@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 160" role="img" aria-label="老年抑郁风险筛查图标">
+  <rect x="4" y="4" width="152" height="152" rx="38" fill="#0F766E"/>
+  <path d="M80 28 L126 45 V86 C126 118 96 135 80 141 C64 135 34 118 34 86 V45 Z" fill="#F8FAFC"/>
+  <path d="M80 110 C58 96 48 86 48 74 C48 65 54 59 63 59 C69 59 75 62 80 70 C85 62 91 59 97 59 C106 59 112 65 112 74 C112 86 102 96 80 110 Z" fill="#0F766E"/>
+  <path d="M52 80 H62 L68 72 L76 88 L82 76 L88 84 H108" fill="none" stroke="#F59E0B" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

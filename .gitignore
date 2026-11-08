@@ -1,0 +1,47 @@
+__pycache__/
+*.py[cod]
+.venv/
+.env
+.DS_Store
+.pytest_cache/
+*.log
+
+# 数据、账号、模型和实验结果一律不进入协作仓库
+data/*
+!data/README.md
+!data/dialogue_intent_seeds.json
+!data/dialogue_intent_seeds_extra.json
+!data/medical_kb/
+data/medical_kb/*
+!data/medical_kb/README.md
+!data/medical_kb/medlineplus_topics.json
+!data/research_dialogues/
+data/research_dialogues/*
+!data/research_dialogues/README.md
+!data/research_dialogues/dialogue_sessions_template.csv
+
+# 运行时产物只保留桌面图标
+output/*
+!output/AppIcon.icns
+!output/AppIcon.iconset/
+output/AppIcon.iconset/*
+!output/AppIcon.iconset/*.png
+!output/dialogue_intent_model.pkl
+!output/dialogue_intent_report.json
+!output/dialogue_response_policy.pkl
+!output/dialogue_response_policy_report.json
+
+# 论文、报告和 Office 生成物不进入代码仓库
+paper/
+docs/*.docx
+docs/*.pdf
+docs/*.pptx
+docs/~$*
+
+# 本地数据库、凭据和任务状态
+*.sqlite
+*.sqlite3
+data/账号密码记录.txt
+data/账号清单.txt
+data/user_records/
+output/jobs_history.jsonl

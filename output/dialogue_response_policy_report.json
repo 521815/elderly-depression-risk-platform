@@ -1,0 +1,41 @@
+{
+  "model_path": "/Users/yellowich/Desktop/大创/老年抑郁风险预测大模型/output/dialogue_response_policy.pkl",
+  "samples": 291,
+  "labels": 8,
+  "accuracy": 0.9690239625949737,
+  "macro_f1": 0.9596353233969334,
+  "high_confidence_coverage": 0.2747516072472238,
+  "high_confidence_accuracy": 0.9875,
+  "folds": [
+    {
+      "accuracy": 0.9830508474576272,
+      "macro_f1": 0.9725274725274725,
+      "coverage": 0.3220338983050847,
+      "high_conf_accuracy": 1.0
+    },
+    {
+      "accuracy": 0.9310344827586207,
+      "macro_f1": 0.9009803921568627,
+      "coverage": 0.27586206896551724,
+      "high_conf_accuracy": 0.9375
+    },
+    {
+      "accuracy": 1.0,
+      "macro_f1": 1.0,
+      "coverage": 0.25862068965517243,
+      "high_conf_accuracy": 1.0
+    },
+    {
+      "accuracy": 0.9827586206896551,
+      "macro_f1": 0.9653846153846154,
+      "coverage": 0.3103448275862069,
+      "high_conf_accuracy": 1.0
+    },
+    {
+      "accuracy": 0.9482758620689655,
+      "macro_f1": 0.9592841369157159,
+      "coverage": 0.20689655172413793,
+      "high_conf_accuracy": 1.0
+    }
+  ]
+}
