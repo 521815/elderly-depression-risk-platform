@@ -131,13 +131,19 @@ def inject_css() -> None:
             font-size: 0.84rem;
         }
         .app-header-status {
-            display: grid;
-            grid-template-columns: repeat(3, max-content);
+            display: flex;
+            flex-wrap: wrap;
             align-items: center;
+            justify-content: center;
             gap: 0.38rem 0.42rem;
-            justify-content: flex-end;
             padding-left: 0.65rem;
             border-left: 1px solid rgba(255, 255, 255, 0.14);
+        }
+        .app-header-status .status-pill {
+            flex: 0 0 auto;
+            width: auto;
+            max-width: 100%;
+            text-align: center;
         }
         .st-key-app_header .status-pill {
             color: rgba(244, 255, 253, 0.9);
@@ -640,12 +646,16 @@ def inject_css() -> None:
                 font-size: 1.08rem;
             }
             .app-header-status {
-                grid-template-columns: 1fr;
+                flex-direction: column;
+                align-items: stretch;
                 justify-content: flex-start;
                 padding-left: 0;
                 border-left: 0;
                 padding-top: 0.45rem;
                 border-top: 1px solid rgba(255, 255, 255, 0.14);
+            }
+            .app-header-status .status-pill {
+                width: 100%;
             }
             [data-testid="stTabs"] button[data-baseweb="tab"] {
                 padding-inline: 0.7rem;
@@ -793,7 +803,7 @@ def render_header(
     )
     with st.container(key="app_header"):
         title_col, controls_col = st.columns(
-            [6.3, 3.7],
+            [5.2, 4.8],
             vertical_alignment="center",
         )
         with title_col:
