@@ -804,10 +804,46 @@ def render_header(
         logo_data = base64.b64encode(logo_path.read_bytes()).decode("ascii")
         logo_mark = f'<img src="data:image/svg+xml;base64,{logo_data}" alt="">'
     rows = [
-        ("CHARLS", status.get("charls_ready", False), "已就绪", "待生成"),
+        ("CHARLS 标准表", status.get("charls_ready", False), "已就绪", "待生成"),
         ("表格基线", status.get("tabular_report", False), "已训练", "未训练"),
-        ("MPDD", status.get("mpdd_ready", False), "已就绪", "待构建"),
-        ("CMDC", status.get("cmdc_ready", False), "已就绪", "待构建"),
+        ("MPDD 特征", status.get("mpdd_ready", False), "已就绪", "待构建"),
+        ("CMDC 外部验证", status.get("cmdc_ready", False), "已就绪", "待构建"),
+        (
+            "CMDC 稳健性",
+            status.get("cmdc_advanced_ready", False),
+            "已完成",
+            "待分析",
+        ),
+        (
+            "CMDC 锁定留出",
+            status.get("cmdc_holdout_ready", False),
+            "已完成",
+            "待验证",
+        ),
+        (
+            "问询意图模型",
+            status.get("dialogue_intent_model", False),
+            "已加载",
+            "未训练",
+        ),
+        (
+            "响应策略模型",
+            status.get("dialogue_response_policy_model", False),
+            "已加载",
+            "未训练",
+        ),
+        (
+            "伦理安全审计",
+            status.get("ethics_audit_passed", False),
+            "已通过",
+            "待检查",
+        ),
+        (
+            "医学知识库",
+            status.get("medical_kb_ready", False),
+            f"{status.get('medical_kb_topics', 0)} 个主题",
+            "待导入",
+        ),
         ("后端 API", status.get("connected", False), "已连接", "本地直连"),
     ]
     status_rows = "".join(
@@ -841,8 +877,12 @@ def render_header(
             )
         if controls_col is not None:
             with controls_col:
-                with st.popover("☰", help="管理菜单与数据状态"):
-                    st.caption("管理菜单")
+                last_sync = st.session_state.get("_last_sync_at")
+                menu_help = "管理菜单与数据状态；每 10 秒自动同步"
+                if last_sync:
+                    menu_help += f"，上次 {last_sync}"
+                with st.popover("☰", help=menu_help):
+                    st.caption("管理菜单 · 状态每 10 秒自动同步")
                     menu_items = [
                         ("工作台", "工作台"),
                         ("账户管理", "账号管理"),
@@ -870,7 +910,20 @@ def render_header(
                         f'<div class="admin-status-grid">{status_rows}</div>',
                         unsafe_allow_html=True,
                     )
-                    st.caption("每 10 秒自动检查后端与数据产物更新")
+                    prompt_versions = status.get("prompt_versions") or {}
+                    if prompt_versions or status.get("tabular_models"):
+                        prompt_text = (
+                            f"Prompt：{prompt_versions.get('interview', '-')} / "
+                            f"{prompt_versions.get('companion', '-')}"
+                            if prompt_versions
+                            else ""
+                        )
+                        model_text = (
+                            f"表格模型：{status.get('tabular_models')} 个"
+                            if status.get("tabular_models")
+                            else ""
+                        )
+                        st.caption(" · ".join(item for item in [prompt_text, model_text] if item))
 
 
 INTERVIEW_GREETING = "您好，我先陪您慢慢聊一会儿。不用着急，想到哪说到哪。\n\n最近这一周，您晚上睡得好吗？会不会半夜醒、醒得早，或者白天总没精神？"
@@ -1880,68 +1933,6 @@ def render_sidebar() -> str:
         else:
             st.caption("当前为标准模式")
         if is_admin:
-            st.markdown("---")
-            st.markdown("#### 数据状态")
-            system_status = st.session_state.get("_system_status") or backend.status()
-            st.session_state._system_status = system_status
-            rows = [
-                ("CHARLS 标准表", system_status.get("charls_ready", False), "已就绪", "待生成"),
-                (
-                    "表格基线",
-                    system_status.get("tabular_report", False),
-                    "已训练",
-                    "未训练",
-                ),
-                ("MPDD 特征", system_status.get("mpdd_ready", False), "已就绪", "待构建"),
-                ("CMDC 外部验证", system_status.get("cmdc_ready", False), "已就绪", "待构建"),
-                ("CMDC 稳健性", system_status.get("cmdc_advanced_ready", False), "已完成", "待分析"),
-                ("CMDC 锁定留出", system_status.get("cmdc_holdout_ready", False), "已完成", "待验证"),
-                (
-                    "对话意图模型",
-                    system_status.get("dialogue_intent_model", False),
-                    "已加载",
-                    "未训练",
-                ),
-                (
-                    "对话响应策略模型",
-                    system_status.get("dialogue_response_policy_model", False),
-                    "已加载",
-                    "未训练",
-                ),
-                (
-                    "伦理安全审计",
-                    system_status.get("ethics_audit_passed", False),
-                    "已通过",
-                    "待检查",
-                ),
-                (
-                    "MedlinePlus 医学知识库",
-                    system_status.get("medical_kb_ready", False),
-                    f"{system_status.get('medical_kb_topics', 0)} 个主题",
-                    "待导入",
-                ),
-                ("后端 API", system_status.get("connected", False), "已连接", "本地直连"),
-            ]
-            for label, ok, ok_text, wait_text in rows:
-                st.markdown(
-                    f'<div class="status-row"><span class="status-label">{label}</span>'
-                    f"{status_pill(ok, ok_text, wait_text)}</div>",
-                    unsafe_allow_html=True,
-                )
-            prompt_versions = system_status.get("prompt_versions") or {}
-            if prompt_versions:
-                st.caption(
-                    "Prompt 版本：问询 "
-                    f"{prompt_versions.get('interview', '-')} · 陪伴 "
-                    f"{prompt_versions.get('companion', '-')}"
-                )
-            if system_status.get("tabular_models"):
-                st.caption(f"已保存表格模型：{system_status['tabular_models']} 个")
-            last_sync = st.session_state.get("_last_sync_at")
-            sync_text = "自动同步：每 10 秒检查后端更新"
-            if last_sync:
-                sync_text += f" · 上次 {last_sync}"
-            st.caption(sync_text)
             st.markdown("---")
             api_key = st.text_input("大模型 API Key（可选）", type="password")
             if api_key:
