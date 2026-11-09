@@ -132,7 +132,7 @@ PYTHONPATH=src:. /opt/anaconda3/bin/python scripts/46_evaluate_therapeutic_quali
 
 - Prompt 模板结构审计：2/2 通过。
 - Prompt 注册表、动态状态注入和 Agent 接口测试通过。
-- 全量单元与接口测试：182 项通过。
+- 全量单元与接口测试：184 项通过。
 - 68 个本地多轮对话场景通过。
 - 19 个治疗性对话质量场景通过。
 - 伦理安全审计：22/22 通过。

@@ -315,6 +315,26 @@ class ApiTests(unittest.TestCase):
         self.assertEqual(report.status_code, 200)
         self.assertFalse(report.json["ready"])
 
+    def test_cmdc_advanced_endpoint_is_admin_only(self):
+        unauthorised = self.client.post("/api/cmdc/advanced", json={})
+        with mock.patch.object(
+            services,
+            "run_cmdc_advanced_analysis",
+            return_value={"ready": True, "subjects": 78},
+        ):
+            response = self.client.post(
+                "/api/cmdc/advanced",
+                json={
+                    "repeats": 3,
+                    "model_repeats": 1,
+                    "bootstrap_iterations": 50,
+                },
+                headers=self.admin_headers,
+            )
+        self.assertEqual(unauthorised.status_code, 401)
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(response.json["ready"])
+
     def test_user_crud(self):
         created = self.client.post(
             "/api/users",

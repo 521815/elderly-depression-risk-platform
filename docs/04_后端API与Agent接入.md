@@ -67,6 +67,7 @@ streamlit run webapp/app.py
 - `POST /api/cmdc/build`：从外部加密归档生成去标识化特征表；密码只在单次请求内使用
 - `POST /api/cmdc/train`：按受试者运行 CMDC 重复分层交叉验证并保存独立模型
 - `GET /api/cmdc/report`：读取 CMDC 分模态评估报告和摘要
+- `POST /api/cmdc/advanced`：运行配对 Bootstrap、缺失模态、嵌套模型、校准和决策曲线分析
 
 ### 评估与量表
 

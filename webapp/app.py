@@ -1867,6 +1867,7 @@ def render_sidebar() -> str:
                 ),
                 ("MPDD 特征", system_status.get("mpdd_ready", False), "已就绪", "待构建"),
                 ("CMDC 外部验证", system_status.get("cmdc_ready", False), "已就绪", "待构建"),
+                ("CMDC 稳健性", system_status.get("cmdc_advanced_ready", False), "已完成", "待分析"),
                 (
                     "对话意图模型",
                     system_status.get("dialogue_intent_model", False),
@@ -4061,6 +4062,131 @@ def render_cmdc_external() -> None:
             file_name="cmdc_external_validation_report.csv",
             mime="text/csv",
         )
+
+    st.markdown("#### 稳健性与多模态提升验证")
+    advanced = summary.get("advanced") or {}
+    if advanced.get("ready"):
+        bootstrap = advanced.get("primary_bootstrap_ci") or {}
+        auc_ci = bootstrap.get("auc") or {}
+        adv_metric_cols = st.columns(4)
+        adv_metric_cols[0].metric(
+            "AUC 95% CI",
+            f"{float(auc_ci.get('ci_low', 0)):.3f}-"
+            f"{float(auc_ci.get('ci_high', 0)):.3f}",
+        )
+        adv_metric_cols[1].metric(
+            "最佳嵌套模型",
+            str(advanced.get("best_nested_model") or "-"),
+        )
+        missing_compare = advanced.get("missing_modality_comparison") or {}
+        adv_metric_cols[2].metric(
+            "动态融合 AUC 差",
+            f"{float(missing_compare.get('auc_difference', 0)):+.3f}",
+        )
+        adv_metric_cols[3].metric(
+            "Bootstrap",
+            f"{int(advanced.get('bootstrap_iterations', 0))} 次",
+        )
+
+        advance_tabs = st.tabs(
+            ["同受试者配对", "缺失模态", "模型比较", "校准与决策"]
+        )
+        with advance_tabs[0]:
+            paired = backend.load_csv(backend.CMDC_PAIRED_REPORT)
+            if paired is not None and not paired.empty:
+                display = paired.rename(
+                    columns={
+                        "group": "分组",
+                        "subjects": "受试者",
+                        "model_a": "比较模型",
+                        "model_b": "基准模型",
+                        "auc_a": "AUC A",
+                        "auc_b": "AUC B",
+                        "auc_difference": "AUC 差值",
+                        "ci_low": "差值 CI 下限",
+                        "ci_high": "差值 CI 上限",
+                        "positive_bootstrap_rate": "Bootstrap 正向率",
+                        "paired_repeat_mean_auc_difference": "重复折平均差值",
+                        "paired_t_p_value": "配对 p 值",
+                    }
+                )
+                st.dataframe(display, width="stretch", hide_index=True)
+        with advance_tabs[1]:
+            missing = backend.load_csv(backend.CMDC_MISSING_MODALITY_REPORT)
+            if missing is not None and not missing.empty:
+                st.dataframe(missing, width="stretch", hide_index=True)
+        with advance_tabs[2]:
+            model_compare = backend.load_csv(backend.CMDC_MODEL_COMPARISON_REPORT)
+            if model_compare is not None and not model_compare.empty:
+                st.dataframe(model_compare, width="stretch", hide_index=True)
+        with advance_tabs[3]:
+            calibration = backend.load_csv(backend.CMDC_CALIBRATION_CURVE)
+            decision_curve = backend.load_csv(backend.CMDC_DECISION_CURVE)
+            if calibration is not None and not calibration.empty:
+                cal_fig = px.line(
+                    calibration,
+                    x="predicted_frequency",
+                    y="observed_frequency",
+                    markers=True,
+                    labels={
+                        "predicted_frequency": "预测概率",
+                        "observed_frequency": "实际阳性率",
+                    },
+                )
+                cal_fig.add_trace(
+                    go.Scatter(
+                        x=[0, 1],
+                        y=[0, 1],
+                        mode="lines",
+                        line=dict(color="#dc2626", dash="dash"),
+                        name="理想校准线",
+                    )
+                )
+                cal_fig.update_layout(
+                    height=320,
+                    margin=dict(l=10, r=10, t=25, b=10),
+                )
+                st.plotly_chart(cal_fig, width="stretch")
+            if decision_curve is not None and not decision_curve.empty:
+                dca_fig = px.line(
+                    decision_curve,
+                    x="threshold",
+                    y=[
+                        "net_benefit",
+                        "treat_all_net_benefit",
+                        "treat_none_net_benefit",
+                    ],
+                    labels={"threshold": "阈值", "value": "净获益", "variable": "策略"},
+                )
+                dca_fig.update_layout(
+                    height=320,
+                    margin=dict(l=10, r=10, t=25, b=10),
+                )
+                st.plotly_chart(dca_fig, width="stretch")
+        st.caption(
+            "这些分析用于提高结果可信度和选择一个可部署的简单模型；"
+            "重复交叉验证与 Bootstrap 仍不能替代独立外部测试集。"
+        )
+    else:
+        st.info("尚未运行同受试者配对、缺失模态、模型比较和校准分析。")
+
+    if st.button(
+        "运行稳健性与多模态提升验证",
+        type="primary",
+        width="stretch",
+    ):
+        try:
+            with st.spinner("正在运行配对 Bootstrap、缺失模态和嵌套模型比较..."):
+                backend.run_cmdc_advanced(
+                    repeats=5,
+                    model_repeats=3,
+                    bootstrap_iterations=500,
+                )
+                st.cache_data.clear()
+        except Exception as exc:
+            st.error(f"稳健性分析失败：{exc}")
+        else:
+            st.rerun()
 
     with st.expander("重新构建特征表", expanded=False):
         st.caption("重建只替换本地数值特征和评估报告，不会把原始文件复制进项目。")

@@ -26,6 +26,12 @@ CMDC_AUDIT_JSON = _local.CMDC_AUDIT_JSON
 CMDC_REPORT = _local.CMDC_REPORT
 CMDC_MODEL_SUMMARY = _local.CMDC_MODEL_SUMMARY
 CMDC_MODEL_DIR = _local.CMDC_MODEL_DIR
+CMDC_PAIRED_REPORT = _local.CMDC_PAIRED_REPORT
+CMDC_MISSING_MODALITY_REPORT = _local.CMDC_MISSING_MODALITY_REPORT
+CMDC_MODEL_COMPARISON_REPORT = _local.CMDC_MODEL_COMPARISON_REPORT
+CMDC_CALIBRATION_CURVE = _local.CMDC_CALIBRATION_CURVE
+CMDC_DECISION_CURVE = _local.CMDC_DECISION_CURVE
+CMDC_ADVANCED_SUMMARY = _local.CMDC_ADVANCED_SUMMARY
 MODEL_REPORT = _local.MODEL_REPORT
 IMBALANCE_REPORT = _local.IMBALANCE_REPORT
 MULTIMODAL_REPORT = _local.MULTIMODAL_REPORT
@@ -373,6 +379,30 @@ def train_cmdc_models(repeats: int = 10) -> dict:
     if data is not None:
         return data
     return _local.train_cmdc_external_models(repeats=repeats)
+
+
+def run_cmdc_advanced(
+    repeats: int = 10,
+    model_repeats: int = 5,
+    bootstrap_iterations: int = 1000,
+) -> dict:
+    data = _api(
+        "POST",
+        "/api/cmdc/advanced",
+        json={
+            "repeats": repeats,
+            "model_repeats": model_repeats,
+            "bootstrap_iterations": bootstrap_iterations,
+        },
+        timeout=600,
+    )
+    if data is not None:
+        return data
+    return _local.run_cmdc_advanced_analysis(
+        repeats=repeats,
+        model_repeats=model_repeats,
+        bootstrap_iterations=bootstrap_iterations,
+    )
 
 
 def mpdd_cache_status() -> dict:

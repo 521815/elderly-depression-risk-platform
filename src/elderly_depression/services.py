@@ -33,6 +33,13 @@ CMDC_AUDIT_JSON = OUTPUT_DIR / "cmdc_data_audit.json"
 CMDC_REPORT = OUTPUT_DIR / "cmdc_benchmark_report.csv"
 CMDC_MODEL_SUMMARY = OUTPUT_DIR / "cmdc_benchmark_summary.json"
 CMDC_MODEL_DIR = OUTPUT_DIR / "cmdc_models"
+CMDC_PAIRED_REPORT = OUTPUT_DIR / "cmdc_paired_comparison.csv"
+CMDC_MISSING_MODALITY_REPORT = OUTPUT_DIR / "cmdc_missing_modality_report.csv"
+CMDC_MODEL_COMPARISON_REPORT = OUTPUT_DIR / "cmdc_model_comparison.csv"
+CMDC_CALIBRATION_CURVE = OUTPUT_DIR / "cmdc_calibration_curve.csv"
+CMDC_DECISION_CURVE = OUTPUT_DIR / "cmdc_decision_curve.csv"
+CMDC_ADVANCED_SUMMARY = OUTPUT_DIR / "cmdc_advanced_summary.json"
+CMDC_NESTED_MODEL = OUTPUT_DIR / "cmdc_nested_best_model.pkl"
 MODEL_REPORT = OUTPUT_DIR / "tabular_model_report.csv"
 IMBALANCE_REPORT = OUTPUT_DIR / "imbalance_comparison.csv"
 IMBALANCE_PAPER_REPORT = OUTPUT_DIR / "imbalance_paper_report.csv"
@@ -130,6 +137,7 @@ def model_registry() -> list[dict]:
     add_report(MULTIMODAL_SUBJECT_REPORT, "multimodal_subject")
     add_report(SYNTHETIC_AUGMENTATION_REPORT, "multimodal_augmentation")
     add_report(CMDC_REPORT, "cmdc_external_validation")
+    add_report(CMDC_MODEL_COMPARISON_REPORT, "cmdc_model_comparison")
     return entries
 
 
@@ -164,6 +172,13 @@ def data_signature() -> str:
         CMDC_AUDIT_JSON,
         CMDC_REPORT,
         CMDC_MODEL_SUMMARY,
+        CMDC_PAIRED_REPORT,
+        CMDC_MISSING_MODALITY_REPORT,
+        CMDC_MODEL_COMPARISON_REPORT,
+        CMDC_CALIBRATION_CURVE,
+        CMDC_DECISION_CURVE,
+        CMDC_ADVANCED_SUMMARY,
+        CMDC_NESTED_MODEL,
         MODEL_REPORT,
         IMBALANCE_REPORT,
         MULTIMODAL_REPORT,
@@ -255,6 +270,25 @@ def train_cmdc_external_models(repeats: int = 10) -> dict:
         summary_path=CMDC_MODEL_SUMMARY,
         model_dir=CMDC_MODEL_DIR,
         repeats=int(repeats),
+    )
+
+
+def run_cmdc_advanced_analysis(
+    repeats: int = 10,
+    model_repeats: int = 5,
+    bootstrap_iterations: int = 1000,
+) -> dict:
+    from .models.cmdc_advanced import run_cmdc_advanced_analysis as _run
+
+    if not CMDC_CSV.exists():
+        raise FileNotFoundError("CMDC 特征表尚未构建")
+    df = pd.read_csv(CMDC_CSV)
+    return _run(
+        df,
+        OUTPUT_DIR,
+        repeats=int(repeats),
+        model_repeats=int(model_repeats),
+        bootstrap_iterations=int(bootstrap_iterations),
     )
 
 
@@ -872,7 +906,13 @@ def train_multimodal(df: pd.DataFrame, threshold: int = 8) -> pd.DataFrame:
 def status() -> dict:
     tabular_models = list(TABULAR_MODEL_DIR.glob("*.pkl")) if TABULAR_MODEL_DIR.exists() else []
     multimodal_models = list(MULTIMODAL_MODEL_DIR.glob("*.pkl")) if MULTIMODAL_MODEL_DIR.exists() else []
-    cmdc_models = list(CMDC_MODEL_DIR.glob("*.pkl")) if CMDC_MODEL_DIR.exists() else []
+    cmdc_models = (
+        list(CMDC_MODEL_DIR.glob("*.pkl"))
+        if CMDC_MODEL_DIR.exists()
+        else []
+    )
+    if CMDC_NESTED_MODEL.exists():
+        cmdc_models.append(CMDC_NESTED_MODEL)
     try:
         from .prompt_registry import prompt_versions
 
@@ -898,6 +938,12 @@ def status() -> dict:
         CMDC_AUDIT_JSON,
         CMDC_REPORT,
         CMDC_MODEL_SUMMARY,
+        CMDC_PAIRED_REPORT,
+        CMDC_MISSING_MODALITY_REPORT,
+        CMDC_MODEL_COMPARISON_REPORT,
+        CMDC_CALIBRATION_CURVE,
+        CMDC_DECISION_CURVE,
+        CMDC_ADVANCED_SUMMARY,
         DIALOGUE_INTENT_MODEL,
         DIALOGUE_RESPONSE_POLICY_MODEL,
         ETHICS_AUDIT_REPORT,
@@ -948,6 +994,7 @@ def status() -> dict:
         "mpdd_ready": mpdd_exists(),
         "cmdc_ready": cmdc_exists(),
         "cmdc_benchmark_ready": CMDC_REPORT.exists(),
+        "cmdc_advanced_ready": CMDC_ADVANCED_SUMMARY.exists(),
         "mpdd_subject_ready": MULTIMODAL_SUBJECT_REPORT.exists(),
         "tabular_report": MODEL_REPORT.exists(),
         "imbalance_report": IMBALANCE_REPORT.exists(),
@@ -1061,6 +1108,7 @@ def cmdc_summary() -> dict:
         }
     audit = read_json_file(CMDC_AUDIT_JSON) or {}
     benchmark = read_json_file(CMDC_MODEL_SUMMARY) or {}
+    advanced = read_json_file(CMDC_ADVANCED_SUMMARY) or {}
     return {
         "ready": True,
         "source": "CMDC",
@@ -1090,7 +1138,9 @@ def cmdc_summary() -> dict:
         "raw_data_copied": bool(audit.get("raw_data_copied", False)),
         "password_persisted": bool(audit.get("password_persisted", False)),
         "benchmark_ready": CMDC_REPORT.exists() and CMDC_MODEL_SUMMARY.exists(),
+        "advanced_ready": CMDC_ADVANCED_SUMMARY.exists(),
         "benchmark": benchmark,
+        "advanced": advanced,
     }
 
 

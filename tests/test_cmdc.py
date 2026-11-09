@@ -10,6 +10,9 @@ import numpy as np
 import pandas as pd
 
 from elderly_depression.data.cmdc import build_cmdc_feature_table
+from elderly_depression.models.cmdc_advanced import (
+    run_cmdc_advanced_analysis,
+)
 from elderly_depression.models.cmdc import train_cmdc_models
 
 
@@ -127,6 +130,62 @@ class CMDCModelTests(unittest.TestCase):
         self.assertIn("text_audio", set(report["variant_name"]))
         self.assertTrue(model_files)
         self.assertIn("age_scope_warning", summary)
+
+    def test_advanced_analysis_writes_robustness_reports(self):
+        rng = np.random.default_rng(7)
+        rows = []
+        for index in range(40):
+            label = index % 2
+            has_visual = index % 3 != 0
+            row = {
+                "subject_id": f"A{index:02d}",
+                "label": label,
+                "group": "MDD" if label else "HC",
+                "text_questions": 3,
+                "visual_questions": 3 if has_visual else 0,
+                "audio_deep_questions": 3,
+                "acoustic_questions": 3,
+                "complete_multimodal": int(has_visual),
+            }
+            for feature in range(6):
+                row[f"text_mean_{feature:03d}"] = rng.normal() + label
+                row[f"text_std_{feature:03d}"] = rng.normal()
+                row[f"audio_deep_mean_{feature:03d}"] = rng.normal() + label * 0.8
+                row[f"audio_deep_std_{feature:03d}"] = rng.normal()
+                row[f"acoustic_mean_{feature:03d}"] = rng.normal() + label * 0.7
+                row[f"acoustic_std_{feature:03d}"] = rng.normal()
+                row[f"visual_mean_{feature:03d}"] = (
+                    rng.normal() + label if has_visual else np.nan
+                )
+                row[f"visual_std_{feature:03d}"] = (
+                    rng.normal() if has_visual else np.nan
+                )
+            rows.append(row)
+        df = pd.DataFrame(rows)
+
+        with tempfile.TemporaryDirectory() as tmp:
+            output = Path(tmp)
+            summary = run_cmdc_advanced_analysis(
+                df,
+                output,
+                repeats=2,
+                model_repeats=1,
+                bootstrap_iterations=50,
+            )
+            expected = [
+                "cmdc_paired_comparison.csv",
+                "cmdc_missing_modality_report.csv",
+                "cmdc_model_comparison.csv",
+                "cmdc_calibration_curve.csv",
+                "cmdc_decision_curve.csv",
+                "cmdc_advanced_summary.json",
+            ]
+            for filename in expected:
+                self.assertTrue((output / filename).exists(), filename)
+
+        self.assertTrue(summary["ready"])
+        self.assertIn("primary_bootstrap_ci", summary)
+        self.assertIn("implemented_measures", summary)
 
 
 if __name__ == "__main__":

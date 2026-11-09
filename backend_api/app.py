@@ -702,6 +702,25 @@ def cmdc_train():
     return jsonify(summary)
 
 
+@app.post("/api/cmdc/advanced")
+def cmdc_advanced():
+    payload = request.get_json(silent=True) or {}
+    try:
+        summary = services.run_cmdc_advanced_analysis(
+            repeats=max(1, min(20, int(payload.get("repeats", 10)))),
+            model_repeats=max(1, min(10, int(payload.get("model_repeats", 5)))),
+            bootstrap_iterations=max(
+                50,
+                min(5000, int(payload.get("bootstrap_iterations", 1000))),
+            ),
+        )
+    except FileNotFoundError as exc:
+        return jsonify({"error": str(exc)}), 400
+    except ValueError as exc:
+        return jsonify({"error": str(exc)}), 400
+    return jsonify(summary)
+
+
 @app.get("/api/mpdd/cache_status")
 def mpdd_cache_status():
     return jsonify(services.mpdd_cache_status())

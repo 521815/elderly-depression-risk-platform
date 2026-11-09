@@ -10,6 +10,7 @@ import matplotlib
 
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
+import numpy as np
 import pandas as pd
 from docx import Document
 from docx.enum.table import WD_ALIGN_VERTICAL, WD_TABLE_ALIGNMENT
@@ -25,6 +26,12 @@ OUTPUT = Path("/Users/yellowich/Desktop/CMDC数据集接入汇报与后续优化
 REPORT_CSV = PROJECT_ROOT / "output" / "cmdc_benchmark_report.csv"
 SUMMARY_JSON = PROJECT_ROOT / "output" / "cmdc_benchmark_summary.json"
 AUDIT_JSON = PROJECT_ROOT / "output" / "cmdc_data_audit.json"
+ADVANCED_SUMMARY_JSON = PROJECT_ROOT / "output" / "cmdc_advanced_summary.json"
+PAIRED_CSV = PROJECT_ROOT / "output" / "cmdc_paired_comparison.csv"
+MISSING_MODALITY_CSV = PROJECT_ROOT / "output" / "cmdc_missing_modality_report.csv"
+MODEL_COMPARISON_CSV = PROJECT_ROOT / "output" / "cmdc_model_comparison.csv"
+CALIBRATION_CSV = PROJECT_ROOT / "output" / "cmdc_calibration_curve.csv"
+DECISION_CURVE_CSV = PROJECT_ROOT / "output" / "cmdc_decision_curve.csv"
 CHART_DIR = Path("/tmp/cmdc_meeting_charts")
 
 FONT_CN = "Arial Unicode MS"
@@ -218,10 +225,33 @@ def load_data():
     report = pd.read_csv(REPORT_CSV)
     summary = json.loads(SUMMARY_JSON.read_text(encoding="utf-8"))
     audit = json.loads(AUDIT_JSON.read_text(encoding="utf-8"))
-    return report, summary, audit
+    advanced = json.loads(ADVANCED_SUMMARY_JSON.read_text(encoding="utf-8"))
+    paired = pd.read_csv(PAIRED_CSV)
+    missing = pd.read_csv(MISSING_MODALITY_CSV)
+    model_comparison = pd.read_csv(MODEL_COMPARISON_CSV)
+    calibration = pd.read_csv(CALIBRATION_CSV)
+    decision_curve = pd.read_csv(DECISION_CURVE_CSV)
+    return (
+        report,
+        summary,
+        audit,
+        advanced,
+        paired,
+        missing,
+        model_comparison,
+        calibration,
+        decision_curve,
+    )
 
 
-def build_charts(report: pd.DataFrame, audit: dict):
+def build_charts(
+    report: pd.DataFrame,
+    audit: dict,
+    paired: pd.DataFrame,
+    model_comparison: pd.DataFrame,
+    calibration: pd.DataFrame,
+    decision_curve: pd.DataFrame,
+):
     CHART_DIR.mkdir(parents=True, exist_ok=True)
     cn_font = FontProperties(fname=FONT_PATH)
     plt.rcParams["axes.edgecolor"] = "#CBD5E1"
@@ -290,12 +320,173 @@ def build_charts(report: pd.DataFrame, audit: dict):
     coverage_path = CHART_DIR / "cmdc_coverage.png"
     fig.savefig(coverage_path, bbox_inches="tight", facecolor="white")
     plt.close(fig)
-    return auc_path, coverage_path
+
+    paired_labels = [
+        "文本＋语音\n对 文本",
+        "文本＋语音\n对 声学",
+        "文本＋语音\n对 语音",
+        "全模态\n对 视觉",
+        "全模态\n对 文本＋语音",
+    ]
+    paired_values = paired["auc_difference"].to_numpy()
+    paired_low = paired["ci_low"].to_numpy()
+    paired_high = paired["ci_high"].to_numpy()
+    errors = np.vstack(
+        [paired_values - paired_low, paired_high - paired_values]
+    )
+    fig, ax = plt.subplots(figsize=(8.6, 3.9), dpi=220)
+    colors = ["#2563EB" if value >= 0 else "#D97706" for value in paired_values]
+    y = np.arange(len(paired_labels))
+    ax.errorbar(
+        paired_values,
+        y,
+        xerr=errors,
+        fmt="none",
+        ecolor="#64748B",
+        elinewidth=1.2,
+        capsize=4,
+    )
+    ax.scatter(paired_values, y, color=colors, s=56, zorder=3)
+    ax.axvline(0, color="#B91C1C", linestyle="--", linewidth=1)
+    ax.set_yticks(y)
+    ax.set_yticklabels(paired_labels, fontproperties=cn_font, fontsize=8.4)
+    ax.invert_yaxis()
+    ax.set_xlabel("配对 AUC 差值及 95% Bootstrap 区间", fontproperties=cn_font, fontsize=9.3)
+    ax.grid(axis="x", color="#E7EDF2", linewidth=0.7)
+    ax.set_axisbelow(True)
+    ax.spines[["top", "right"]].set_visible(False)
+    fig.tight_layout()
+    paired_path = CHART_DIR / "cmdc_paired_difference.png"
+    fig.savefig(paired_path, bbox_inches="tight", facecolor="white")
+    plt.close(fig)
+
+    model_labels = {
+        "logistic_l2": "Logistic L2",
+        "random_forest": "Random Forest",
+        "extra_trees": "Extra Trees",
+    }
+    model_df = model_comparison.copy()
+    model_df["label"] = model_df["model"].map(model_labels).fillna(model_df["model"])
+    values = model_df["auc"].to_numpy()
+    lower = values - model_df["auc_ci_low"].to_numpy()
+    upper = model_df["auc_ci_high"].to_numpy() - values
+    fig, ax = plt.subplots(figsize=(8.4, 3.4), dpi=220)
+    bars = ax.bar(
+        model_df["label"],
+        values,
+        color=["#2563EB", "#0F766E", "#D97706"],
+        width=0.58,
+    )
+    ax.errorbar(
+        model_df["label"],
+        values,
+        yerr=np.vstack([lower, upper]),
+        fmt="none",
+        ecolor="#475569",
+        capsize=5,
+        linewidth=1.2,
+    )
+    for bar, value in zip(bars, values):
+        ax.text(
+            bar.get_x() + bar.get_width() / 2,
+            min(1.02, bar.get_height() + 0.012),
+            f"{value:.3f}",
+            ha="center",
+            va="bottom",
+            fontsize=8.8,
+            fontproperties=cn_font,
+        )
+    ax.set_ylim(0.82, 1.03)
+    ax.set_ylabel("AUC", fontproperties=cn_font, fontsize=9.5)
+    ax.set_xticks(range(len(model_df)))
+    ax.set_xticklabels(model_df["label"], fontproperties=cn_font, fontsize=9)
+    ax.grid(axis="y", color="#E7EDF2", linewidth=0.7)
+    ax.set_axisbelow(True)
+    ax.spines[["top", "right"]].set_visible(False)
+    fig.tight_layout()
+    model_path = CHART_DIR / "cmdc_model_comparison.png"
+    fig.savefig(model_path, bbox_inches="tight", facecolor="white")
+    plt.close(fig)
+
+    fig, axes = plt.subplots(1, 2, figsize=(9.0, 3.45), dpi=220)
+    ax = axes[0]
+    ax.plot(
+        calibration["predicted_frequency"],
+        calibration["observed_frequency"],
+        marker="o",
+        color="#2563EB",
+        linewidth=1.8,
+    )
+    ax.plot([0, 1], [0, 1], linestyle="--", color="#B91C1C", linewidth=1)
+    ax.set_xlim(0, 1)
+    ax.set_ylim(0, 1)
+    ax.set_xlabel("预测概率", fontproperties=cn_font, fontsize=8.8)
+    ax.set_ylabel("实际阳性率", fontproperties=cn_font, fontsize=8.8)
+    ax.set_title("校准曲线", fontproperties=cn_font, fontsize=10)
+    ax.grid(color="#E7EDF2", linewidth=0.6)
+    ax.spines[["top", "right"]].set_visible(False)
+
+    ax = axes[1]
+    ax.plot(
+        decision_curve["threshold"],
+        decision_curve["net_benefit"],
+        color="#0F766E",
+        linewidth=1.8,
+        label="模型",
+    )
+    ax.plot(
+        decision_curve["threshold"],
+        decision_curve["treat_all_net_benefit"],
+        color="#D97706",
+        linewidth=1.2,
+        label="全部干预",
+    )
+    ax.plot(
+        decision_curve["threshold"],
+        decision_curve["treat_none_net_benefit"],
+        color="#64748B",
+        linewidth=1.0,
+        label="不干预",
+    )
+    ax.set_xlabel("阈值", fontproperties=cn_font, fontsize=8.8)
+    ax.set_ylabel("净获益", fontproperties=cn_font, fontsize=8.8)
+    ax.set_title("决策曲线", fontproperties=cn_font, fontsize=10)
+    ax.grid(color="#E7EDF2", linewidth=0.6)
+    ax.legend(prop=cn_font, fontsize=7.8, frameon=False)
+    ax.spines[["top", "right"]].set_visible(False)
+    fig.tight_layout(w_pad=1.5)
+    calibration_path = CHART_DIR / "cmdc_calibration_decision.png"
+    fig.savefig(calibration_path, bbox_inches="tight", facecolor="white")
+    plt.close(fig)
+    return auc_path, coverage_path, paired_path, model_path, calibration_path
 
 
 def build() -> Document:
-    report, summary, audit = load_data()
-    auc_chart, coverage_chart = build_charts(report, audit)
+    (
+        report,
+        summary,
+        audit,
+        advanced,
+        paired,
+        missing,
+        model_comparison,
+        calibration,
+        decision_curve,
+    ) = load_data()
+    (
+        auc_chart,
+        coverage_chart,
+        paired_chart,
+        model_chart,
+        calibration_chart,
+    ) = build_charts(
+        report,
+        audit,
+        paired,
+        model_comparison,
+        calibration,
+        decision_curve,
+    )
     primary = summary["primary_result"]
 
     doc = Document()
@@ -366,6 +557,7 @@ def build() -> Document:
         [
             ["主要收益", "新增独立的中文多模态外部验证域，提高数据多样性和科研可信度"],
             ["主要结果", f"文本＋语音 77 人，受试者级 AUC {primary['auc_mean']:.3f}"],
+            ["融合是否已证明更好", "点估计有提升倾向，但配对 Bootstrap 区间跨 0，暂不能宣称稳定提升"],
             ["是否改变主评分", "否。CMDC 不进入当前老年主风险融合模型"],
             ["下一步重点", "置信区间与校准、缺失模态、模型对比、人口学与老年外部数据"],
         ],
@@ -385,6 +577,7 @@ def build() -> Document:
     add_bullet(doc, "新增 78 名受试者、每人 12 道半结构化访谈题和约 10.83 小时音频。")
     add_bullet(doc, "新增文本、语音嵌入、openSMILE 声学和访谈视觉四类受试者级特征。")
     add_bullet(doc, "形成严格按 subject_id 切分的重复交叉验证，避免同一人的 12 个回答跨训练和验证。")
+    add_bullet(doc, "落地配对 Bootstrap、缺失模态动态融合、嵌套模型比较、校准和决策曲线。")
     add_bullet(doc, "新增工作台页面、管理员接口、数据健康限制和独立模型产物。")
     add_text(
         doc,
@@ -514,6 +707,186 @@ def build() -> Document:
         bold_lead="主结果解释：",
     )
 
+    add_heading(doc, "5.1 配对比较与置信区间", 2)
+    bootstrap = advanced.get("primary_bootstrap_ci", {})
+    auc_ci = bootstrap.get("auc", {})
+    add_text(
+        doc,
+        f"文本＋语音的 Bootstrap AUC 为 {auc_ci.get('mean', 0):.3f}，"
+        f"95% 区间 {auc_ci.get('ci_low', 0):.3f} 至 "
+        f"{auc_ci.get('ci_high', 0):.3f}。区间较宽，说明 78 人样本下仍需谨慎解释。",
+        bold_lead="整体不确定性：",
+    )
+    doc.add_picture(str(paired_chart), width=Inches(6.35))
+    doc.inline_shapes[-1]._inline.docPr.set(
+        "descr",
+        "文本加语音、全模态与其他模态之间的配对 AUC 差值及 Bootstrap 置信区间",
+    )
+    doc.inline_shapes[-1]._inline.docPr.set("title", "CMDC 配对 AUC 差异")
+    doc.paragraphs[-1].alignment = WD_ALIGN_PARAGRAPH.CENTER
+    fmt_paragraph(doc.paragraphs[-1], after=3)
+    p = doc.add_paragraph()
+    p.alignment = WD_ALIGN_PARAGRAPH.CENTER
+    fmt_paragraph(p, after=8)
+    run = p.add_run("图 3 同一受试者上的配对 AUC 差异与 95% Bootstrap 区间")
+    set_font(run, size=8.5)
+    run.font.color.rgb = MUTED
+
+    paired_rows = []
+    paired_name_labels = {
+        "text_audio": "文本＋语音",
+        "text": "文本",
+        "acoustic": "声学",
+        "audio": "语音融合",
+        "visual": "视觉",
+        "complete_multimodal": "全模态",
+    }
+    for _, row in paired.iterrows():
+        paired_rows.append(
+            [
+                f"{paired_name_labels.get(row['model_a'], row['model_a'])} vs "
+                f"{paired_name_labels.get(row['model_b'], row['model_b'])}",
+                str(int(row["subjects"])),
+                f"{row['auc_a']:.3f}",
+                f"{row['auc_b']:.3f}",
+                f"{row['auc_difference']:+.3f}",
+                f"{row['ci_low']:+.3f} 至 {row['ci_high']:+.3f}",
+                f"{row['paired_t_p_value']:.4f}",
+            ]
+        )
+    add_table(
+        doc,
+        ["比较", "人数", "AUC A", "AUC B", "差值", "Bootstrap 95% CI", "折级 p"],
+        paired_rows,
+        widths=[5.3, 1.2, 1.5, 1.5, 1.4, 3.4, 1.4],
+        font_size=7.9,
+    )
+    add_text(
+        doc,
+        "文本＋语音相对文本的点估计提高约 0.046，但受试者级 Bootstrap 区间仍跨 0；相对声学和语音融合的差异更小。"
+        "全模态相对视觉和文本＋语音也没有表现出稳定优势。因此当前结果支持“融合有潜力”，尚不支持“融合已稳定提高准确性”。",
+        bold_lead="配对结论：",
+    )
+
+    page_break(doc)
+
+    add_heading(doc, "5.2 缺失模态与动态融合", 2)
+    missing_labels = {
+        "available_modality_dynamic_fusion": "可用模态动态融合",
+        "dynamic_fusion_complete_subjects": "动态融合限定完整病例",
+        "fixed_complete_multimodal": "固定四模态完整病例",
+    }
+    missing_rows = []
+    for _, row in missing.iterrows():
+        missing_rows.append(
+            [
+                missing_labels.get(row["strategy"], row["strategy"]),
+                str(int(row["subjects"])),
+                f"{row['auc']:.3f}",
+                f"{row['auc_ci_low']:.3f} 至 {row['auc_ci_high'] if 'auc_ci_high' in row else float('nan'):.3f}",
+                f"{row['brier']:.3f}",
+            ]
+        )
+    add_table(
+        doc,
+        ["策略", "人数", "AUC", "Bootstrap 95% CI", "Brier"],
+        missing_rows,
+        widths=[5.5, 1.5, 1.5, 4.4, 1.8],
+        font_size=8.6,
+    )
+    missing_comparison = advanced.get("missing_modality_comparison", {})
+    add_text(
+        doc,
+        "动态融合允许受试者只要具备文本、视觉或语音中的可用模态就参与，不强制删除视觉缺失者。"
+        f"它的覆盖率从 44 人扩展到 78 人，AUC 为 {missing.loc[missing['strategy'] == 'available_modality_dynamic_fusion', 'auc'].iloc[0]:.3f}。"
+        f"在共同完整病例上，动态融合与固定四模态的 AUC 差为 "
+        f"{missing_comparison.get('auc_difference', 0):+.3f}，"
+        f"95% 区间 {missing_comparison.get('ci_low', 0):+.3f} 至 "
+        f"{missing_comparison.get('ci_high', 0):+.3f}，没有显著差异。",
+        bold_lead="覆盖与性能：",
+    )
+
+    add_heading(doc, "5.3 嵌套调参的多模型比较", 2)
+    model_labels = {
+        "logistic_l2": "Logistic L2",
+        "random_forest": "Random Forest",
+        "extra_trees": "Extra Trees",
+    }
+    model_rows = []
+    for _, row in model_comparison.iterrows():
+        model_rows.append(
+            [
+                model_labels.get(row["model"], row["model"]),
+                f"{row['auc']:.3f}",
+                f"{row['auc_ci_low']:.3f}",
+                f"{row['sensitivity']:.3f}",
+                f"{row['specificity']:.3f}",
+                f"{row['brier']:.3f}",
+            ]
+        )
+    add_table(
+        doc,
+        ["模型", "AUC", "Bootstrap CI 下限", "灵敏度", "特异度", "Brier"],
+        model_rows,
+        widths=[4.1, 1.7, 3.1, 2.1, 2.1, 2.1],
+        font_size=8.8,
+    )
+    doc.add_picture(str(model_chart), width=Inches(6.35))
+    doc.inline_shapes[-1]._inline.docPr.set(
+        "descr",
+        "Logistic L2、Random Forest 和 Extra Trees 的受试者级 AUC 及 Bootstrap 置信区间",
+    )
+    doc.inline_shapes[-1]._inline.docPr.set("title", "CMDC 嵌套模型比较")
+    doc.paragraphs[-1].alignment = WD_ALIGN_PARAGRAPH.CENTER
+    fmt_paragraph(doc.paragraphs[-1], after=3)
+    p = doc.add_paragraph()
+    p.alignment = WD_ALIGN_PARAGRAPH.CENTER
+    fmt_paragraph(p, after=8)
+    run = p.add_run("图 4 嵌套调参模型的 AUC 与不确定性")
+    set_font(run, size=8.5)
+    run.font.color.rgb = MUTED
+    add_text(
+        doc,
+        f"Extra Trees 的点估计 AUC 最高，但三种模型的置信区间明显重叠，且 Extra Trees 的灵敏度较低。"
+        f"当前自动选择结果为 {advanced.get('best_nested_model', '-')}，但它只是按 AUC 选择，"
+        "最终上线模型还需要综合校准、灵敏度、复杂度和部署成本。",
+        bold_lead="模型选择：",
+    )
+
+    add_heading(doc, "5.4 校准与决策曲线", 2)
+    add_text(
+        doc,
+        f"已生成 {len(calibration)} 个校准分箱和 {len(decision_curve)} 个决策阈值。"
+        "低概率分箱的预期风险接近 0，高概率分箱接近 1，但中间分箱样本较少，校准仍不稳定。"
+        "决策曲线在多数组阈值下优于“全部干预”和“全部不干预”，但仍需独立样本验证。",
+        bold_lead="新增可信度分析：",
+    )
+    doc.add_picture(str(calibration_chart), width=Inches(6.35))
+    doc.inline_shapes[-1]._inline.docPr.set(
+        "descr",
+        "CMDC 外部验证模型的校准曲线和决策曲线",
+    )
+    doc.inline_shapes[-1]._inline.docPr.set("title", "CMDC 校准与决策曲线")
+    doc.paragraphs[-1].alignment = WD_ALIGN_PARAGRAPH.CENTER
+    fmt_paragraph(doc.paragraphs[-1], after=3)
+    p = doc.add_paragraph()
+    p.alignment = WD_ALIGN_PARAGRAPH.CENTER
+    fmt_paragraph(p, after=8)
+    run = p.add_run("图 5 校准曲线与决策曲线")
+    set_font(run, size=8.5)
+    run.font.color.rgb = MUTED
+
+    add_heading(doc, "5.5 多模态提升结论", 2)
+    add_bullet(doc, "文本＋语音相对纯文本的点估计更高，但受试者级 Bootstrap 区间跨 0，不能宣称稳定显著提升。")
+    add_bullet(doc, "四模态完整病例没有稳定优于视觉或文本＋语音；当前数据不足以证明“模态越多一定越好”。")
+    add_bullet(doc, "可用模态动态融合把覆盖从 44 人扩展到 78 人，在完整病例上没有显著性能损失，更适合真实缺失场景。")
+    add_bullet(doc, "Extra Trees 的 AUC 点估计最高，但置信区间与 Logistic、Random Forest 重叠，且灵敏度较低。")
+    add_text(
+        doc,
+        "当前证据支持“中文多模态有研究价值、动态融合有工程价值”，尚不支持“复杂多模态融合已经稳定提高准确性”。",
+        bold_lead="一句话结论：",
+    )
+
     page_break(doc)
 
     add_heading(doc, "6 为什么不能直接并入老年主模型", 1)
@@ -538,17 +911,22 @@ def build() -> Document:
     )
 
     add_heading(doc, "7 后续提升路线", 1)
+    add_text(
+        doc,
+        "本轮已经把可直接实施的稳健性措施落地：同一受试者配对 Bootstrap、95% 置信区间、缺失模态动态融合、三种模型的嵌套调参比较、校准曲线和决策曲线。"
+        "下一阶段不再重复这些基础实验，而是验证独立留出集、选择阈值、补数据和老年外部验证。",
+        bold_lead="已完成：",
+    )
     add_table(
         doc,
         ["优先级", "提升方向", "具体工作", "预期作用"],
         [
-            ["P0", "统计可信度", "Bootstrap 95% CI、校准曲线、决策曲线、DeLong 检验", "判断高 AUC 是否稳定，补足论文证据"],
-            ["P0", "缺失模态", "完整病例、缺失指示、多重插补和模态缺失模型对比", "解释 45 人与 78 人结果差异"],
-            ["P0", "模型对比", "嵌套调参的 Logistic、Elastic Net、Random Forest、XGBoost", "避免固定单一模型造成误判"],
-            ["P1", "受试者级融合", "早期融合、后期融合、门控融合、模态 dropout", "充分利用文本、语音和视觉互补信号"],
+            ["P0", "固定独立留出", "预先固定受试者训练/验证比例，锁定模型和阈值后只测试一次", "减少反复交叉验证带来的乐观偏差"],
+            ["P0", "阈值与校准决策", "在训练内部选择阈值，再评估外部灵敏度、特异度和决策曲线", "避免用测试集反向选择阈值"],
+            ["P1", "复杂门控融合", "在已完成的动态融合基础上比较注意力门控和模态 dropout", "只有独立验证优于简单融合时才采用"],
             ["P1", "数据补齐", "申请年龄、性别、共病、教育、用药和量表分数", "支持亚组、共病和严重程度分析"],
             ["P1", "老年外部验证", "寻找或建立独立老年中文多模态样本", "验证从成人混合样本到老年人的迁移性"],
-            ["P2", "领域适配", "用 CMDC 预训练文本/语音编码器，再在老年数据微调", "提高小样本条件下的表征能力"],
+            ["P2", "领域适配", "取得可复现的原始文本/语音后，用 CMDC 预训练编码器再在老年数据微调", "提高小样本条件下的表征能力"],
             ["P2", "前瞻性验证", "固定采集协议、盲法评估、人工复核和随访", "从回顾性实验走向真实筛查验证"],
         ],
         widths=[1.5, 3.4, 7.2, 4.6],
@@ -560,10 +938,10 @@ def build() -> Document:
         doc,
         ["时间", "工作", "可交付结果"],
         [
-            ["第 1 周", "补齐 CMDC 的 Bootstrap 置信区间、校准曲线和决策曲线", "更完整的 CMDC 结果表与图"],
-            ["第 2 周", "完成缺失模态三方案和五类模型对比", "选择稳定的主分析和敏感性分析"],
-            ["第 3 周", "尝试受试者级早期/后期/门控融合", "比较不同融合策略，不以最高 AUC 单独选型"],
-            ["第 4 周", "申请或确认人口学、共病和量表数据，形成老年外部验证申请清单", "下一步数据申请方案与导师决策材料"],
+            ["第 1 周", "固定独立受试者留出集并锁定主模型、特征和阈值", "一次性独立测试结果"],
+            ["第 2 周", "复核动态融合、门控融合和校准，比较覆盖与临床错误成本", "确定主分析与敏感性分析"],
+            ["第 3 周", "申请或确认年龄、性别、共病、用药和量表数据", "更完整的外部验证和亚组分析"],
+            ["第 4 周", "形成老年多模态外部验证申请清单与采集方案", "导师决策材料和下一步数据计划"],
         ],
         widths=[2.2, 8.4, 6.1],
         font_size=8.9,
@@ -597,7 +975,13 @@ def build() -> Document:
     )
     add_text(
         doc,
-        "“当前最重要的变化是增加了独立中文多模态外部验证和完整工程链路，而不是直接提高老年主风险评分。下一阶段要做置信区间、校准、缺失模态、模型比较和老年外部数据补齐。”",
+        "“我们进一步完成了配对 Bootstrap、95% 置信区间、缺失模态动态融合、嵌套模型比较、校准和决策曲线。"
+        "配对结果显示文本＋语音的点估计更高，但置信区间仍跨 0；动态融合把覆盖从 44 人扩展到 78 人，没有观察到显著性能损失。”",
+    )
+    add_text(
+        doc,
+        "“所以当前可以确认的是中文多模态信号有研究价值、系统具备更完整的验证能力，但还不能宣称融合已经稳定提高准确性。"
+        "下一步会做固定留出测试、阈值选择、元数据补齐和老年外部验证，而不是继续在 78 人样本上追求更高单点 AUC。”",
     )
 
     add_heading(doc, "11 建议向导师确认的事项", 1)
@@ -608,7 +992,7 @@ def build() -> Document:
             ["CMDC 的论文定位", "作为中文多模态外部验证，不并入老年主队列"],
             ["是否继续申请元数据", "优先确认年龄、性别、共病和量表分数是否可获得"],
             ["是否寻找老年多模态外部数据", "若论文目标包含老年外部验证，应列为下一阶段重点"],
-            ["下一步实验优先级", "先置信区间、校准和缺失模态，再做复杂融合模型"],
+            ["下一步实验优先级", "先固定独立留出、锁定阈值，再决定是否采用复杂融合"],
             ["合成数据使用边界", "只用于训练侧增强，验证和测试始终使用真实数据"],
         ],
         widths=[5.0, 10.2],
