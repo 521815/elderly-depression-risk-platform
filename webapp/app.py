@@ -189,6 +189,19 @@ def inject_css() -> None:
             background: #e7f6f0;
             border-color: #bde3d7;
         }
+        .sidebar-visual {
+            margin-top: 1rem;
+            overflow: hidden;
+            border: 1px solid #d7e7e2;
+            border-radius: 14px;
+            background: #e8f4ef;
+            box-shadow: 0 12px 26px rgba(24, 82, 76, 0.10);
+        }
+        .sidebar-visual img {
+            display: block;
+            width: 100%;
+            height: auto;
+        }
         .st-key-app_header div[data-testid="stPopover"] button {
             width: 2.2rem;
             min-width: 2.2rem;
@@ -1939,6 +1952,16 @@ def render_sidebar() -> str:
                 st.caption("已填写，用于对话 Agent 与风险摘要。")
             else:
                 st.caption("留空时使用本地 .env 配置。")
+            visual_path = PROJECT_ROOT / "webapp" / "assets" / "sidebar-conversation.svg"
+            if visual_path.exists():
+                visual_data = base64.b64encode(visual_path.read_bytes()).decode("ascii")
+                st.markdown(
+                    f'<div class="sidebar-visual">'
+                    f'<img src="data:image/svg+xml;base64,{visual_data}" '
+                    f'alt="两位长者相对而坐、交流对话的插画">'
+                    f"</div>",
+                    unsafe_allow_html=True,
+                )
             return api_key
         st.markdown("---")
         st.caption("普通用户仅可使用风险评估与个人记录功能。")
