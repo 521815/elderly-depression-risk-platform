@@ -13,6 +13,7 @@ from elderly_depression.data.cmdc import build_cmdc_feature_table
 from elderly_depression.models.cmdc_advanced import (
     run_cmdc_advanced_analysis,
 )
+from elderly_depression.models.cmdc_holdout import run_cmdc_locked_holdout
 from elderly_depression.models.cmdc import train_cmdc_models
 
 
@@ -186,6 +187,69 @@ class CMDCModelTests(unittest.TestCase):
         self.assertTrue(summary["ready"])
         self.assertIn("primary_bootstrap_ci", summary)
         self.assertIn("implemented_measures", summary)
+
+    def test_locked_holdout_is_deterministic_and_writes_artifacts(self):
+        rng = np.random.default_rng(19)
+        rows = []
+        for index in range(40):
+            label = index % 2
+            row = {
+                "subject_id": f"H{index:02d}",
+                "label": label,
+                "group": "MDD" if label else "HC",
+                "text_questions": 3,
+                "audio_deep_questions": 3,
+                "acoustic_questions": 3,
+                "complete_multimodal": 1,
+            }
+            for feature in range(6):
+                row[f"text_mean_{feature:03d}"] = rng.normal() + label
+                row[f"text_std_{feature:03d}"] = rng.normal()
+                row[f"audio_deep_mean_{feature:03d}"] = rng.normal() + label * 0.8
+                row[f"audio_deep_std_{feature:03d}"] = rng.normal()
+                row[f"acoustic_mean_{feature:03d}"] = rng.normal() + label * 0.7
+                row[f"acoustic_std_{feature:03d}"] = rng.normal()
+            rows.append(row)
+        df = pd.DataFrame(rows)
+
+        with tempfile.TemporaryDirectory() as tmp:
+            output = Path(tmp)
+            summaries = [
+                run_cmdc_locked_holdout(
+                    df,
+                    output,
+                    repeats=2,
+                    bootstrap_iterations=50,
+                )
+                for _ in range(2)
+            ]
+            predictions = pd.read_csv(
+                output / "cmdc_locked_holdout_predictions.csv"
+            )
+            expected = [
+                "cmdc_locked_holdout_summary.json",
+                "cmdc_locked_holdout_predictions.csv",
+                "cmdc_locked_holdout_model.pkl",
+            ]
+            for filename in expected:
+                self.assertTrue((output / filename).exists(), filename)
+
+        first, second = summaries
+        self.assertTrue(first["ready"])
+        self.assertEqual(first["holdout_seed"], second["holdout_seed"])
+        self.assertEqual(first["locked_threshold"], second["locked_threshold"])
+        self.assertEqual(first["train_subjects"], 32)
+        self.assertEqual(first["test_subjects"], 8)
+        self.assertEqual(len(predictions), 8)
+        locked = first["holdout_metrics"]["locked_threshold"]
+        self.assertIn("sensitivity_exact_ci", locked)
+        self.assertIn("specificity_exact_ci", locked)
+        self.assertIn("small_sample_warning", first)
+        self.assertEqual(
+            set(predictions["prediction_locked"].unique()).issubset({0, 1}),
+            True,
+        )
+        self.assertIn("不能替代", first["evidence_boundary"])
 
 
 if __name__ == "__main__":

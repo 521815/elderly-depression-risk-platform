@@ -155,6 +155,7 @@ cd ~/Desktop/大创/老年抑郁风险预测大模型
 - MPDD 进阶评估：label3 三分类、PHQ-9 回归、测试集预测导出、单被试推理
 - CMDC 外部验证：加密归档本地读取、受试者级特征聚合、文本/语音/视觉分模态评估、全模态完整病例分析，独立模型不进入老年主评分
 - CMDC 稳健性分析：同受试者配对 Bootstrap、95% 置信区间、缺失模态动态融合、嵌套调参多模型比较、校准和决策曲线
+- CMDC 锁定留出：固定种子按受试者划分 80/20，阈值只在训练集选择，锁定测试集仅用于最终评估；16 人测试集 AUC 1.000，但精确区间仍宽，不能据此宣称稳定临床性能
 - 系统说明：模块结构与项目边界
 
 ## 后端 API
@@ -179,6 +180,8 @@ cd ~/Desktop/大创/老年抑郁风险预测大模型
 - `POST http://localhost:8001/api/cmdc/build`
 - `POST http://localhost:8001/api/cmdc/train`
 - `GET http://localhost:8001/api/cmdc/report`
+- `POST http://localhost:8001/api/cmdc/advanced`
+- `POST http://localhost:8001/api/cmdc/holdout`
 - `POST http://localhost:8001/api/agent/chat`
 - `GET http://localhost:8001/api/models/list`
 

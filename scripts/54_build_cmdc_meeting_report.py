@@ -27,6 +27,7 @@ REPORT_CSV = PROJECT_ROOT / "output" / "cmdc_benchmark_report.csv"
 SUMMARY_JSON = PROJECT_ROOT / "output" / "cmdc_benchmark_summary.json"
 AUDIT_JSON = PROJECT_ROOT / "output" / "cmdc_data_audit.json"
 ADVANCED_SUMMARY_JSON = PROJECT_ROOT / "output" / "cmdc_advanced_summary.json"
+HOLDOUT_SUMMARY_JSON = PROJECT_ROOT / "output" / "cmdc_locked_holdout_summary.json"
 PAIRED_CSV = PROJECT_ROOT / "output" / "cmdc_paired_comparison.csv"
 MISSING_MODALITY_CSV = PROJECT_ROOT / "output" / "cmdc_missing_modality_report.csv"
 MODEL_COMPARISON_CSV = PROJECT_ROOT / "output" / "cmdc_model_comparison.csv"
@@ -226,6 +227,7 @@ def load_data():
     summary = json.loads(SUMMARY_JSON.read_text(encoding="utf-8"))
     audit = json.loads(AUDIT_JSON.read_text(encoding="utf-8"))
     advanced = json.loads(ADVANCED_SUMMARY_JSON.read_text(encoding="utf-8"))
+    holdout = json.loads(HOLDOUT_SUMMARY_JSON.read_text(encoding="utf-8"))
     paired = pd.read_csv(PAIRED_CSV)
     missing = pd.read_csv(MISSING_MODALITY_CSV)
     model_comparison = pd.read_csv(MODEL_COMPARISON_CSV)
@@ -236,6 +238,7 @@ def load_data():
         summary,
         audit,
         advanced,
+        holdout,
         paired,
         missing,
         model_comparison,
@@ -251,6 +254,7 @@ def build_charts(
     model_comparison: pd.DataFrame,
     calibration: pd.DataFrame,
     decision_curve: pd.DataFrame,
+    holdout: dict,
 ):
     CHART_DIR.mkdir(parents=True, exist_ok=True)
     cn_font = FontProperties(fname=FONT_PATH)
@@ -408,6 +412,65 @@ def build_charts(
     fig.savefig(model_path, bbox_inches="tight", facecolor="white")
     plt.close(fig)
 
+    locked = (holdout.get("holdout_metrics") or {}).get(
+        "locked_threshold",
+        {},
+    )
+    sensitivity_ci = locked.get("sensitivity_exact_ci") or {}
+    specificity_ci = locked.get("specificity_exact_ci") or {}
+    estimate_values = np.asarray(
+        [
+            float(sensitivity_ci.get("estimate", 0)),
+            float(specificity_ci.get("estimate", 0)),
+        ]
+    )
+    lower = estimate_values - np.asarray(
+        [
+            float(sensitivity_ci.get("ci_low", 0)),
+            float(specificity_ci.get("ci_low", 0)),
+        ]
+    )
+    upper = np.asarray(
+        [
+            float(sensitivity_ci.get("ci_high", 0)),
+            float(specificity_ci.get("ci_high", 0)),
+        ]
+    ) - estimate_values
+    fig, ax = plt.subplots(figsize=(7.5, 2.85), dpi=220)
+    labels_holdout = ["灵敏度\n5/5", "特异度\n10/11"]
+    ax.errorbar(
+        labels_holdout,
+        estimate_values,
+        yerr=np.vstack([lower, upper]),
+        fmt="o",
+        markersize=7,
+        color="#0F766E",
+        ecolor="#64748B",
+        capsize=7,
+        linewidth=1.4,
+    )
+    for index, value in enumerate(estimate_values):
+        ax.text(
+            index + 0.08,
+            value,
+            f"{value:.3f}",
+            va="center",
+            fontsize=9,
+            fontproperties=cn_font,
+            color="#24323D",
+        )
+    ax.set_ylim(0.38, 1.04)
+    ax.set_ylabel("比例及 95% 精确区间", fontproperties=cn_font, fontsize=9)
+    ax.set_xticks(range(2))
+    ax.set_xticklabels(labels_holdout, fontproperties=cn_font, fontsize=9)
+    ax.grid(axis="y", color="#E7EDF2", linewidth=0.7)
+    ax.set_axisbelow(True)
+    ax.spines[["top", "right"]].set_visible(False)
+    fig.tight_layout()
+    holdout_path = CHART_DIR / "cmdc_locked_holdout_ci.png"
+    fig.savefig(holdout_path, bbox_inches="tight", facecolor="white")
+    plt.close(fig)
+
     fig, axes = plt.subplots(1, 2, figsize=(9.0, 3.45), dpi=220)
     ax = axes[0]
     ax.plot(
@@ -458,7 +521,14 @@ def build_charts(
     calibration_path = CHART_DIR / "cmdc_calibration_decision.png"
     fig.savefig(calibration_path, bbox_inches="tight", facecolor="white")
     plt.close(fig)
-    return auc_path, coverage_path, paired_path, model_path, calibration_path
+    return (
+        auc_path,
+        coverage_path,
+        paired_path,
+        model_path,
+        holdout_path,
+        calibration_path,
+    )
 
 
 def build() -> Document:
@@ -467,6 +537,7 @@ def build() -> Document:
         summary,
         audit,
         advanced,
+        holdout,
         paired,
         missing,
         model_comparison,
@@ -478,6 +549,7 @@ def build() -> Document:
         coverage_chart,
         paired_chart,
         model_chart,
+        holdout_chart,
         calibration_chart,
     ) = build_charts(
         report,
@@ -486,6 +558,7 @@ def build() -> Document:
         model_comparison,
         calibration,
         decision_curve,
+        holdout,
     )
     primary = summary["primary_result"]
 
@@ -557,9 +630,10 @@ def build() -> Document:
         [
             ["主要收益", "新增独立的中文多模态外部验证域，提高数据多样性和科研可信度"],
             ["主要结果", f"文本＋语音 77 人，受试者级 AUC {primary['auc_mean']:.3f}"],
+            ["锁定留出", "61 人训练、16 人测试；AUC 1.000，但精确区间宽，不能视为临床性能证明"],
             ["融合是否已证明更好", "点估计有提升倾向，但配对 Bootstrap 区间跨 0，暂不能宣称稳定提升"],
             ["是否改变主评分", "否。CMDC 不进入当前老年主风险融合模型"],
-            ["下一步重点", "置信区间与校准、缺失模态、模型对比、人口学与老年外部数据"],
+            ["下一步重点", "多中心或老年独立留出、人口学与共病元数据、跨中心校准"],
         ],
         widths=[3.8, 11.5],
         font_size=9.2,
@@ -578,6 +652,7 @@ def build() -> Document:
     add_bullet(doc, "新增文本、语音嵌入、openSMILE 声学和访谈视觉四类受试者级特征。")
     add_bullet(doc, "形成严格按 subject_id 切分的重复交叉验证，避免同一人的 12 个回答跨训练和验证。")
     add_bullet(doc, "落地配对 Bootstrap、缺失模态动态融合、嵌套模型比较、校准和决策曲线。")
+    add_bullet(doc, "完成固定种子的 61/16 受试者级留出，阈值只在训练集选择并评估一次锁定测试集。")
     add_bullet(doc, "新增工作台页面、管理员接口、数据健康限制和独立模型产物。")
     add_text(
         doc,
@@ -876,7 +951,87 @@ def build() -> Document:
     set_font(run, size=8.5)
     run.font.color.rgb = MUTED
 
-    add_heading(doc, "5.5 多模态提升结论", 2)
+    add_heading(doc, "5.5 固定受试者留出与阈值锁定", 2)
+    holdout_metrics = holdout.get("holdout_metrics") or {}
+    locked = holdout_metrics.get("locked_threshold") or {}
+    sensitivity_ci = locked.get("sensitivity_exact_ci") or {}
+    specificity_ci = locked.get("specificity_exact_ci") or {}
+    train_metrics = holdout.get("train_cv_metrics") or {}
+    add_text(
+        doc,
+        "为减少反复使用同一批交叉验证结果造成的乐观偏差，新增一个预先固定随机种子 "
+        f"{holdout.get('holdout_seed', '-')} 的受试者级 80/20 留出分析。"
+        "先用训练集内部折外概率选择筛查阈值，再固定模型和阈值评估测试集，测试标签不参与调参。",
+        bold_lead="协议：",
+    )
+    add_table(
+        doc,
+        ["评估", "人数", "AUC", "PR-AUC", "灵敏度", "特异度", "Brier"],
+        [
+            [
+                "训练集交叉验证",
+                str(holdout.get("train_subjects", 0)),
+                f"{train_metrics.get('auc', 0):.3f}",
+                f"{train_metrics.get('pr_auc', 0):.3f}",
+                f"{train_metrics.get('sensitivity', 0):.3f}",
+                f"{train_metrics.get('specificity', 0):.3f}",
+                f"{train_metrics.get('brier', 0):.3f}",
+            ],
+            [
+                "锁定测试集",
+                str(holdout.get("test_subjects", 0)),
+                f"{holdout_metrics.get('auc', 0):.3f}",
+                f"{holdout_metrics.get('pr_auc', 0):.3f}",
+                f"{locked.get('sensitivity', 0):.3f}",
+                f"{locked.get('specificity', 0):.3f}",
+                f"{holdout_metrics.get('brier', 0):.3f}",
+            ],
+        ],
+        widths=[4.0, 1.5, 1.7, 1.8, 1.9, 1.9, 1.7],
+        font_size=8.6,
+    )
+    add_text(
+        doc,
+        f"训练集 {holdout.get('train_hc', 0)} 名 HC、{holdout.get('train_mdd', 0)} 名 MDD；"
+        f"测试集 {holdout.get('test_hc', 0)} 名 HC、{holdout.get('test_mdd', 0)} 名 MDD。"
+        f"训练内选出的锁定阈值为 {holdout.get('locked_threshold', 0):.4f}。"
+        f"测试集混淆矩阵为 TP={locked.get('tp', 0)}、TN={locked.get('tn', 0)}、"
+        f"FP={locked.get('fp', 0)}、FN={locked.get('fn', 0)}。",
+        bold_lead="样本与阈值：",
+    )
+    doc.add_picture(str(holdout_chart), width=Inches(5.9))
+    doc.inline_shapes[-1]._inline.docPr.set(
+        "descr",
+        "CMDC 锁定测试集灵敏度和特异度点估计及 95% 精确二项区间",
+    )
+    doc.inline_shapes[-1]._inline.docPr.set("title", "CMDC 锁定留出精确区间")
+    doc.paragraphs[-1].alignment = WD_ALIGN_PARAGRAPH.CENTER
+    fmt_paragraph(doc.paragraphs[-1], after=3)
+    p = doc.add_paragraph()
+    p.alignment = WD_ALIGN_PARAGRAPH.CENTER
+    fmt_paragraph(p, after=8)
+    run = p.add_run("图 6 锁定测试集的精确二项区间")
+    set_font(run, size=8.5)
+    run.font.color.rgb = MUTED
+    add_text(
+        doc,
+        f"灵敏度 {sensitivity_ci.get('successes', 0)}/{sensitivity_ci.get('trials', 0)}，"
+        f"点估计 {sensitivity_ci.get('estimate', 0):.3f}，95% 精确区间 "
+        f"{sensitivity_ci.get('ci_low', 0):.3f}-{sensitivity_ci.get('ci_high', 0):.3f}；"
+        f"特异度 {specificity_ci.get('successes', 0)}/{specificity_ci.get('trials', 0)}，"
+        f"点估计 {specificity_ci.get('estimate', 0):.3f}，95% 精确区间 "
+        f"{specificity_ci.get('ci_low', 0):.3f}-{specificity_ci.get('ci_high', 0):.3f}。"
+        "测试集只有 16 人，完美 AUC 会使普通 Bootstrap 区间退化；精确区间更能反映信息不足。",
+        bold_lead="不要误读：",
+    )
+    add_text(
+        doc,
+        "这次留出验证证明固定划分、训练内选阈值和锁定评估的流程已经跑通，且点估计没有与交叉验证方向冲突；"
+        "但它仍是同一 CMDC 数据源的小样本留出，不是多中心或老年独立外部测试，不能据此宣称模型已具备稳定临床性能。",
+        bold_lead="证据边界：",
+    )
+
+    add_heading(doc, "5.6 多模态提升结论", 2)
     add_bullet(doc, "文本＋语音相对纯文本的点估计更高，但受试者级 Bootstrap 区间跨 0，不能宣称稳定显著提升。")
     add_bullet(doc, "四模态完整病例没有稳定优于视觉或文本＋语音；当前数据不足以证明“模态越多一定越好”。")
     add_bullet(doc, "可用模态动态融合把覆盖从 44 人扩展到 78 人，在完整病例上没有显著性能损失，更适合真实缺失场景。")
@@ -886,8 +1041,6 @@ def build() -> Document:
         "当前证据支持“中文多模态有研究价值、动态融合有工程价值”，尚不支持“复杂多模态融合已经稳定提高准确性”。",
         bold_lead="一句话结论：",
     )
-
-    page_break(doc)
 
     add_heading(doc, "6 为什么不能直接并入老年主模型", 1)
     add_table(
@@ -913,15 +1066,16 @@ def build() -> Document:
     add_heading(doc, "7 后续提升路线", 1)
     add_text(
         doc,
-        "本轮已经把可直接实施的稳健性措施落地：同一受试者配对 Bootstrap、95% 置信区间、缺失模态动态融合、三种模型的嵌套调参比较、校准曲线和决策曲线。"
-        "下一阶段不再重复这些基础实验，而是验证独立留出集、选择阈值、补数据和老年外部验证。",
+        "本轮已经把可直接实施的稳健性措施落地：同一受试者配对 Bootstrap、95% 置信区间、缺失模态动态融合、三种模型的嵌套调参比较、校准曲线和决策曲线；"
+        "并完成固定种子的受试者级 61/16 留出、训练内阈值选择和锁定测试。"
+        "下一阶段不再重复这些基础实验，而是争取多中心或老年独立留出、补齐元数据并验证跨中心迁移。",
         bold_lead="已完成：",
     )
     add_table(
         doc,
         ["优先级", "提升方向", "具体工作", "预期作用"],
         [
-            ["P0", "固定独立留出", "预先固定受试者训练/验证比例，锁定模型和阈值后只测试一次", "减少反复交叉验证带来的乐观偏差"],
+            ["P0", "多中心或老年独立留出", "在外部机构或独立老年队列预先锁定特征、模型和阈值", "检验本地 61/16 留出结果能否跨人群复现"],
             ["P0", "阈值与校准决策", "在训练内部选择阈值，再评估外部灵敏度、特异度和决策曲线", "避免用测试集反向选择阈值"],
             ["P1", "复杂门控融合", "在已完成的动态融合基础上比较注意力门控和模态 dropout", "只有独立验证优于简单融合时才采用"],
             ["P1", "数据补齐", "申请年龄、性别、共病、教育、用药和量表分数", "支持亚组、共病和严重程度分析"],
@@ -938,7 +1092,7 @@ def build() -> Document:
         doc,
         ["时间", "工作", "可交付结果"],
         [
-            ["第 1 周", "固定独立受试者留出集并锁定主模型、特征和阈值", "一次性独立测试结果"],
+            ["第 1 周", "复核本地 61/16 锁定留出，完成模型卡与失败病例分析", "可复核的留出报告和错误案例清单"],
             ["第 2 周", "复核动态融合、门控融合和校准，比较覆盖与临床错误成本", "确定主分析与敏感性分析"],
             ["第 3 周", "申请或确认年龄、性别、共病、用药和量表数据", "更完整的外部验证和亚组分析"],
             ["第 4 周", "形成老年多模态外部验证申请清单与采集方案", "导师决策材料和下一步数据计划"],
@@ -975,13 +1129,18 @@ def build() -> Document:
     )
     add_text(
         doc,
+        "“我们还固定了随机种子，把 77 人按受试者分成 61 人训练和 16 人测试，阈值只在训练集选择。锁定测试集 AUC 为 1.000，"
+        "但测试集只有 11 名 HC 和 5 名 MDD；灵敏度 5/5 的 95% 精确区间是 0.478 到 1.000，所以这是一项流程和点估计验证，不是临床性能证明。”",
+    )
+    add_text(
+        doc,
         "“我们进一步完成了配对 Bootstrap、95% 置信区间、缺失模态动态融合、嵌套模型比较、校准和决策曲线。"
         "配对结果显示文本＋语音的点估计更高，但置信区间仍跨 0；动态融合把覆盖从 44 人扩展到 78 人，没有观察到显著性能损失。”",
     )
     add_text(
         doc,
         "“所以当前可以确认的是中文多模态信号有研究价值、系统具备更完整的验证能力，但还不能宣称融合已经稳定提高准确性。"
-        "下一步会做固定留出测试、阈值选择、元数据补齐和老年外部验证，而不是继续在 78 人样本上追求更高单点 AUC。”",
+        "下一步会争取多中心或老年独立留出、补齐元数据并验证跨中心迁移，而不是继续在 78 人样本上追求更高单点 AUC。”",
     )
 
     add_heading(doc, "11 建议向导师确认的事项", 1)
@@ -992,7 +1151,7 @@ def build() -> Document:
             ["CMDC 的论文定位", "作为中文多模态外部验证，不并入老年主队列"],
             ["是否继续申请元数据", "优先确认年龄、性别、共病和量表分数是否可获得"],
             ["是否寻找老年多模态外部数据", "若论文目标包含老年外部验证，应列为下一阶段重点"],
-            ["下一步实验优先级", "先固定独立留出、锁定阈值，再决定是否采用复杂融合"],
+            ["下一步实验优先级", "先取得多中心或老年独立留出，再决定是否采用复杂融合"],
             ["合成数据使用边界", "只用于训练侧增强，验证和测试始终使用真实数据"],
         ],
         widths=[5.0, 10.2],

@@ -32,6 +32,8 @@ CMDC_MODEL_COMPARISON_REPORT = _local.CMDC_MODEL_COMPARISON_REPORT
 CMDC_CALIBRATION_CURVE = _local.CMDC_CALIBRATION_CURVE
 CMDC_DECISION_CURVE = _local.CMDC_DECISION_CURVE
 CMDC_ADVANCED_SUMMARY = _local.CMDC_ADVANCED_SUMMARY
+CMDC_HOLDOUT_SUMMARY = _local.CMDC_HOLDOUT_SUMMARY
+CMDC_HOLDOUT_PREDICTIONS = _local.CMDC_HOLDOUT_PREDICTIONS
 MODEL_REPORT = _local.MODEL_REPORT
 IMBALANCE_REPORT = _local.IMBALANCE_REPORT
 MULTIMODAL_REPORT = _local.MULTIMODAL_REPORT
@@ -401,6 +403,27 @@ def run_cmdc_advanced(
     return _local.run_cmdc_advanced_analysis(
         repeats=repeats,
         model_repeats=model_repeats,
+        bootstrap_iterations=bootstrap_iterations,
+    )
+
+
+def run_cmdc_holdout(
+    repeats: int = 10,
+    bootstrap_iterations: int = 1000,
+) -> dict:
+    data = _api(
+        "POST",
+        "/api/cmdc/holdout",
+        json={
+            "repeats": repeats,
+            "bootstrap_iterations": bootstrap_iterations,
+        },
+        timeout=600,
+    )
+    if data is not None:
+        return data
+    return _local.run_cmdc_locked_holdout(
+        repeats=repeats,
         bootstrap_iterations=bootstrap_iterations,
     )
 

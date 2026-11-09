@@ -721,6 +721,24 @@ def cmdc_advanced():
     return jsonify(summary)
 
 
+@app.post("/api/cmdc/holdout")
+def cmdc_holdout():
+    payload = request.get_json(silent=True) or {}
+    try:
+        summary = services.run_cmdc_locked_holdout(
+            repeats=max(1, min(20, int(payload.get("repeats", 10)))),
+            bootstrap_iterations=max(
+                50,
+                min(5000, int(payload.get("bootstrap_iterations", 1000))),
+            ),
+        )
+    except FileNotFoundError as exc:
+        return jsonify({"error": str(exc)}), 400
+    except ValueError as exc:
+        return jsonify({"error": str(exc)}), 400
+    return jsonify(summary)
+
+
 @app.get("/api/mpdd/cache_status")
 def mpdd_cache_status():
     return jsonify(services.mpdd_cache_status())

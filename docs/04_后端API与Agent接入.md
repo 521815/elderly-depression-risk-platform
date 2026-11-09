@@ -68,6 +68,7 @@ streamlit run webapp/app.py
 - `POST /api/cmdc/train`：按受试者运行 CMDC 重复分层交叉验证并保存独立模型
 - `GET /api/cmdc/report`：读取 CMDC 分模态评估报告和摘要
 - `POST /api/cmdc/advanced`：运行配对 Bootstrap、缺失模态、嵌套模型、校准和决策曲线分析
+- `POST /api/cmdc/holdout`：按固定种子划分受试者级 80/20 留出集，仅用训练集选择阈值并锁定测试集评估；body 可传 `{"repeats": 10, "bootstrap_iterations": 1000}`
 
 ### 评估与量表
 
@@ -181,6 +182,7 @@ text_risk,scale_risk,context_risk,expression_risk,mpdd_risk,depression
 - `output/tabular_models/`：Logistic、RandomForest、XGBoost 及特征重要性
 - `output/multimodal_models/`：多模态融合模型
 - `output/cmdc_models/`：CMDC 独立外部验证模型，不参与老年主风险评分
+- `output/cmdc_locked_holdout_model.pkl`：固定受试者留出分析的锁定模型，不参与老年主风险评分
 - `output/fusion_models/`：学习型风险融合权重与报告
 
 通过 `joblib.load()` 即可直接复用，无需重新训练。

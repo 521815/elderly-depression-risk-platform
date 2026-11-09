@@ -335,6 +335,23 @@ class ApiTests(unittest.TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertTrue(response.json["ready"])
 
+    def test_cmdc_holdout_endpoint_is_admin_only(self):
+        unauthorised = self.client.post("/api/cmdc/holdout", json={})
+        with mock.patch.object(
+            services,
+            "run_cmdc_locked_holdout",
+            return_value={"ready": True, "test_subjects": 16},
+        ) as runner:
+            response = self.client.post(
+                "/api/cmdc/holdout",
+                json={"repeats": 5, "bootstrap_iterations": 50},
+                headers=self.admin_headers,
+            )
+        self.assertEqual(unauthorised.status_code, 401)
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(response.json["ready"])
+        runner.assert_called_once_with(repeats=5, bootstrap_iterations=50)
+
     def test_user_crud(self):
         created = self.client.post(
             "/api/users",

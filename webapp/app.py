@@ -1868,6 +1868,7 @@ def render_sidebar() -> str:
                 ("MPDD 特征", system_status.get("mpdd_ready", False), "已就绪", "待构建"),
                 ("CMDC 外部验证", system_status.get("cmdc_ready", False), "已就绪", "待构建"),
                 ("CMDC 稳健性", system_status.get("cmdc_advanced_ready", False), "已完成", "待分析"),
+                ("CMDC 锁定留出", system_status.get("cmdc_holdout_ready", False), "已完成", "待验证"),
                 (
                     "对话意图模型",
                     system_status.get("dialogue_intent_model", False),
@@ -4185,6 +4186,120 @@ def render_cmdc_external() -> None:
                 st.cache_data.clear()
         except Exception as exc:
             st.error(f"稳健性分析失败：{exc}")
+        else:
+            st.rerun()
+
+    st.markdown("#### 锁定留出集验证")
+    holdout = summary.get("holdout") or {}
+    st.caption(
+        "固定随机种子按受试者分层划分 80% 训练、20% 测试；"
+        "分类阈值只在训练集内选择，测试集不参与调参。"
+    )
+    if holdout.get("ready"):
+        holdout_metrics = holdout.get("holdout_metrics") or {}
+        locked = holdout_metrics.get("locked_threshold") or {}
+        default = holdout_metrics.get("default_threshold") or {}
+        locked_sensitivity_ci = locked.get("sensitivity_exact_ci") or {}
+        locked_specificity_ci = locked.get("specificity_exact_ci") or {}
+        holdout_ci = (holdout.get("holdout_bootstrap_ci") or {}).get("auc") or {}
+        holdout_cols = st.columns(4)
+        holdout_cols[0].metric(
+            "留出 AUC",
+            f"{float(holdout_metrics.get('auc', 0)):.3f}",
+            help=(
+                f"95% CI {float(holdout_ci.get('ci_low', 0)):.3f}-"
+                f"{float(holdout_ci.get('ci_high', 0)):.3f}"
+            ),
+        )
+        holdout_cols[1].metric(
+            "锁定阈值",
+            f"{float(holdout.get('locked_threshold', 0)):.3f}",
+        )
+        holdout_cols[2].metric(
+            "留出灵敏度",
+            f"{float(locked.get('sensitivity', 0)):.3f}",
+            help=(
+                "精确 95% CI "
+                f"{float(locked_sensitivity_ci.get('ci_low', 0)):.3f}-"
+                f"{float(locked_sensitivity_ci.get('ci_high', 0)):.3f}"
+            ),
+        )
+        holdout_cols[3].metric(
+            "留出特异度",
+            f"{float(locked.get('specificity', 0)):.3f}",
+            help=(
+                "精确 95% CI "
+                f"{float(locked_specificity_ci.get('ci_low', 0)):.3f}-"
+                f"{float(locked_specificity_ci.get('ci_high', 0)):.3f}"
+            ),
+        )
+        boundary_cols = st.columns(3)
+        boundary_cols[0].metric(
+            "训练 / 测试受试者",
+            f"{int(holdout.get('train_subjects', 0))} / {int(holdout.get('test_subjects', 0))}",
+        )
+        boundary_cols[1].metric(
+            "测试集 HC / MDD",
+            f"{int(holdout.get('test_hc', 0))} / {int(holdout.get('test_mdd', 0))}",
+        )
+        boundary_cols[2].metric(
+            "默认阈值准确率",
+            (
+                f"{float(default.get('balanced_accuracy', 0)):.3f}"
+                if default
+                else "-"
+            ),
+            help="默认阈值 0.50 下的平衡准确率，仅用于对照。",
+        )
+        holdout_table = pd.DataFrame(
+            [
+                {
+                    "评估集": "锁定测试集",
+                    "受试者": int(holdout.get("test_subjects", 0)),
+                    "AUC": round(float(holdout_metrics.get("auc", 0)), 4),
+                    "PR-AUC": round(float(holdout_metrics.get("pr_auc", 0)), 4),
+                    "灵敏度": round(float(locked.get("sensitivity", 0)), 4),
+                    "灵敏度精确 95% CI": (
+                        f"{float(locked_sensitivity_ci.get('ci_low', 0)):.3f}-"
+                        f"{float(locked_sensitivity_ci.get('ci_high', 0)):.3f}"
+                    ),
+                    "特异度": round(float(locked.get("specificity", 0)), 4),
+                    "特异度精确 95% CI": (
+                        f"{float(locked_specificity_ci.get('ci_low', 0)):.3f}-"
+                        f"{float(locked_specificity_ci.get('ci_high', 0)):.3f}"
+                    ),
+                    "平衡准确率": round(
+                        float(locked.get("balanced_accuracy", 0)),
+                        4,
+                    ),
+                    "Brier": round(float(holdout_metrics.get("brier", 0)), 4),
+                }
+            ]
+        )
+        st.dataframe(holdout_table, width="stretch", hide_index=True)
+        st.warning(str(holdout.get("evidence_boundary") or ""))
+        st.warning(str(holdout.get("small_sample_warning") or ""))
+    else:
+        st.info(
+            "尚未运行锁定留出验证。该结果只检验固定流程，"
+            "不能替代老年多中心外部测试。"
+        )
+
+    if st.button(
+        "运行锁定留出验证",
+        type="primary",
+        width="stretch",
+        key="cmdc_holdout_run",
+    ):
+        try:
+            with st.spinner("正在固定受试者划分、训练阈值并一次性评估测试集..."):
+                backend.run_cmdc_holdout(
+                    repeats=10,
+                    bootstrap_iterations=1000,
+                )
+                st.cache_data.clear()
+        except Exception as exc:
+            st.error(f"锁定留出验证失败：{exc}")
         else:
             st.rerun()
 

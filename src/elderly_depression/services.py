@@ -40,6 +40,9 @@ CMDC_CALIBRATION_CURVE = OUTPUT_DIR / "cmdc_calibration_curve.csv"
 CMDC_DECISION_CURVE = OUTPUT_DIR / "cmdc_decision_curve.csv"
 CMDC_ADVANCED_SUMMARY = OUTPUT_DIR / "cmdc_advanced_summary.json"
 CMDC_NESTED_MODEL = OUTPUT_DIR / "cmdc_nested_best_model.pkl"
+CMDC_HOLDOUT_SUMMARY = OUTPUT_DIR / "cmdc_locked_holdout_summary.json"
+CMDC_HOLDOUT_PREDICTIONS = OUTPUT_DIR / "cmdc_locked_holdout_predictions.csv"
+CMDC_HOLDOUT_MODEL = OUTPUT_DIR / "cmdc_locked_holdout_model.pkl"
 MODEL_REPORT = OUTPUT_DIR / "tabular_model_report.csv"
 IMBALANCE_REPORT = OUTPUT_DIR / "imbalance_comparison.csv"
 IMBALANCE_PAPER_REPORT = OUTPUT_DIR / "imbalance_paper_report.csv"
@@ -179,6 +182,9 @@ def data_signature() -> str:
         CMDC_DECISION_CURVE,
         CMDC_ADVANCED_SUMMARY,
         CMDC_NESTED_MODEL,
+        CMDC_HOLDOUT_SUMMARY,
+        CMDC_HOLDOUT_PREDICTIONS,
+        CMDC_HOLDOUT_MODEL,
         MODEL_REPORT,
         IMBALANCE_REPORT,
         MULTIMODAL_REPORT,
@@ -288,6 +294,23 @@ def run_cmdc_advanced_analysis(
         OUTPUT_DIR,
         repeats=int(repeats),
         model_repeats=int(model_repeats),
+        bootstrap_iterations=int(bootstrap_iterations),
+    )
+
+
+def run_cmdc_locked_holdout(
+    repeats: int = 10,
+    bootstrap_iterations: int = 1000,
+) -> dict:
+    from .models.cmdc_holdout import run_cmdc_locked_holdout as _run
+
+    if not CMDC_CSV.exists():
+        raise FileNotFoundError("CMDC 特征表尚未构建")
+    df = pd.read_csv(CMDC_CSV)
+    return _run(
+        df,
+        OUTPUT_DIR,
+        repeats=int(repeats),
         bootstrap_iterations=int(bootstrap_iterations),
     )
 
@@ -913,6 +936,8 @@ def status() -> dict:
     )
     if CMDC_NESTED_MODEL.exists():
         cmdc_models.append(CMDC_NESTED_MODEL)
+    if CMDC_HOLDOUT_MODEL.exists():
+        cmdc_models.append(CMDC_HOLDOUT_MODEL)
     try:
         from .prompt_registry import prompt_versions
 
@@ -944,6 +969,8 @@ def status() -> dict:
         CMDC_CALIBRATION_CURVE,
         CMDC_DECISION_CURVE,
         CMDC_ADVANCED_SUMMARY,
+        CMDC_HOLDOUT_SUMMARY,
+        CMDC_HOLDOUT_PREDICTIONS,
         DIALOGUE_INTENT_MODEL,
         DIALOGUE_RESPONSE_POLICY_MODEL,
         ETHICS_AUDIT_REPORT,
@@ -995,6 +1022,7 @@ def status() -> dict:
         "cmdc_ready": cmdc_exists(),
         "cmdc_benchmark_ready": CMDC_REPORT.exists(),
         "cmdc_advanced_ready": CMDC_ADVANCED_SUMMARY.exists(),
+        "cmdc_holdout_ready": CMDC_HOLDOUT_SUMMARY.exists(),
         "mpdd_subject_ready": MULTIMODAL_SUBJECT_REPORT.exists(),
         "tabular_report": MODEL_REPORT.exists(),
         "imbalance_report": IMBALANCE_REPORT.exists(),
@@ -1109,6 +1137,7 @@ def cmdc_summary() -> dict:
     audit = read_json_file(CMDC_AUDIT_JSON) or {}
     benchmark = read_json_file(CMDC_MODEL_SUMMARY) or {}
     advanced = read_json_file(CMDC_ADVANCED_SUMMARY) or {}
+    holdout = read_json_file(CMDC_HOLDOUT_SUMMARY) or {}
     return {
         "ready": True,
         "source": "CMDC",
@@ -1139,8 +1168,10 @@ def cmdc_summary() -> dict:
         "password_persisted": bool(audit.get("password_persisted", False)),
         "benchmark_ready": CMDC_REPORT.exists() and CMDC_MODEL_SUMMARY.exists(),
         "advanced_ready": CMDC_ADVANCED_SUMMARY.exists(),
+        "holdout_ready": CMDC_HOLDOUT_SUMMARY.exists(),
         "benchmark": benchmark,
         "advanced": advanced,
+        "holdout": holdout,
     }
 
 
