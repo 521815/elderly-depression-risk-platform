@@ -74,10 +74,20 @@ def inject_css() -> None:
         h1, h2, h3 {
             letter-spacing: 0;
             color: var(--ink);
+            font-family: "Songti SC", "STSong", "Noto Serif CJK SC", "Times New Roman", serif;
+            font-weight: 700;
         }
         h3 {
-            font-size: 1.35rem;
-            margin-bottom: 0.15rem;
+            font-size: 1.65rem;
+            line-height: 1.28;
+            margin-bottom: 0.7rem;
+            padding-bottom: 0.48rem;
+            border-bottom: 1px solid var(--line);
+        }
+        h4 {
+            color: var(--ink);
+            font-weight: 720;
+            letter-spacing: 0;
         }
         p, li, .stMarkdown {
             color: var(--ink);
@@ -131,8 +141,9 @@ def inject_css() -> None:
         }
         .app-name {
             color: var(--ink);
-            font-size: 1.14rem;
-            font-weight: 760;
+            font-family: "Songti SC", "STSong", "Noto Serif CJK SC", "Times New Roman", serif;
+            font-size: 1.22rem;
+            font-weight: 700;
             line-height: 1.25;
         }
         .app-sub {
@@ -144,7 +155,7 @@ def inject_css() -> None:
             color: var(--accent);
             font-size: 0.68rem;
             font-weight: 740;
-            letter-spacing: 0.12em;
+            letter-spacing: 0.16em;
         }
         .st-key-app_header .status-pill {
             color: rgba(244, 255, 253, 0.9);
@@ -274,17 +285,17 @@ def inject_css() -> None:
         div[data-testid="stMetric"] {
             position: relative;
             overflow: hidden;
-            background: #ffffff;
+            background: rgba(255, 255, 255, 0.66);
             border: 1px solid var(--line);
             border-top: 2px solid var(--accent);
-            border-radius: 8px;
+            border-radius: 6px;
             padding: 0.7rem 0.85rem;
             min-height: 88px;
             height: 88px;
             display: flex;
             flex-direction: column;
             justify-content: center;
-            box-shadow: 0 1px 2px rgba(16, 24, 40, 0.03);
+            box-shadow: none;
             transition: box-shadow 0.18s ease, transform 0.18s ease, border-color 0.18s ease;
         }
         div[data-testid="stMetric"]:hover {
@@ -307,6 +318,7 @@ def inject_css() -> None:
             font-weight: 750;
             line-height: 1.2;
             font-variant-numeric: tabular-nums;
+            font-feature-settings: "tnum";
         }
         .stButton button {
             min-height: 2.6rem;
