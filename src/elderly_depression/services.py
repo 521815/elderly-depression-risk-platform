@@ -22,7 +22,8 @@ from .models.llm_assessor import DialogueAssessor
 from .models.tabular import prepare_X
 from .data.feature_cache import load_parquet_features
 
-DATA_DIR = Path(__file__).resolve().parents[2] / "data"
+PROJECT_ROOT = Path(__file__).resolve().parents[2]
+DATA_DIR = PROJECT_ROOT / "data"
 CHARLS_CSV = DATA_DIR / "charls_standardized.csv"
 MPDD_CSV = DATA_DIR / "mpdd_features.csv"
 MPDD_UPLOAD_CSV = DATA_DIR / "mpdd_features_uploaded.csv"
@@ -137,6 +138,7 @@ def code_signature() -> str:
     roots = [
         Path(__file__).resolve().parent,
         Path(__file__).resolve().parents[2] / "backend_api",
+        PROJECT_ROOT / "prompts",
     ]
     newest = 0.0
     for root in roots:
@@ -871,6 +873,12 @@ def status() -> dict:
     tabular_models = list(TABULAR_MODEL_DIR.glob("*.pkl")) if TABULAR_MODEL_DIR.exists() else []
     multimodal_models = list(MULTIMODAL_MODEL_DIR.glob("*.pkl")) if MULTIMODAL_MODEL_DIR.exists() else []
     cmdc_models = list(CMDC_MODEL_DIR.glob("*.pkl")) if CMDC_MODEL_DIR.exists() else []
+    try:
+        from .prompt_registry import prompt_versions
+
+        prompts = prompt_versions()
+    except Exception:
+        prompts = {}
     from . import records as user_records
 
     try:
@@ -952,6 +960,7 @@ def status() -> dict:
         "dialogue_intent_report": DIALOGUE_INTENT_REPORT.exists(),
         "dialogue_response_policy_model": DIALOGUE_RESPONSE_POLICY_MODEL.exists(),
         "dialogue_response_policy_report": DIALOGUE_RESPONSE_POLICY_REPORT.exists(),
+        "prompt_versions": prompts,
         "ethics_audit_passed": ethics_audit_passed,
         "medical_kb_ready": medical_kb_topics > 0,
         "medical_kb_topics": medical_kb_topics,

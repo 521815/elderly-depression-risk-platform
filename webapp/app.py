@@ -1769,7 +1769,12 @@ def status_pill(ok: bool, ok_text: str, wait_text: str) -> str:
     return f'<span class="status-pill {cls}">{label}</span>'
 
 
-def dialogue_engine_caption(engine: str, reason: str, latency_ms) -> str:
+def dialogue_engine_caption(
+    engine: str,
+    reason: str,
+    latency_ms,
+    prompt_version: str = "",
+) -> str:
     labels = {
         "llm": "大模型增强",
         "fastpath": "预案快速响应",
@@ -1793,6 +1798,8 @@ def dialogue_engine_caption(engine: str, reason: str, latency_ms) -> str:
     text = f"对话引擎：{labels.get(engine, engine or '本地规则')}"
     if reason and reason in reason_labels:
         text += f" · {reason_labels[reason]}"
+    if prompt_version:
+        text += f" · Prompt {prompt_version}"
     try:
         latency = float(latency_ms or 0)
         if latency > 0:
@@ -1892,6 +1899,13 @@ def render_sidebar() -> str:
                     f"{status_pill(ok, ok_text, wait_text)}</div>",
                     unsafe_allow_html=True,
                 )
+            prompt_versions = system_status.get("prompt_versions") or {}
+            if prompt_versions:
+                st.caption(
+                    "Prompt 版本：问询 "
+                    f"{prompt_versions.get('interview', '-')} · 陪伴 "
+                    f"{prompt_versions.get('companion', '-')}"
+                )
             if system_status.get("tabular_models"):
                 st.caption(f"已保存表格模型：{system_status['tabular_models']} 个")
             last_sync = st.session_state.get("_last_sync_at")
@@ -1924,6 +1938,9 @@ def store_companion_response(agent_response: dict) -> None:
     )
     st.session_state.companion_latency_ms = agent_response.get("latency_ms", 0)
     st.session_state.companion_reason = agent_response.get("fastpath_reason", "")
+    st.session_state.companion_prompt_version = agent_response.get(
+        "last_prompt_version", ""
+    )
     st.session_state.companion_clinical_alert = agent_response.get("clinical_alert")
     st.session_state.companion_scale_evidence = agent_response.get(
         "scale_evidence", []
@@ -1975,6 +1992,9 @@ def store_interview_response(agent_response: dict) -> None:
     )
     st.session_state.agent_latency_ms = agent_response.get("latency_ms", 0)
     st.session_state.agent_reason = agent_response.get("fastpath_reason", "")
+    st.session_state.agent_prompt_version = agent_response.get(
+        "last_prompt_version", ""
+    )
     st.session_state.agent_clinical_alert = agent_response.get("clinical_alert")
     st.session_state.agent_scale_evidence = agent_response.get("scale_evidence", [])
     st.session_state.agent_covered_topics = agent_response.get("covered_topics", [])
@@ -2090,6 +2110,7 @@ def render_companion_chat(api_key: str) -> None:
             st.session_state.companion_engine,
             st.session_state.get("companion_reason", ""),
             st.session_state.get("companion_latency_ms", 0),
+            st.session_state.get("companion_prompt_version", ""),
         )
     )
     companion_alert = st.session_state.get("companion_clinical_alert")
@@ -2535,6 +2556,7 @@ def render_assessment(api_key: str) -> None:
                 st.session_state.agent_engine,
                 st.session_state.get("agent_reason", ""),
                 st.session_state.get("agent_latency_ms", 0),
+                st.session_state.get("agent_prompt_version", ""),
             )
         )
         clinical_alert = st.session_state.get("agent_clinical_alert")

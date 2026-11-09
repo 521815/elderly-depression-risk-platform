@@ -31,6 +31,11 @@ output/AppIcon.iconset/*
 !output/dialogue_response_policy.pkl
 !output/dialogue_response_policy_report.json
 
+# CMDC 和 MPDD 受许可约束的派生文件
+data/cmdc_features.csv
+data/cmdc_*.csv
+output/cmdc_*
+
 # 论文、报告和 Office 生成物不进入代码仓库
 paper/
 docs/*.docx

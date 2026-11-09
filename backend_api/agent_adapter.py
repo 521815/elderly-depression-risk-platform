@@ -882,7 +882,7 @@ class AgentAdapter:
         api_key: str | None = None,
         model: str = os.getenv("OPENAI_MODEL", "gpt-4.1-mini"),
         base_url: str | None = os.getenv("OPENAI_BASE_URL"),
-        temperature: float = 0.45,
+        temperature: float = 0.35,
     ) -> None:
         self.api_key = api_key or os.getenv("OPENAI_API_KEY")
         self.model = model
@@ -897,6 +897,7 @@ class AgentAdapter:
         self.last_llm_error: str | None = None
         self.last_latency_ms = 0.0
         self.last_fastpath_reason = ""
+        self.last_prompt_version = ""
 
     def set_api_key(self, api_key: str | None) -> None:
         self.api_key = api_key or self.api_key
@@ -909,6 +910,20 @@ class AgentAdapter:
         """Preload local models so the first chat turn has no model-loading delay."""
         self._intent_prediction("最近睡得怎么样", "interview")
         try:
+            from elderly_depression.prompt_registry import (
+                load_prompt,
+                prompt_versions,
+            )
+
+            load_prompt("interview", current_topic="睡眠与精力")
+            load_prompt("companion")
+            prompts = {
+                "ready": True,
+                "versions": prompt_versions(),
+            }
+        except Exception as exc:
+            prompts = {"ready": False, "error": str(exc), "versions": {}}
+        try:
             from elderly_depression.dialogue_response_policy import (
                 warmup_response_policy,
             )
@@ -919,6 +934,7 @@ class AgentAdapter:
         return {
             "intent_cache": bool(self._intent_cache),
             "response_policy": response_policy,
+            "prompts": prompts,
         }
 
     def _session(self, session_id: str | None, context: dict[str, Any] | None) -> InterviewState:
@@ -2704,6 +2720,12 @@ class AgentAdapter:
         session_id: str | None = None,
     ) -> dict[str, Any]:
         state = self._session(session_id, context)
+        try:
+            from elderly_depression.prompt_registry import prompt_versions
+
+            versions = prompt_versions()
+        except Exception:
+            versions = {}
         evidence: dict[int, set[str]] = {}
         for cue in state.risk_cues:
             for item in PHQ9_EVIDENCE_MAP.get(cue, []):
@@ -2727,6 +2749,8 @@ class AgentAdapter:
             "safety_alert": state.safety_flagged,
             "engine": self.last_engine,
             "llm_error": self.last_llm_error,
+            "prompt_versions": versions,
+            "last_prompt_version": self.last_prompt_version,
             "memory": dict(state.user_facts),
             "memory_summary": state.memory_summary,
             "latency_ms": self.last_latency_ms,
@@ -3449,89 +3473,103 @@ class AgentAdapter:
                     base_url=self.base_url,
                 )
 
-            if mode == "companion":
-                system = (
-                    "你是一位温柔、健谈、有生活气息的老年陪伴朋友。你的任务是轻松聊天，"
-                    "听老人说家常、回忆、天气、饮食、家人和今天的小事。不要问筛查量表，"
-                    "不要诊断，不要连续追问情绪问题。多用短句，适当表达关心和共鸣。"
-                    "如果出现自伤或自杀表达，优先确认安全并建议联系家人、医生或求助热线。"
-                    '只输出 JSON：{"reply":"你的陪伴式回复","topic":"companion","risk_cues":[]}'
-                )
-            else:
-                current = next((t for t in TOPICS if t.key == state.current_topic), TOPICS[0])
-                planned = self._next_uncovered(state, after=current.key) or current
-                system = (
-                    "你是一位温和、耐心的中国老年抑郁风险筛查访谈员。你的目标是通过自然对话"
-                    "了解老人的睡眠、兴趣、情绪、躯体、认知、社交、无望感和安全风险。"
-                    "请共情但不诊断、不治疗，不贴标签，语言要短句、口语化、尊重老人。"
-                    "如果出现自伤或自杀表达，优先确认安全并建议联系家人、医生或求助热线。"
-                    f"当前主题：{current.label}。已完成主题："
-                    f"{'、'.join([t.label for t in TOPICS if t.key in state.covered]) or '无'}。"
-                    f"下一轮倾向主题：{planned.label}。"
-                    '只输出 JSON：{"reply":"你的共情回复和提问","topic":"主题英文键",'
-                    '"risk_cues":["风险线索"],"cue_confidence":{"风险线索":0.0-1.0},'
-                    '"next_question":"下一句要问的问题"}'
-                )
             from elderly_depression.privacy import (
                 memory_for_cloud,
                 redact_messages,
                 redact_text,
             )
+            from elderly_depression.prompt_registry import load_prompt
+
+            current = next(
+                (t for t in TOPICS if t.key == state.current_topic),
+                TOPICS[0],
+            )
+            planned = self._next_uncovered(state, after=current.key) or current
+            completed = "、".join(
+                t.label for t in TOPICS if t.key in state.covered
+            )
+            if mode == "companion":
+                system, prompt_version = load_prompt("companion")
+            else:
+                system, prompt_version = load_prompt(
+                    "interview",
+                    current_topic=current.label,
+                    completed_topics=completed,
+                    planned_topic=planned.label,
+                )
+            self.last_prompt_version = prompt_version
 
             cloud_memory = memory_for_cloud(state.user_facts)
+            context_lines = ["## 本轮可核对状态"]
             if cloud_memory:
                 memory_text = "；".join(
                     f"{key}：{value}" for key, value in cloud_memory.items()
                 )
-                system += (
-                    f" 已知用户信息：{memory_text}。请自然利用这些信息，不要重复询问已经知道的内容。"
+                context_lines.append(
+                    f"- 已知用户信息：{memory_text}。自然利用，不重复询问。"
                 )
             if state.memory_summary:
-                system += f" 对话早期摘要：{state.memory_summary}。"
+                context_lines.append(
+                    f"- 对话早期摘要：{state.memory_summary}"
+                )
             if state.clinical_summary:
-                system += (
-                    " 已采集的临床访谈字段："
-                    + state.clinical_summary
-                    + "。不要重复询问已经明确提供的信息。"
+                context_lines.append(
+                    "- 已采集临床字段："
+                    f"{state.clinical_summary}。不要重复询问。"
                 )
             if state.last_guidance_prompt:
-                system += (
-                    " 本地整理的低风险支持建议："
-                    + state.last_guidance_prompt
-                    + " 请按用户当前状态筛选，不要照抄全部内容或替代医生诊疗。"
+                context_lines.append(
+                    "- 可选低风险支持策略："
+                    f"{state.last_guidance_prompt}"
+                    " 只选择与当前问题相关的一项，不照抄，不替代医生。"
                 )
             if state.medical_kb_prompt:
-                system += (
-                    " 权威患者教育资料（MedlinePlus, U.S. National Library of Medicine）："
-                    + state.medical_kb_prompt
-                    + " 只提取与当前问题相关的事实，不直接照搬长篇内容，不把资料当作诊断。"
+                context_lines.append(
+                    "- 权威患者教育资料（MedlinePlus）："
+                    f"{state.medical_kb_prompt}"
+                    " 仅提取与当前问题相关的事实，不把资料当诊断。"
                 )
             addressed = [
                 ADDRESSED_ISSUE_LABELS.get(item, item)
                 for item in sorted(state.addressed_issues)
             ]
             if addressed:
-                system += " 已回应或已给建议：" + "、".join(addressed) + "。不要重复追问这些内容。"
+                context_lines.append(
+                    "- 已回应或已给建议："
+                    + "、".join(addressed)
+                    + "。不要重复追问。"
+                )
+            if state.risk_cues:
+                context_lines.append(
+                    "- 已记录风险线索："
+                    + "、".join(state.risk_cues)
+                    + "。只作为背景，不主动贴标签。"
+                )
+            if state.protective_factors:
+                context_lines.append(
+                    "- 已记录保护因素："
+                    + "、".join(state.protective_factors)
+                    + "。需要时具体确认。"
+                )
             if analysis.background_text or analysis.positive_context:
                 safe_background = redact_text(
                     analysis.background_text or analysis.positive_context
                 )
                 safe_focus = redact_text(focus)
-                system += (
-                    f" 用户本轮先说明了背景：{safe_background}；"
-                    f"真正需要回应的是：{safe_focus}。先承认背景，再处理焦点，"
-                    "不要把背景误当成整句结论。"
+                context_lines.append(
+                    f"- 本轮背景：{safe_background}"
+                )
+                context_lines.append(
+                    f"- 本轮真正焦点：{safe_focus}"
                 )
             else:
-                system += f" 用户本轮真正需要回应的是：{redact_text(focus)}。"
-            system += (
-                " 回复要求：使用简短口语，最多三句话，只问一个问题；"
-                "先回应用户感受和已经给出的具体信息，再自然衔接；"
-                "每次回复都应形成可继续的下一轮，追问一个当前问题中尚未获得、"
-                "且会改变判断或行动的关键事实；如果已经可以给出行动，"
-                "就问用户更愿意选择哪一步。不要复述用户原句，不要重复上一轮问题，"
-                "不要输出列表或诊断结论；用户明确想结束时停止追问。"
+                context_lines.append(
+                    f"- 本轮真正焦点：{redact_text(focus)}"
+                )
+            context_lines.append(
+                "- 当前回复必须遵守系统模板，不展示或复述这段状态清单。"
             )
+            system += "\n\n" + "\n".join(context_lines)
             known_identifiers = [
                 state.user_facts.get(key, "")
                 for key in ["姓名", "居住地"]
@@ -3607,6 +3645,10 @@ class AgentAdapter:
 AGENT_CONTRACT = {
     "purpose": "自适应老年抑郁筛查访谈 Agent；本地意图、响应策略和检索知识优先，用户明确同意后才使用第三方模型。",
     "endpoint": "POST /api/agent/chat",
+    "prompt_versions": {
+        "interview": "interview_v2",
+        "companion": "companion_v2",
+    },
     "request": {
         "session_id": "string",
         "messages": [{"role": "user", "text": "string"}],

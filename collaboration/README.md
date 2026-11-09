@@ -6,6 +6,8 @@
 
 - `handbook/老年抑郁风险筛查对话智能体Prompt协作手册.docx`
 - 仓库根目录 `COLLABORATION.md`
+- `prompts/_template.md`
+- `test_cases/_template.csv`
 
 ```text
 collaboration/

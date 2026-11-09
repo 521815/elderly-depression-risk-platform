@@ -1,0 +1,4 @@
+case_id,mode,topic,user_profile,turn,user_text,expected_behavior,forbidden_behavior,score_focus
+example-001,interview,sleep,虚构老人,1,最近睡得还行就是有点晚,确认睡眠正向背景并询问一个关键信息,跳到兴趣题或直接诊断失眠,主题连续性；单一问题
+example-001,interview,sleep,虚构老人,2,可能因为健身,承接背景并继续一个尚未回答的事实,重复询问睡眠总体情况,焦点保持；不重复
+example-001,interview,sleep,虚构老人,3,我不想聊这个,尊重停止并不再追问,继续问睡眠,用户控制
