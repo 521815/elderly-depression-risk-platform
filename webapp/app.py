@@ -571,6 +571,93 @@ def inject_css() -> None:
             border-color: var(--accent) !important;
             color: var(--accent-strong) !important;
         }
+        [class*="st-key-scale_item_"] {
+            margin-bottom: 0.55rem;
+            padding: 0.68rem 0.72rem 0.72rem;
+            border: 1px solid var(--line);
+            border-radius: 7px;
+            background: rgba(255, 255, 255, 0.64);
+        }
+        [class*="st-key-scale_item_"] [data-testid="stWidgetLabel"] p {
+            color: var(--ink);
+            font-size: 0.84rem;
+            font-weight: 650;
+            line-height: 1.45;
+        }
+        [class*="st-key-scale_item_"] div[data-baseweb="button-group"] {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(46px, 1fr));
+            gap: 0.18rem;
+            width: 100%;
+            padding: 0.2rem;
+            border: 1px solid #dbe4e1;
+            border-radius: 7px;
+            background: #eef3f1;
+        }
+        [class*="st-key-scale_item_"] div[data-baseweb="button-group"] button {
+            min-width: 0;
+            min-height: 2.15rem;
+            padding: 0.28rem 0.35rem;
+            border: 0 !important;
+            border-radius: 5px !important;
+            background: transparent;
+            color: #607477;
+            font-size: 0.72rem;
+            font-weight: 650;
+            box-shadow: none;
+        }
+        [class*="st-key-scale_item_"] div[data-baseweb="button-group"] button:hover {
+            background: rgba(255, 255, 255, 0.72);
+            color: var(--accent-strong);
+        }
+        [class*="st-key-scale_item_"] div[data-baseweb="button-group"] button[aria-pressed="true"],
+        [class*="st-key-scale_item_"] div[data-baseweb="button-group"] button[aria-selected="true"] {
+            background: var(--accent) !important;
+            color: #ffffff !important;
+            box-shadow: 0 2px 7px rgba(15, 111, 102, 0.17);
+        }
+        [class*="st-key-scale_item_"] [role="radiogroup"] {
+            display: flex;
+            flex-wrap: nowrap;
+            gap: 0.18rem;
+            width: 100%;
+            padding: 0.2rem;
+            border: 1px solid #dbe4e1;
+            border-radius: 7px;
+            background: #eef3f1;
+        }
+        [class*="st-key-scale_item_"] [role="radiogroup"] label {
+            display: flex;
+            flex: 1 1 0;
+            align-items: center;
+            justify-content: center;
+            min-width: 0;
+            min-height: 2.2rem;
+            margin: 0;
+            padding: 0.28rem 0.2rem;
+            border-radius: 5px;
+            color: #607477;
+            font-size: 0.7rem;
+            font-weight: 650;
+            white-space: nowrap;
+            transition: background 0.16s ease, color 0.16s ease, box-shadow 0.16s ease;
+        }
+        [class*="st-key-scale_item_"] [role="radiogroup"] label:hover {
+            background: rgba(255, 255, 255, 0.72);
+            color: var(--accent-strong);
+        }
+        [class*="st-key-scale_item_"] [role="radiogroup"] label:has(input:checked) {
+            background: var(--accent);
+            color: #ffffff;
+            box-shadow: 0 2px 7px rgba(15, 111, 102, 0.17);
+        }
+        [class*="st-key-scale_item_"] [role="radiogroup"] label:has(input:checked) p,
+        [class*="st-key-scale_item_"] [role="radiogroup"] label:has(input:checked) div {
+            color: #ffffff !important;
+        }
+        [class*="st-key-scale_item_"] [role="radiogroup"] label > div:first-child {
+            display: none;
+        }
         .st-key-conversation_mode_selector [role="radiogroup"] {
             display: grid;
             grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -2200,8 +2287,8 @@ def risk_gauge(probability: float) -> go.Figure:
         go.Indicator(
             mode="gauge+number",
             value=value,
-            number={"suffix": "%", "font": {"size": 34, "color": color}},
-            title={"text": "抑郁风险概率", "font": {"size": 15}},
+            number={"suffix": "%", "font": {"size": 30, "color": color}},
+            title={"text": "抑郁风险概率", "font": {"size": 13}},
             gauge={
                 "axis": {"range": [0, 100], "tickwidth": 1},
                 "bar": {"color": color, "thickness": 0.24},
@@ -2214,7 +2301,12 @@ def risk_gauge(probability: float) -> go.Figure:
             },
         )
     )
-    fig.update_layout(height=250, margin=dict(l=20, r=20, t=40, b=10), paper_bgcolor="rgba(0,0,0,0)")
+    fig.update_layout(
+        height=215,
+        margin=dict(l=12, r=12, t=28, b=0),
+        paper_bgcolor="rgba(0,0,0,0)",
+        plot_bgcolor="rgba(0,0,0,0)",
+    )
     return fig
 
 
@@ -3060,36 +3152,48 @@ def render_assessment(api_key: str) -> None:
                 "hamd24": (24, 4),
             }
             item_n, item_max = item_config[scale_key]
+            answer_labels = {
+                "cesd10": ["没有", "有时", "经常", "总是"],
+                "phq9": ["没有", "几天", "一半以上", "几乎每天"],
+                "gds15": ["否", "是"],
+                "hamd24": ["无", "轻", "中", "重", "极重"],
+            }[scale_key]
             answer_mode = st.segmented_control(
                 "作答方式",
                 options=["slider", "buttons"],
-                default="slider",
+                default="buttons",
                 format_func=lambda x: "滑动作答" if x == "slider" else "大按钮作答",
+                key=f"scale_answer_mode_v2_{scale_key}",
             )
             answers = []
-            cols = st.columns(2)
+            cols = st.columns(1 if answer_mode == "buttons" else 2)
             for i in range(item_n):
-                with cols[i % 2]:
-                    if answer_mode == "buttons":
-                        answers.append(
-                            st.radio(
-                                f"{i + 1}. {SCALE_ITEMS[scale_key][i]}",
-                                options=list(range(item_max + 1)),
-                                index=0,
-                                horizontal=True,
-                                key=f"scale_btn_{scale_key}_{i}",
+                with cols[i % len(cols)]:
+                    with st.container(
+                        key=f"scale_item_{scale_key}_{i}",
+                    ):
+                        question_label = f"{i + 1}. {SCALE_ITEMS[scale_key][i]}"
+                        if answer_mode == "buttons":
+                            answers.append(
+                                st.radio(
+                                    question_label,
+                                    options=list(range(item_max + 1)),
+                                    index=0,
+                                    format_func=lambda value, labels=answer_labels: labels[value],
+                                    key=f"scale_choice_{scale_key}_{i}",
+                                    horizontal=True,
+                                )
                             )
-                        )
-                    else:
-                        answers.append(
-                            st.slider(
-                                f"{i + 1}. {SCALE_ITEMS[scale_key][i]}",
-                                min_value=0,
-                                max_value=item_max,
-                                value=0,
-                                key=f"scale_{scale_key}_{i}",
+                        else:
+                            answers.append(
+                                st.slider(
+                                    question_label,
+                                    min_value=0,
+                                    max_value=item_max,
+                                    value=0,
+                                    key=f"scale_{scale_key}_{i}",
+                                )
                             )
-                        )
             if scale_key == "cesd10":
                 st.caption("选项：0=没有或很少（<1天），1=有时（1-2天），2=经常（3-4天），3=大部分/所有时间（5-7天）。")
             elif scale_key == "phq9":
@@ -3386,7 +3490,11 @@ def render_assessment(api_key: str) -> None:
 
         gauge_col, factor_col = st.columns([0.46, 0.54], gap="large")
         with gauge_col:
-            st.plotly_chart(risk_gauge(prob), width="stretch")
+            st.plotly_chart(
+                risk_gauge(prob),
+                width="stretch",
+                config={"displayModeBar": False},
+            )
         with factor_col:
             st.markdown("#### 风险构成")
             scale_level_cn = SCALE_LEVEL_LABELS.get(result.get("scale_level"), result.get("scale_level"))

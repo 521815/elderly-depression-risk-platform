@@ -33,13 +33,6 @@ MISSING_MODALITY_CSV = PROJECT_ROOT / "output" / "cmdc_missing_modality_report.c
 MODEL_COMPARISON_CSV = PROJECT_ROOT / "output" / "cmdc_model_comparison.csv"
 CALIBRATION_CSV = PROJECT_ROOT / "output" / "cmdc_calibration_curve.csv"
 DECISION_CURVE_CSV = PROJECT_ROOT / "output" / "cmdc_decision_curve.csv"
-FRONTEND_LOGIN_IMAGE = PROJECT_ROOT / "docs" / "assets" / "frontend" / "login-editorial.png"
-FRONTEND_ASSESSMENT_IMAGE = (
-    PROJECT_ROOT / "docs" / "assets" / "frontend" / "assessment-editorial.png"
-)
-FRONTEND_WORKBENCH_IMAGE = (
-    PROJECT_ROOT / "docs" / "assets" / "frontend" / "workbench-editorial.png"
-)
 CHART_DIR = Path("/tmp/cmdc_meeting_charts")
 
 FONT_CN = "Arial Unicode MS"
@@ -613,10 +606,10 @@ def build() -> Document:
 
     p = doc.add_paragraph(style="Title")
     fmt_paragraph(p, before=0, after=10, line=1.08)
-    run = p.add_run("CMDC 数据集接入、模型验证")
+    run = p.add_run("CMDC 数据集接入汇报")
     set_font(run, size=27, bold=True)
     run.add_break()
-    run = p.add_run("与前端产品化汇报")
+    run = p.add_run("与后续优化建议")
     set_font(run, size=27, bold=True)
 
     p = doc.add_paragraph()
@@ -628,7 +621,7 @@ def build() -> Document:
     add_text(
         doc,
         "本次汇报说明 CMDC 数据接入后系统发生了什么变化、目前取得了哪些结果、哪些结果可以写入论文，"
-        "并补充登录入口与工作台的前端产品化进展，以及下一阶段可从数据、模型、评估和 Agent 四个方向继续推进的工作。",
+        "以及下一阶段可从数据、模型、评估和 Agent 四个方向继续推进的工作。",
         after=12,
         size=11,
     )
@@ -641,7 +634,6 @@ def build() -> Document:
             ["锁定留出", "61 人训练、16 人测试；AUC 1.000，但精确区间宽，不能视为临床性能证明"],
             ["融合是否已证明更好", "点估计有提升倾向，但配对 Bootstrap 区间跨 0，暂不能宣称稳定提升"],
             ["是否改变主评分", "否。CMDC 不进入当前老年主风险融合模型"],
-            ["前端产品化", "完成科研编辑式登录页、工作台导航、数据状态中心、线描插画与响应式适配"],
             ["下一步重点", "多中心或老年独立留出、人口学与共病元数据、跨中心校准"],
         ],
         widths=[3.8, 11.5],
@@ -1127,102 +1119,7 @@ def build() -> Document:
     add_bullet(doc, "建立人工盲评集，比较访谈、陪伴、安全和医学边界四个维度的不同模型版本。")
     add_bullet(doc, "把对话缺失信息转化为结构化字段，为后续风险模型提供可解释变量。")
 
-    page_break(doc)
-
-    add_heading(doc, "10 前端产品化更新", 1)
-    add_text(
-        doc,
-        "前端已从基础功能工作台进一步整理为面向科研人员和管理员的产品界面。"
-        "本轮重点不是增加装饰，而是提高登录体验、信息层级、状态可追溯性和不同屏幕下的可读性。",
-        bold_lead="更新目标：",
-    )
-    add_bullet(doc, "登录页采用编辑式双栏布局，左侧展示产品定位、交流场景插画和科研使用边界，右侧集中承载登录、注册与找回密码。")
-    add_bullet(doc, "工作台使用浅色科研工具头、文字型主导航、紧凑指标面板和统一表单焦点态，减少高饱和渐变与模板化卡片。")
-    add_bullet(doc, "管理员菜单集中展示数据、模型、伦理审计、知识库和 Prompt 状态，避免状态信息在标题栏和侧栏重复出现。")
-    add_bullet(doc, "插画采用无人物的双椅与茶几场景，表达倾听与交流，不出现可能引发不适的人物凝视。")
-    add_bullet(doc, "所有新增图片提供替代文本；关键交互提供键盘焦点样式，并支持系统“减少动态效果”设置。")
-    add_text(
-        doc,
-        "以下截图来自当前本地运行版本。截图中的用户和统计内容均为本机测试数据，不包含真实受试者信息。",
-        bold_lead="截图说明：",
-    )
-    doc.add_picture(str(FRONTEND_LOGIN_IMAGE), width=Inches(6.35))
-    doc.inline_shapes[-1]._inline.docPr.set(
-        "descr",
-        "新版登录页面，左侧为品牌说明和双椅交流插画，右侧为登录、注册和找回密码入口",
-    )
-    doc.inline_shapes[-1]._inline.docPr.set("title", "新版登录页面")
-    doc.paragraphs[-1].alignment = WD_ALIGN_PARAGRAPH.CENTER
-    fmt_paragraph(doc.paragraphs[-1], after=3)
-    p = doc.add_paragraph()
-    p.alignment = WD_ALIGN_PARAGRAPH.CENTER
-    fmt_paragraph(p, after=8)
-    run = p.add_run("图 7 编辑式登录入口与交流场景插画")
-    set_font(run, size=8.5)
-    run.font.color.rgb = MUTED
-
-    page_break(doc)
-
-    add_heading(doc, "10.1 一页式风险评估", 2)
-    add_text(
-        doc,
-        "风险评估页按真实任务顺序组织信息：先确认隐私与交流方式，再选择筛查对象，随后完成背景、量表与访谈，"
-        "最后查看风险概率、因素构成与导出操作。页面不再依赖默认表单的纵向堆叠。",
-    )
-    add_bullet(doc, "隐私授权与交流模式并列展示，本地运行状态和当前模式可直接识别。")
-    add_bullet(doc, "用户档案、基本信息和量表作答使用统一标题、边框与间距，减少误操作和重复查找。")
-    add_bullet(doc, "访谈、风险概率与风险构成放在同一结果区域，保存、导出和朗读操作移到完整宽度的操作带。")
-    doc.add_picture(str(FRONTEND_ASSESSMENT_IMAGE), width=Inches(6.35))
-    doc.inline_shapes[-1]._inline.docPr.set(
-        "descr",
-        "新版风险评估页，展示隐私与数据、交流方式、用户档案、量表、访谈和风险结果",
-    )
-    doc.inline_shapes[-1]._inline.docPr.set("title", "新版一页式风险评估")
-    doc.paragraphs[-1].alignment = WD_ALIGN_PARAGRAPH.CENTER
-    fmt_paragraph(doc.paragraphs[-1], after=3)
-    p = doc.add_paragraph()
-    p.alignment = WD_ALIGN_PARAGRAPH.CENTER
-    fmt_paragraph(p, after=8)
-    run = p.add_run("图 8 一页式风险评估与任务分区")
-    set_font(run, size=8.5)
-    run.font.color.rgb = MUTED
-
-    page_break(doc)
-
-    add_heading(doc, "10.2 工作台与状态中心", 2)
-    add_text(
-        doc,
-        "工作台保留风险筛查、用户记录、多模态数据、数据健康和统计校正等核心流程，"
-        "同时把管理入口、运行状态和数据质量信息集中在明确的位置，减少页面间来回查找。",
-    )
-    doc.add_picture(str(FRONTEND_WORKBENCH_IMAGE), width=Inches(6.35))
-    doc.inline_shapes[-1]._inline.docPr.set(
-        "descr",
-        "新版工作台数据健康页面，展示科研工具式顶部、文字导航、紧凑指标和数据质量提示",
-    )
-    doc.inline_shapes[-1]._inline.docPr.set("title", "新版工作台数据健康页面")
-    doc.paragraphs[-1].alignment = WD_ALIGN_PARAGRAPH.CENTER
-    fmt_paragraph(doc.paragraphs[-1], after=3)
-    p = doc.add_paragraph()
-    p.alignment = WD_ALIGN_PARAGRAPH.CENTER
-    fmt_paragraph(p, after=8)
-    run = p.add_run("图 9 数据健康页面与新版工作台布局")
-    set_font(run, size=8.5)
-    run.font.color.rgb = MUTED
-    add_text(
-        doc,
-        "前端调整不改变任何模型概率、阈值或评估结果。其价值在于降低误操作风险、提高数据状态可见性，"
-        "并让导师、组员和后续使用者能够更清楚地理解系统当前处于什么状态。",
-        bold_lead="效果边界：",
-    )
-    add_text(
-        doc,
-        "下一阶段前端应继续围绕真实科研流程优化，而不是继续叠加视觉特效。优先项包括："
-        "用户评估记录的可解释趋势、跨数据源状态的一致性、可打印报告和团队协作留痕。",
-        bold_lead="后续方向：",
-    )
-
-    add_heading(doc, "11 组会汇报口径", 1)
+    add_heading(doc, "10 组会汇报口径", 1)
     add_text(
         doc,
         "“这次新接入的是 CMDC 中文半结构化访谈数据，共 78 人，每人 12 题，约 10.83 小时音频。系统新增了文本、语音和视觉三类数值特征，并把同一受试者的 12 个回答聚合后按受试者切分验证。”",
@@ -1243,16 +1140,11 @@ def build() -> Document:
     )
     add_text(
         doc,
-        "“前端方面，我们完成了适合科研场景的登录页和工作台整理：管理员状态集中在菜单中，数据健康提示可以单独查看，"
-        "界面避免使用过度装饰，并补充了适合老年科研场景的交流插画和无障碍说明。前端调整不参与风险概率计算。”",
-    )
-    add_text(
-        doc,
         "“所以当前可以确认的是中文多模态信号有研究价值、系统具备更完整的验证能力，但还不能宣称融合已经稳定提高准确性。"
         "下一步会争取多中心或老年独立留出、补齐元数据并验证跨中心迁移，而不是继续在 78 人样本上追求更高单点 AUC。”",
     )
 
-    add_heading(doc, "12 建议向导师确认的事项", 1)
+    add_heading(doc, "11 建议向导师确认的事项", 1)
     add_table(
         doc,
         ["确认事项", "建议决策"],
@@ -1262,7 +1154,6 @@ def build() -> Document:
             ["是否寻找老年多模态外部数据", "若论文目标包含老年外部验证，应列为下一阶段重点"],
             ["下一步实验优先级", "先取得多中心或老年独立留出，再决定是否采用复杂融合"],
             ["合成数据使用边界", "只用于训练侧增强，验证和测试始终使用真实数据"],
-            ["前端演示与后续优先级", "以当前版本作为组会演示基线，后续优先完善真实科研流程而非继续增加特效"],
         ],
         widths=[5.0, 10.2],
         font_size=9.0,
