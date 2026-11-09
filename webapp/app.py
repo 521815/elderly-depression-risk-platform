@@ -87,12 +87,18 @@ def inject_css() -> None:
             line-height: 1.55;
         }
         .st-key-app_header {
-            background: linear-gradient(105deg, #123f3b 0%, #0e5d57 58%, #0d6f66 100%);
+            background:
+                linear-gradient(112deg, rgba(18, 63, 59, 0.99), rgba(14, 93, 87, 0.98) 58%, rgba(13, 111, 102, 0.96)),
+                rgba(14, 93, 87, 0.96);
             border: 1px solid rgba(255, 255, 255, 0.12);
-            border-radius: 12px;
+            border-radius: 14px;
             padding: 0.95rem 1.1rem;
             margin-bottom: 1rem;
-            box-shadow: 0 14px 32px rgba(15, 72, 69, 0.18);
+            box-shadow:
+                inset 0 1px 0 rgba(255, 255, 255, 0.08),
+                0 18px 38px rgba(15, 72, 69, 0.18);
+            backdrop-filter: blur(18px) saturate(1.12);
+            -webkit-backdrop-filter: blur(18px) saturate(1.12);
         }
         .st-key-app_header [data-testid="stHorizontalBlock"] {
             align-items: center;
@@ -114,6 +120,12 @@ def inject_css() -> None:
             justify-content: center;
             padding: 5px;
             box-shadow: none;
+            transition: background 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
+        }
+        .app-mark:hover {
+            background: rgba(255, 255, 255, 0.17);
+            border-color: rgba(255, 255, 255, 0.30);
+            transform: translateY(-1px);
         }
         .app-mark img {
             display: block;
@@ -196,11 +208,21 @@ def inject_css() -> None:
             border-radius: 14px;
             background: #e8f4ef;
             box-shadow: 0 12px 26px rgba(24, 82, 76, 0.10);
+            transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
+        }
+        .sidebar-visual:hover {
+            border-color: #bddfd5;
+            box-shadow: 0 16px 34px rgba(24, 82, 76, 0.14);
+            transform: translateY(-2px);
         }
         .sidebar-visual img {
             display: block;
             width: 100%;
             height: auto;
+            transition: transform 0.35s ease;
+        }
+        .sidebar-visual:hover img {
+            transform: scale(1.012);
         }
         .st-key-app_header div[data-testid="stPopover"] button {
             width: 2.2rem;
@@ -232,7 +254,7 @@ def inject_css() -> None:
             justify-content: flex-start;
         }
         [data-testid="stSidebar"] {
-            background: #fbfdfc;
+            background: linear-gradient(180deg, #fcfefd 0%, #f7fbf9 62%, #eef7f3 100%);
             border-right: 1px solid var(--line);
         }
         [data-testid="stSidebarContent"] {
@@ -246,9 +268,9 @@ def inject_css() -> None:
             color: var(--muted);
         }
         div[data-testid="stMetric"] {
-            background: var(--panel);
+            background: linear-gradient(180deg, #ffffff 0%, #fbfdfc 100%);
             border: 1px solid var(--line);
-            border-left: 3px solid var(--accent);
+            border-left: 4px solid var(--accent);
             border-radius: 10px;
             padding: 0.7rem 0.85rem;
             min-height: 88px;
@@ -257,11 +279,12 @@ def inject_css() -> None:
             flex-direction: column;
             justify-content: center;
             box-shadow: var(--shadow-sm);
-            transition: box-shadow 0.15s ease, transform 0.15s ease;
+            transition: box-shadow 0.18s ease, transform 0.18s ease, border-color 0.18s ease;
         }
         div[data-testid="stMetric"]:hover {
             box-shadow: var(--shadow-md);
-            transform: translateY(-1px);
+            border-color: #c8ded9;
+            transform: translateY(-2px);
         }
         div[data-testid="stMetricLabel"] {
             color: var(--muted);
@@ -277,6 +300,7 @@ def inject_css() -> None:
             font-size: 1.35rem;
             font-weight: 750;
             line-height: 1.2;
+            font-variant-numeric: tabular-nums;
         }
         .stButton button {
             min-height: 2.6rem;
@@ -286,7 +310,7 @@ def inject_css() -> None:
             color: var(--ink);
             font-weight: 600;
             box-shadow: 0 1px 2px rgba(16, 24, 40, 0.04);
-            transition: box-shadow 0.15s ease, transform 0.12s ease, border-color 0.15s ease;
+            transition: box-shadow 0.18s ease, transform 0.14s ease, border-color 0.18s ease, background 0.18s ease;
         }
         .stButton button:hover {
             border-color: #9fcac4;
@@ -294,16 +318,28 @@ def inject_css() -> None:
             box-shadow: 0 8px 18px rgba(15, 118, 110, 0.11);
             transform: translateY(-1px);
         }
+        .stButton button:active {
+            transform: translateY(0) scale(0.985);
+        }
         .stButton button[kind="primary"] {
-            background: var(--accent);
+            background: linear-gradient(135deg, #11877d 0%, #0f766e 52%, #0a5f59 100%);
             border-color: var(--accent);
             color: #ffffff;
-            box-shadow: 0 7px 16px rgba(15, 118, 110, 0.20);
+            box-shadow:
+                inset 0 1px 0 rgba(255, 255, 255, 0.18),
+                0 8px 18px rgba(15, 118, 110, 0.22);
         }
         .stButton button[kind="primary"]:hover {
-            background: var(--accent-strong);
+            background: linear-gradient(135deg, #0f7c73 0%, #0b6b64 55%, #084f4b 100%);
             border-color: var(--accent-strong);
             color: #ffffff;
+        }
+        .stButton button:focus-visible,
+        .stDownloadButton button:focus-visible,
+        [data-testid="stTabs"] button[data-baseweb="tab"]:focus-visible,
+        .st-key-main_nav [role="radiogroup"] label:focus-within {
+            outline: 2px solid rgba(15, 118, 110, 0.35);
+            outline-offset: 2px;
         }
         [data-testid="stTabs"] {
             gap: 0.3rem;
@@ -336,10 +372,12 @@ def inject_css() -> None:
             color: var(--accent-strong);
         }
         [data-testid="stTabs"] button[data-baseweb="tab"][aria-selected="true"] {
-            background: var(--accent);
+            background: linear-gradient(135deg, #11877d 0%, #0f766e 58%, #0a625c 100%);
             color: #ffffff;
             border-color: var(--accent);
-            box-shadow: 0 4px 10px rgba(15, 118, 110, 0.18);
+            box-shadow:
+                inset 0 1px 0 rgba(255, 255, 255, 0.18),
+                0 6px 14px rgba(15, 118, 110, 0.20);
         }
         [data-testid="stExpander"] {
             background: var(--panel);
@@ -423,10 +461,14 @@ def inject_css() -> None:
             flex-wrap: wrap;
             gap: 0.1rem;
             padding: 0.34rem;
-            background: rgba(255, 255, 255, 0.94);
+            background: rgba(255, 255, 255, 0.82);
             border: 1px solid var(--line);
-            border-radius: 10px;
-            box-shadow: var(--shadow-sm);
+            border-radius: 12px;
+            box-shadow:
+                inset 0 1px 0 rgba(255, 255, 255, 0.72),
+                0 10px 26px rgba(24, 70, 73, 0.07);
+            backdrop-filter: blur(18px) saturate(1.08);
+            -webkit-backdrop-filter: blur(18px) saturate(1.08);
         }
         .st-key-main_nav [role="radiogroup"] label {
             display: inline-flex;
@@ -439,17 +481,21 @@ def inject_css() -> None:
             font-size: 0.86rem;
             font-weight: 600;
             cursor: pointer;
-            transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+            transition: background 0.18s ease, color 0.18s ease, border-color 0.18s ease, transform 0.14s ease;
         }
         .st-key-main_nav [role="radiogroup"] label:hover {
             background: #edf6f4;
             color: var(--accent-strong);
+            transform: translateY(-1px);
         }
         .st-key-main_nav [role="radiogroup"] label:has(input:checked),
         .st-key-main_nav [aria-checked="true"] {
-            background: var(--accent);
+            background: linear-gradient(135deg, #11877d 0%, #0f766e 58%, #0a625c 100%);
             border-color: var(--accent);
-            box-shadow: 0 4px 10px rgba(15, 118, 110, 0.18);
+            box-shadow:
+                inset 0 1px 0 rgba(255, 255, 255, 0.17),
+                0 6px 14px rgba(15, 118, 110, 0.19);
+            transform: translateY(-1px);
         }
         .st-key-main_nav [role="radiogroup"] label:has(input:checked) *,
         .st-key-main_nav [aria-checked="true"] * {
@@ -465,6 +511,11 @@ def inject_css() -> None:
             padding: 0.55rem 0.75rem;
             margin-bottom: 0.5rem;
             box-shadow: var(--shadow-sm);
+            transition: border-color 0.18s ease, box-shadow 0.18s ease;
+        }
+        [data-testid="stChatMessage"]:hover {
+            border-color: #cfe2dd;
+            box-shadow: 0 8px 20px rgba(24, 70, 73, 0.07);
         }
         [data-testid="stChatMessage"] [data-testid="chatAvatarIcon-user"] {
             background: var(--accent);
@@ -686,6 +737,28 @@ def inject_css() -> None:
             }
             [data-testid="stTabs"] button[data-baseweb="tab"] {
                 padding-inline: 0.7rem;
+            }
+        }
+        @media (prefers-reduced-motion: reduce) {
+            .app-mark,
+            .sidebar-visual,
+            .sidebar-visual img,
+            div[data-testid="stMetric"],
+            .stButton button,
+            .st-key-main_nav [role="radiogroup"] label,
+            [data-testid="stChatMessage"] {
+                transition: none !important;
+            }
+            .app-mark:hover,
+            .sidebar-visual:hover,
+            .sidebar-visual:hover img,
+            div[data-testid="stMetric"]:hover,
+            .stButton button:hover,
+            .stButton button:active,
+            .st-key-main_nav [role="radiogroup"] label:hover,
+            .st-key-main_nav [role="radiogroup"] label:has(input:checked),
+            .st-key-main_nav [aria-checked="true"] {
+                transform: none !important;
             }
         }
         </style>
