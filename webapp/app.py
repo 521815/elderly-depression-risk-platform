@@ -130,21 +130,6 @@ def inject_css() -> None:
             color: rgba(236, 253, 250, 0.76);
             font-size: 0.84rem;
         }
-        .app-header-status {
-            display: flex;
-            flex-wrap: wrap;
-            align-items: center;
-            justify-content: center;
-            gap: 0.38rem 0.42rem;
-            padding-left: 0.65rem;
-            border-left: 1px solid rgba(255, 255, 255, 0.14);
-        }
-        .app-header-status .status-pill {
-            flex: 0 0 auto;
-            width: auto;
-            max-width: 100%;
-            text-align: center;
-        }
         .st-key-app_header .status-pill {
             color: rgba(244, 255, 253, 0.9);
             background: rgba(255, 255, 255, 0.09);
@@ -162,6 +147,47 @@ def inject_css() -> None:
             color: #fff0c7;
             background: rgba(245, 158, 11, 0.14);
             border-color: rgba(252, 211, 77, 0.22);
+        }
+        .admin-status-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 0.32rem;
+            margin: 0.35rem 0 0.2rem;
+        }
+        .admin-status-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 0.45rem;
+            min-width: 0;
+            padding: 0.38rem 0.46rem;
+            border: 1px solid #dce9e5;
+            border-radius: 8px;
+            background: #f7faf9;
+        }
+        .admin-status-key {
+            color: #304b50;
+            min-width: 0;
+            overflow: hidden;
+            font-size: 0.78rem;
+            font-weight: 620;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        .admin-status-value {
+            color: #8a5a12;
+            background: #fff4d8;
+            border: 1px solid #f1d89a;
+            border-radius: 999px;
+            padding: 0.12rem 0.45rem;
+            font-size: 0.72rem;
+            font-weight: 680;
+            white-space: nowrap;
+        }
+        .admin-status-value.ok {
+            color: #1d6b59;
+            background: #e7f6f0;
+            border-color: #bde3d7;
         }
         .st-key-app_header div[data-testid="stPopover"] button {
             width: 2.2rem;
@@ -645,18 +671,6 @@ def inject_css() -> None:
             .app-name {
                 font-size: 1.08rem;
             }
-            .app-header-status {
-                flex-direction: column;
-                align-items: stretch;
-                justify-content: flex-start;
-                padding-left: 0;
-                border-left: 0;
-                padding-top: 0.45rem;
-                border-top: 1px solid rgba(255, 255, 255, 0.14);
-            }
-            .app-header-status .status-pill {
-                width: 100%;
-            }
             [data-testid="stTabs"] button[data-baseweb="tab"] {
                 padding-inline: 0.7rem;
             }
@@ -796,16 +810,22 @@ def render_header(
         ("CMDC", status.get("cmdc_ready", False), "已就绪", "待构建"),
         ("后端 API", status.get("connected", False), "已连接", "本地直连"),
     ]
-    pills = "".join(
-        f'<span class="status-pill {("status-ok" if ok else "status-wait")}">'
-        f"{label} · {ok_text if ok else wait_text}</span>"
+    status_rows = "".join(
+        f'<div class="admin-status-row">'
+        f'<span class="admin-status-key">{label}</span>'
+        f'<span class="admin-status-value {("ok" if ok else "wait")}">'
+        f"{ok_text if ok else wait_text}</span></div>"
         for label, ok, ok_text, wait_text in rows
     )
     with st.container(key="app_header"):
-        title_col, controls_col = st.columns(
-            [5.2, 4.8],
-            vertical_alignment="center",
-        )
+        if show_admin_menu:
+            title_col, controls_col = st.columns(
+                [9.2, 0.8],
+                vertical_alignment="center",
+            )
+        else:
+            title_col = st.container()
+            controls_col = None
         with title_col:
             st.markdown(
                 f"""
@@ -819,22 +839,19 @@ def render_header(
                 """,
                 unsafe_allow_html=True,
             )
-        with controls_col:
-            if show_admin_menu:
-                menu_col, status_col = st.columns(
-                    [0.55, 5.45],
-                    vertical_alignment="center",
-                )
-                with menu_col:
-                    with st.popover("☰", help="管理菜单"):
-                        st.caption("管理菜单")
-                        menu_items = [
-                            ("工作台", "工作台"),
-                            ("账户管理", "账号管理"),
-                            ("个人主页", "个人主页"),
-                            ("系统说明", "系统说明"),
-                        ]
-                        for label, page_name in menu_items:
+        if controls_col is not None:
+            with controls_col:
+                with st.popover("☰", help="管理菜单与数据状态"):
+                    st.caption("管理菜单")
+                    menu_items = [
+                        ("工作台", "工作台"),
+                        ("账户管理", "账号管理"),
+                        ("个人主页", "个人主页"),
+                        ("系统说明", "系统说明"),
+                    ]
+                    menu_cols = st.columns(2)
+                    for index, (label, page_name) in enumerate(menu_items):
+                        with menu_cols[index % 2]:
                             if st.button(
                                 label,
                                 key=f"admin_menu_{page_name}",
@@ -847,13 +864,13 @@ def render_header(
                             ):
                                 st.session_state.admin_console_page = page_name
                                 st.rerun()
-            else:
-                status_col = controls_col
-            with status_col:
-                st.markdown(
-                    f'<div class="app-header-status">{pills}</div>',
-                    unsafe_allow_html=True,
-                )
+                    st.divider()
+                    st.markdown("#### 数据状态")
+                    st.markdown(
+                        f'<div class="admin-status-grid">{status_rows}</div>',
+                        unsafe_allow_html=True,
+                    )
+                    st.caption("每 10 秒自动检查后端与数据产物更新")
 
 
 INTERVIEW_GREETING = "您好，我先陪您慢慢聊一会儿。不用着急，想到哪说到哪。\n\n最近这一周，您晚上睡得好吗？会不会半夜醒、醒得早，或者白天总没精神？"
