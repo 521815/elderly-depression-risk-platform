@@ -157,6 +157,132 @@ def inject_css() -> None:
             font-weight: 740;
             letter-spacing: 0.16em;
         }
+        .assessment-hero {
+            padding: 0.25rem 0 1rem;
+            margin-bottom: 0.55rem;
+        }
+        .assessment-eyebrow,
+        .panel-kicker {
+            color: var(--accent);
+            font-size: 0.68rem;
+            font-weight: 760;
+            letter-spacing: 0.08em;
+        }
+        .assessment-title-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 1rem;
+            margin-top: 0.36rem;
+        }
+        .assessment-title-row h2 {
+            margin: 0;
+            color: var(--ink);
+            font-family: "Songti SC", "STSong", "Noto Serif CJK SC", "Times New Roman", serif;
+            font-size: clamp(2rem, 2.7vw, 2.65rem);
+            font-weight: 700;
+            line-height: 1.18;
+        }
+        .assessment-local-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.42rem;
+            padding: 0.34rem 0.58rem;
+            border: 1px solid #cfe0da;
+            border-radius: 999px;
+            color: #34675e;
+            background: rgba(255, 255, 255, 0.68);
+            font-size: 0.74rem;
+            font-weight: 680;
+            white-space: nowrap;
+        }
+        .assessment-local-badge i {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: #1a8b68;
+            box-shadow: 0 0 0 3px rgba(26, 139, 104, 0.10);
+        }
+        .assessment-hero > p {
+            max-width: 56rem;
+            margin: 0.45rem 0 0;
+            color: var(--muted);
+            line-height: 1.65;
+        }
+        .assessment-steps {
+            display: grid;
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+            margin-top: 1rem;
+            border-top: 1px solid var(--line);
+            border-bottom: 1px solid var(--line);
+        }
+        .assessment-steps span {
+            padding: 0.58rem 0.7rem 0.58rem 0;
+            color: #617477;
+            font-size: 0.78rem;
+            font-weight: 620;
+        }
+        .assessment-steps span + span {
+            padding-left: 0.9rem;
+            border-left: 1px solid var(--line);
+        }
+        .assessment-steps b {
+            margin-right: 0.45rem;
+            color: #9b712f;
+            font-family: "Avenir Next", "Helvetica Neue", sans-serif;
+            font-size: 0.68rem;
+            letter-spacing: 0.08em;
+        }
+        .panel-kicker {
+            margin-bottom: 0.28rem;
+        }
+        .panel-title {
+            color: var(--ink);
+            font-family: "Songti SC", "STSong", "Noto Serif CJK SC", "Times New Roman", serif;
+            font-size: 1.22rem;
+            font-weight: 700;
+        }
+        .panel-copy {
+            margin: 0.2rem 0 0.55rem;
+            color: var(--muted);
+            font-size: 0.82rem;
+            line-height: 1.55;
+        }
+        .assessment-result-head {
+            margin-top: 0.35rem;
+            padding-top: 1.05rem;
+            border-top: 1px solid var(--line);
+        }
+        .st-key-assessment_privacy_panel [data-testid="stVerticalBlockBorderWrapper"],
+        .st-key-assessment_mode_panel [data-testid="stVerticalBlockBorderWrapper"],
+        .st-key-assessment_storage_panel [data-testid="stVerticalBlockBorderWrapper"],
+        .st-key-assessment_user_panel [data-testid="stVerticalBlockBorderWrapper"] {
+            border: 1px solid var(--line);
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.68);
+            box-shadow: none;
+        }
+        .st-key-assessment_user_panel .user-card {
+            min-height: 58px;
+            padding: 0.45rem 0;
+            border: 0;
+            border-top: 1px solid var(--line);
+            border-radius: 0;
+            background: transparent;
+            box-shadow: none;
+        }
+        .st-key-assessment_user_panel .user-card:hover {
+            border-color: var(--line);
+            box-shadow: none;
+            transform: none;
+        }
+        .st-key-interview_chat_panel [data-testid="stVerticalBlockBorderWrapper"],
+        .st-key-companion_chat_panel [data-testid="stVerticalBlockBorderWrapper"] {
+            border: 1px solid var(--line);
+            border-radius: 8px;
+            background: #ffffff;
+            box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.72);
+        }
         .st-key-app_header .status-pill {
             color: rgba(244, 255, 253, 0.9);
             background: rgba(255, 255, 255, 0.09);
@@ -396,15 +522,21 @@ def inject_css() -> None:
             box-shadow: inset 0 -2px 0 var(--accent);
         }
         [data-testid="stExpander"] {
-            background: var(--panel);
-            border: 1px solid var(--line);
-            border-radius: 10px;
-            box-shadow: var(--shadow-sm);
-            overflow: hidden;
+            background: transparent;
+            border: 0;
+            border-top: 1px solid var(--line);
+            border-radius: 0;
+            box-shadow: none;
+            overflow: visible;
         }
         [data-testid="stExpander"] summary {
-            font-weight: 650;
-            background: #f8fbfa;
+            min-height: 3rem;
+            padding: 0.72rem 0;
+            color: var(--ink);
+            font-family: "Songti SC", "STSong", "Noto Serif CJK SC", "Times New Roman", serif;
+            font-size: 1.06rem;
+            font-weight: 700;
+            background: transparent;
         }
         [data-testid="stExpander"] summary:hover {
             color: var(--accent-strong);
@@ -440,34 +572,40 @@ def inject_css() -> None:
             color: var(--accent-strong) !important;
         }
         .st-key-conversation_mode_selector [role="radiogroup"] {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 0.45rem;
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 0.25rem;
+            width: 100%;
+            padding: 0.25rem;
+            border: 1px solid #d9e3df;
+            border-radius: 8px;
+            background: #eef3f1;
         }
         .st-key-conversation_mode_selector [role="radiogroup"] label {
-            display: inline-flex;
+            display: flex;
             align-items: center;
+            justify-content: center;
             gap: 0.3rem;
-            min-height: 2.35rem;
-            padding: 0.35rem 0.85rem;
-            border: 1px solid var(--line);
-            border-radius: 999px;
-            background: #f7fbfa;
+            min-height: 2.45rem;
+            padding: 0.35rem 0.55rem;
+            border: 0;
+            border-radius: 6px;
+            background: transparent;
             cursor: pointer;
-            transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+            transition: background 0.18s ease, box-shadow 0.18s ease, color 0.18s ease;
         }
         .st-key-conversation_mode_selector [role="radiogroup"] label:hover {
-            border-color: var(--accent);
-            background: var(--accent-soft);
+            background: rgba(255, 255, 255, 0.65);
         }
         .st-key-conversation_mode_selector [role="radiogroup"] label:has(input:checked),
         .st-key-conversation_mode_selector [aria-checked="true"] {
-            border-color: var(--accent);
-            background: var(--accent);
+            border-color: transparent;
+            background: #ffffff;
+            box-shadow: 0 2px 7px rgba(24, 70, 73, 0.09);
         }
         .st-key-conversation_mode_selector [role="radiogroup"] label:has(input:checked) *,
         .st-key-conversation_mode_selector [aria-checked="true"] * {
-            color: #ffffff !important;
+            color: var(--accent-strong) !important;
         }
         .st-key-conversation_mode_selector [role="radiogroup"] label > div:first-child {
             display: none;
@@ -525,6 +663,11 @@ def inject_css() -> None:
             box-shadow: var(--shadow-sm);
             transition: border-color 0.18s ease, box-shadow 0.18s ease;
         }
+        [data-testid="stChatMessage"]:has([data-testid="chatAvatarIcon-user"]) {
+            margin-left: 10%;
+            border-color: #d1e2dd;
+            background: #edf5f2;
+        }
         [data-testid="stChatMessage"]:hover {
             border-color: #cfe2dd;
             box-shadow: 0 8px 20px rgba(24, 70, 73, 0.07);
@@ -534,6 +677,16 @@ def inject_css() -> None:
         }
         [data-testid="stChatMessage"] [data-testid="chatAvatarIcon-assistant"] {
             background: #2f8f83;
+        }
+        [data-testid="stChatInput"] {
+            border-radius: 8px;
+            border-color: #d3e1dd;
+            background: #ffffff;
+            box-shadow: none;
+        }
+        [data-testid="stChatInput"]:focus-within {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px rgba(15, 111, 102, 0.10);
         }
         [data-testid="stDataFrame"] {
             border: 1px solid var(--line);
@@ -610,8 +763,11 @@ def inject_css() -> None:
         }
         .factor-row {
             display: grid;
-            grid-template-columns: minmax(96px, auto) minmax(72px, auto) 1fr;
-            gap: 0.5rem 0.7rem;
+            grid-template-columns: minmax(0, 1fr) auto;
+            grid-template-areas:
+                "factor-label factor-value"
+                "factor-delta factor-delta";
+            gap: 0.22rem 0.7rem;
             align-items: center;
             padding: 0.5rem 0;
             border-bottom: 1px solid var(--line);
@@ -621,22 +777,24 @@ def inject_css() -> None:
             border-bottom: none;
         }
         .factor-label {
+            grid-area: factor-label;
             color: var(--muted);
             font-size: 0.86rem;
         }
         .factor-value {
+            grid-area: factor-value;
             color: var(--ink);
             font-weight: 650;
             font-size: 0.94rem;
             white-space: nowrap;
         }
         .factor-delta {
+            grid-area: factor-delta;
             color: var(--muted);
             font-size: 0.8rem;
-            text-align: right;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
+            text-align: left;
+            white-space: normal;
+            overflow: visible;
         }
         .user-card {
             background: var(--panel);
@@ -1255,6 +1413,12 @@ SCALE_LABELS = {
     "phq9": "患者健康问卷（PHQ-9）",
     "gds15": "老年抑郁量表（GDS-15）",
     "hamd24": "汉密尔顿量表（HAMD-24）",
+}
+SCALE_SELECT_LABELS = {
+    "cesd10": "CES-D-10｜流调中心量表",
+    "phq9": "PHQ-9｜患者健康问卷",
+    "gds15": "GDS-15｜老年抑郁量表",
+    "hamd24": "HAMD-24｜汉密尔顿量表",
 }
 
 SCALE_ITEMS = {
@@ -2468,8 +2632,14 @@ def store_interview_response(agent_response: dict) -> None:
 
 
 def render_companion_chat(api_key: str) -> None:
-    st.markdown("#### 日常陪伴式聊天")
-    st.caption("这里不进入风险评分，就是陪您慢慢聊聊天。")
+    st.markdown(
+        """
+        <div class="panel-kicker">陪伴对话</div>
+        <div class="panel-title">日常陪伴式聊天</div>
+        <div class="panel-copy">这段对话不进入风险评分，只用于陪伴交流。</div>
+        """,
+        unsafe_allow_html=True,
+    )
 
     button_col, hint_col = st.columns([0.28, 0.72])
     with button_col:
@@ -2479,7 +2649,11 @@ def render_companion_chat(api_key: str) -> None:
     with hint_col:
         st.caption("切回“温情问询”可继续做风险筛查。")
 
-    chat_box = st.container(border=True, height=420)
+    chat_box = st.container(
+        key="companion_chat_panel",
+        border=True,
+        height=420,
+    )
     with chat_box:
         for msg in st.session_state.companion_messages:
             with st.chat_message(msg["role"]):
@@ -2634,49 +2808,97 @@ def render_companion_chat(api_key: str) -> None:
 
 
 def render_assessment(api_key: str) -> None:
-    st.subheader("抑郁风险筛查")
-    st.caption("填写背景与量表，再进行一轮简短访谈；每次回答都会实时更新风险概率。")
-    cloud_consent = st.toggle(
-        "允许将脱敏后的对话文本发送给第三方大模型服务",
-        value=st.session_state.get("cloud_consent", False),
-        key="cloud_consent_toggle",
-        help="默认关闭。开启后仍不会发送姓名、住址、电话、证件号或邮箱。",
+    st.markdown(
+        """
+        <section class="assessment-hero">
+            <div class="assessment-eyebrow">科研评估 · 01</div>
+            <div class="assessment-title-row">
+                <h2>抑郁风险筛查</h2>
+                <span class="assessment-local-badge"><i></i>本地优先</span>
+            </div>
+            <p>填写背景与量表，再进行一轮简短访谈；系统会同步整理量表、语言和可用行为线索。</p>
+            <div class="assessment-steps">
+                <span><b>01</b>评估方式</span>
+                <span><b>02</b>背景与量表</span>
+                <span><b>03</b>半结构化访谈</span>
+                <span><b>04</b>风险解释</span>
+            </div>
+        </section>
+        """,
+        unsafe_allow_html=True,
     )
-    st.session_state.cloud_consent = cloud_consent
-    if not cloud_consent:
-        st.caption("当前仅使用本地规则与本地模型，不向第三方发送对话。")
 
-    if "conversation_mode_selector" not in st.session_state:
-        st.session_state.conversation_mode_selector = st.session_state.get(
-            "conversation_mode", "interview"
-        )
-    mode = st.radio(
-        "对话模式",
-        options=["interview", "companion"],
-        key="conversation_mode_selector",
-        on_change=sync_conversation_mode,
-        format_func=lambda x: "温情问询" if x == "interview" else "日常陪伴式聊天",
-        horizontal=True,
-        label_visibility="collapsed",
-    )
-    if mode in {"interview", "companion"}:
-        st.session_state.conversation_mode = mode
-    mode = st.session_state.get("conversation_mode", "interview")
-    st.caption(
-        "当前模式：温情问询 · 进入抑郁风险筛查"
-        if mode == "interview"
-        else "当前模式：日常陪伴式聊天 · 不进入风险评分"
-    )
+    control_cols = st.columns([0.46, 0.54], gap="large")
+    with control_cols[0]:
+        with st.container(key="assessment_privacy_panel", border=True):
+            st.markdown(
+                """
+                <div class="panel-kicker">隐私与数据</div>
+                <div class="panel-title">隐私与数据</div>
+                <div class="panel-copy">默认在本地完成筛查；只有明确开启后才调用第三方模型。</div>
+                """,
+                unsafe_allow_html=True,
+            )
+            cloud_consent = st.toggle(
+                "允许第三方模型增强",
+                value=st.session_state.get("cloud_consent", False),
+                key="cloud_consent_toggle",
+                help="默认关闭。开启后仍不会发送姓名、住址、电话、证件号或邮箱。",
+            )
+            st.session_state.cloud_consent = cloud_consent
+            st.caption(
+                "已开启脱敏后的第三方模型增强。"
+                if cloud_consent
+                else "本地规则与本地模型正在运行。"
+            )
+
+    with control_cols[1]:
+        with st.container(key="assessment_mode_panel", border=True):
+            st.markdown(
+                """
+                <div class="panel-kicker">交流方式</div>
+                <div class="panel-title">选择交流方式</div>
+                <div class="panel-copy">温情问询进入筛查；日常陪伴不生成风险结论。</div>
+                """,
+                unsafe_allow_html=True,
+            )
+            if "conversation_mode_selector" not in st.session_state:
+                st.session_state.conversation_mode_selector = st.session_state.get(
+                    "conversation_mode", "interview"
+                )
+            mode = st.radio(
+                "对话模式",
+                options=["interview", "companion"],
+                key="conversation_mode_selector",
+                on_change=sync_conversation_mode,
+                format_func=lambda x: "温情问询" if x == "interview" else "日常陪伴式聊天",
+                horizontal=True,
+                label_visibility="collapsed",
+            )
+            if mode in {"interview", "companion"}:
+                st.session_state.conversation_mode = mode
+            mode = st.session_state.get("conversation_mode", "interview")
+            st.caption(
+                "当前：温情问询 · 进入风险筛查"
+                if mode == "interview"
+                else "当前：日常陪伴 · 不进入风险评分"
+            )
+
     if mode == "companion":
         render_companion_chat(api_key)
         return
 
-    storage_consent = st.toggle(
-        "我已知晓并同意将本次评估数据保存到当前设备",
-        value=st.session_state.get("assessment_storage_consent", False),
-        key="assessment_storage_consent_toggle",
-        help="不勾选仍可查看和导出本次结果，但不会写入用户评估记录。",
-    )
+    with st.container(key="assessment_storage_panel", border=True):
+        storage_col, storage_note_col = st.columns([0.58, 0.42], vertical_alignment="center")
+        with storage_col:
+            storage_consent = st.toggle(
+                "允许将本次评估保存到当前设备",
+                value=st.session_state.get("assessment_storage_consent", False),
+                key="assessment_storage_consent_toggle",
+                help="不勾选仍可查看和导出本次结果，但不会写入用户评估记录。",
+            )
+        with storage_note_col:
+            st.caption("保存后可回到用户记录页查看历史趋势；不保存不会影响本次结果。")
     st.session_state.assessment_storage_consent = storage_consent
 
     users = backend.list_users()
@@ -2696,8 +2918,15 @@ def render_assessment(api_key: str) -> None:
             st.session_state.profile_loaded_user_id = active_uid
             st.session_state.profile_loaded_updated_at = active_user_cache.get("updated_at")
 
-    with st.container(border=True):
-        st.markdown("#### 当前用户")
+    with st.container(key="assessment_user_panel", border=True):
+        st.markdown(
+            """
+            <div class="panel-kicker">用户档案</div>
+            <div class="panel-title">当前用户</div>
+            <div class="panel-copy">选择已有档案，或直接创建新的筛查对象。</div>
+            """,
+            unsafe_allow_html=True,
+        )
         if users:
             options = [u["id"] for u in users]
             default_index = (
@@ -2822,7 +3051,7 @@ def render_assessment(api_key: str) -> None:
             scale_key = st.selectbox(
                 "量表",
                 scale_options,
-                format_func=lambda x: SCALE_LABELS[x],
+                format_func=lambda x: SCALE_SELECT_LABELS[x],
             )
             item_config = {
                 "cesd10": (10, 3),
@@ -2906,7 +3135,14 @@ def render_assessment(api_key: str) -> None:
                 st.caption(f"{active_user['name']} · 暂无历史评估，保存后可在用户记录页查看趋势")
         else:
             st.caption("当前未选择用户，可在上方填写姓名创建。")
-        st.markdown("#### 对话访谈")
+        st.markdown(
+            """
+            <div class="panel-kicker">半结构化访谈</div>
+            <div class="panel-title">对话访谈</div>
+            <div class="panel-copy">回答会结合背景与量表实时更新风险解释。</div>
+            """,
+            unsafe_allow_html=True,
+        )
         action_cols = st.columns([0.34, 0.30, 0.36])
         with action_cols[0]:
             if st.button("填入高风险示例回答", width="stretch"):
@@ -2919,7 +3155,11 @@ def render_assessment(api_key: str) -> None:
         with action_cols[2]:
             st.caption("问题会随回答动态调整")
 
-        chat_box = st.container(border=True, height=300)
+        chat_box = st.container(
+            key="interview_chat_panel",
+            border=True,
+            height=340,
+        )
         with chat_box:
             for msg in st.session_state.messages:
                 with st.chat_message(msg["role"]):
@@ -3130,6 +3370,15 @@ def render_assessment(api_key: str) -> None:
         level_map = {"low": ("低风险", "#16a34a"), "medium": ("中风险", "#f59e0b"), "high": ("高风险", "#dc2626")}
         level_text, level_color = level_map[level]
         st.markdown(
+            """
+            <div class="assessment-result-head">
+                <div class="panel-kicker">本次评估结果</div>
+                <div class="panel-title">风险概率与构成</div>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+        st.markdown(
             f'<span class="risk-badge" style="color:{level_color};">{level_text}</span> '
             f"<span style='color:var(--muted);font-size:0.85rem;'>依据对话、量表、共病与表情线索</span>",
             unsafe_allow_html=True,
@@ -3224,47 +3473,47 @@ def render_assessment(api_key: str) -> None:
                 ensure_ascii=False,
                 sort_keys=True,
             )
-            action_cols = st.columns(3 if active_user else 2)
-            with action_cols[0]:
-                if active_user:
-                    if st.button(
-                        "保存本次评估到用户记录",
-                        key="save_assessment",
-                        width="stretch",
-                        disabled=not storage_consent,
-                    ):
-                        if persist_assessment(active_user, record, signature):
-                            st.toast("已保存到用户记录")
-                            st.rerun()
-                        else:
-                            st.toast("本次结果已保存，无需重复保存")
-            with action_cols[1 if active_user else 0]:
-                st.download_button(
-                    "导出评估报告",
-                    data=report_md.encode("utf-8"),
-                    file_name=f"depression_risk_report_{datetime.now().strftime('%Y%m%d_%H%M%S')}.md",
-                    mime="text/markdown",
-                    width="stretch",
-                    key="export_risk_report",
-                )
-            speech_summary = (
-                f"本次评估的抑郁风险概率为{prob:.0%}，风险等级为{level_text}。"
-                "该结果仅用于科研筛查与风险提示，不替代临床诊断。"
-            )
-            with action_cols[2 if active_user else 1]:
-                if st.button("朗读结果", key="speak_result", width="stretch"):
-                    speak_text(speech_summary)
+        action_cols = st.columns(3 if active_user else 2)
+        with action_cols[0]:
             if active_user:
                 if st.button(
-                    "保存并查看用户记录",
-                    key="save_and_view_records",
+                    "保存到用户记录",
+                    key="save_assessment",
                     width="stretch",
                     disabled=not storage_consent,
                 ):
-                    persist_assessment(active_user, record, signature)
-                    st.session_state.selected_user_id = active_user["id"]
-                    st.session_state.active_user_id = active_user["id"]
-                    navigate_to("用户记录")
+                    if persist_assessment(active_user, record, signature):
+                        st.toast("已保存到用户记录")
+                        st.rerun()
+                    else:
+                        st.toast("本次结果已保存，无需重复保存")
+        with action_cols[1 if active_user else 0]:
+            st.download_button(
+                "导出评估报告",
+                data=report_md.encode("utf-8"),
+                file_name=f"depression_risk_report_{datetime.now().strftime('%Y%m%d_%H%M%S')}.md",
+                mime="text/markdown",
+                width="stretch",
+                key="export_risk_report",
+            )
+        speech_summary = (
+            f"本次评估的抑郁风险概率为{prob:.0%}，风险等级为{level_text}。"
+            "该结果仅用于科研筛查与风险提示，不替代临床诊断。"
+        )
+        with action_cols[2 if active_user else 1]:
+            if st.button("朗读结果", key="speak_result", width="stretch"):
+                speak_text(speech_summary)
+        if active_user:
+            if st.button(
+                "保存并查看记录",
+                key="save_and_view_records",
+                width="stretch",
+                disabled=not storage_consent,
+            ):
+                persist_assessment(active_user, record, signature)
+                st.session_state.selected_user_id = active_user["id"]
+                st.session_state.active_user_id = active_user["id"]
+                navigate_to("用户记录")
         st.caption(result["disclaimer"])
 
 

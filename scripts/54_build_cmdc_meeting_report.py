@@ -34,6 +34,9 @@ MODEL_COMPARISON_CSV = PROJECT_ROOT / "output" / "cmdc_model_comparison.csv"
 CALIBRATION_CSV = PROJECT_ROOT / "output" / "cmdc_calibration_curve.csv"
 DECISION_CURVE_CSV = PROJECT_ROOT / "output" / "cmdc_decision_curve.csv"
 FRONTEND_LOGIN_IMAGE = PROJECT_ROOT / "docs" / "assets" / "frontend" / "login-editorial.png"
+FRONTEND_ASSESSMENT_IMAGE = (
+    PROJECT_ROOT / "docs" / "assets" / "frontend" / "assessment-editorial.png"
+)
 FRONTEND_WORKBENCH_IMAGE = (
     PROJECT_ROOT / "docs" / "assets" / "frontend" / "workbench-editorial.png"
 )
@@ -1160,7 +1163,33 @@ def build() -> Document:
 
     page_break(doc)
 
-    add_heading(doc, "10.1 工作台与状态中心", 2)
+    add_heading(doc, "10.1 一页式风险评估", 2)
+    add_text(
+        doc,
+        "风险评估页按真实任务顺序组织信息：先确认隐私与交流方式，再选择筛查对象，随后完成背景、量表与访谈，"
+        "最后查看风险概率、因素构成与导出操作。页面不再依赖默认表单的纵向堆叠。",
+    )
+    add_bullet(doc, "隐私授权与交流模式并列展示，本地运行状态和当前模式可直接识别。")
+    add_bullet(doc, "用户档案、基本信息和量表作答使用统一标题、边框与间距，减少误操作和重复查找。")
+    add_bullet(doc, "访谈、风险概率与风险构成放在同一结果区域，保存、导出和朗读操作移到完整宽度的操作带。")
+    doc.add_picture(str(FRONTEND_ASSESSMENT_IMAGE), width=Inches(6.35))
+    doc.inline_shapes[-1]._inline.docPr.set(
+        "descr",
+        "新版风险评估页，展示隐私与数据、交流方式、用户档案、量表、访谈和风险结果",
+    )
+    doc.inline_shapes[-1]._inline.docPr.set("title", "新版一页式风险评估")
+    doc.paragraphs[-1].alignment = WD_ALIGN_PARAGRAPH.CENTER
+    fmt_paragraph(doc.paragraphs[-1], after=3)
+    p = doc.add_paragraph()
+    p.alignment = WD_ALIGN_PARAGRAPH.CENTER
+    fmt_paragraph(p, after=8)
+    run = p.add_run("图 8 一页式风险评估与任务分区")
+    set_font(run, size=8.5)
+    run.font.color.rgb = MUTED
+
+    page_break(doc)
+
+    add_heading(doc, "10.2 工作台与状态中心", 2)
     add_text(
         doc,
         "工作台保留风险筛查、用户记录、多模态数据、数据健康和统计校正等核心流程，"
@@ -1177,7 +1206,7 @@ def build() -> Document:
     p = doc.add_paragraph()
     p.alignment = WD_ALIGN_PARAGRAPH.CENTER
     fmt_paragraph(p, after=8)
-    run = p.add_run("图 8 数据健康页面与新版工作台布局")
+    run = p.add_run("图 9 数据健康页面与新版工作台布局")
     set_font(run, size=8.5)
     run.font.color.rgb = MUTED
     add_text(
