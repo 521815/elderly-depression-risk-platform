@@ -463,20 +463,22 @@ def inject_css() -> None:
         .st-key-main_nav [role="radiogroup"] {
             display: flex;
             flex-wrap: wrap;
-            gap: 0.1rem;
-            padding: 0.34rem;
-            background: rgba(255, 255, 255, 0.94);
-            border: 1px solid var(--line);
-            border-radius: 12px;
-            box-shadow: 0 8px 22px rgba(24, 70, 73, 0.06);
+            gap: 0.12rem;
+            padding: 0 0 0.55rem;
+            background: transparent;
+            border: 0;
+            border-bottom: 1px solid var(--line);
+            border-radius: 0;
+            box-shadow: none;
         }
         .st-key-main_nav [role="radiogroup"] label {
             display: inline-flex;
             align-items: center;
             min-height: 2.45rem;
-            padding: 0.35rem 0.68rem;
-            border: 1px solid transparent;
-            border-radius: 8px;
+            padding: 0.38rem 0.62rem;
+            border: 0;
+            border-bottom: 2px solid transparent;
+            border-radius: 6px;
             color: var(--muted);
             font-size: 0.86rem;
             font-weight: 600;
@@ -484,14 +486,16 @@ def inject_css() -> None:
             transition: background 0.18s ease, color 0.18s ease, border-color 0.18s ease, transform 0.14s ease;
         }
         .st-key-main_nav [role="radiogroup"] label:hover {
-            background: #f1f6f4;
+            background: #edf4f1;
             color: var(--accent-strong);
+            border-bottom-color: #b6d2ca;
         }
         .st-key-main_nav [role="radiogroup"] label:has(input:checked),
         .st-key-main_nav [aria-checked="true"] {
-            background: var(--accent-soft);
-            border-color: #d2e2dd;
-            box-shadow: inset 0 -2px 0 var(--accent);
+            background: transparent;
+            border-color: transparent;
+            border-bottom-color: var(--accent);
+            box-shadow: none;
         }
         .st-key-main_nav [role="radiogroup"] label:has(input:checked) *,
         .st-key-main_nav [aria-checked="true"] * {
@@ -1782,7 +1786,7 @@ def render_auth_gate() -> None:
     with shell:
         brand_col, auth_col = st.columns([1.03, 0.97], gap="large")
         logo_path = PROJECT_ROOT / "webapp" / "assets" / "logo-mark.svg"
-        illustration_path = PROJECT_ROOT / "webapp" / "assets" / "conversation-editorial.svg"
+        illustration_path = PROJECT_ROOT / "webapp" / "assets" / "conversation-chairs.svg"
         logo_uri = ""
         illustration_uri = ""
         if logo_path.exists():
@@ -1810,7 +1814,7 @@ def render_auth_gate() -> None:
                     对话、量表与多模态信号协同，为科研风险筛查提供可解释的风险参考。
                 </p>
                 <div class="auth-brand-illustration">
-                    <img src="{illustration_uri}" alt="两位长者相对而坐、交流对话的插画">
+                    <img src="{illustration_uri}" alt="两把相对摆放的椅子、茶几与绿植插画">
                 </div>
                 <div class="auth-trust-row">
                     <span class="auth-trust-chip">本地处理优先</span>
@@ -2326,13 +2330,13 @@ def render_sidebar() -> str:
                 st.caption("已填写，用于对话 Agent 与风险摘要。")
             else:
                 st.caption("留空时使用本地 .env 配置。")
-            visual_path = PROJECT_ROOT / "webapp" / "assets" / "conversation-editorial.svg"
+            visual_path = PROJECT_ROOT / "webapp" / "assets" / "conversation-chairs.svg"
             if visual_path.exists():
                 visual_data = base64.b64encode(visual_path.read_bytes()).decode("ascii")
                 st.markdown(
                     f'<div class="sidebar-visual">'
                     f'<img src="data:image/svg+xml;base64,{visual_data}" '
-                    f'alt="两位长者相对而坐、交流对话的插画">'
+                    f'alt="两把相对摆放的椅子、茶几与绿植插画">'
                     f"</div>",
                     unsafe_allow_html=True,
                 )

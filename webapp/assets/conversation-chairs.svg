@@ -1,0 +1,57 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 420" role="img" aria-labelledby="title desc">
+  <title id="title">Quiet conversation room</title>
+  <desc id="desc">Two empty chairs face each other beside a small table and plant, suggesting a calm space for conversation.</desc>
+  <defs>
+    <linearGradient id="paper" x1="52" y1="20" x2="664" y2="410" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#fafbf8"/>
+      <stop offset="1" stop-color="#eef4f0"/>
+    </linearGradient>
+    <pattern id="grain" width="18" height="18" patternUnits="userSpaceOnUse">
+      <circle cx="2" cy="2" r=".8" fill="#809b91" opacity=".18"/>
+    </pattern>
+  </defs>
+
+  <rect width="720" height="420" rx="18" fill="url(#paper)"/>
+  <rect width="720" height="420" rx="18" fill="url(#grain)"/>
+  <path d="M22 328C130 304 218 342 322 317C441 288 548 260 696 286" fill="none" stroke="#c2d7ce" stroke-width="1.5"/>
+  <path d="M55 349C175 329 272 362 376 341C492 318 576 309 676 324" fill="none" stroke="#d6e4de" stroke-width="1.2"/>
+
+  <g fill="none" stroke="#1b3e40" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M142 285V211C142 190 155 178 173 178H217C235 178 248 191 248 210V289"/>
+    <path d="M160 219H228V258H160Z" fill="#e4ede9"/>
+    <path d="M151 289C151 300 159 308 170 308H219C230 308 238 300 238 289"/>
+    <path d="M166 308V337M225 308V337"/>
+    <path d="M256 238H276C291 238 298 248 298 260V285"/>
+    <path d="M257 260H294V285"/>
+
+    <path d="M578 285V211C578 190 565 178 547 178H503C485 178 472 191 472 210V289"/>
+    <path d="M492 219H560V258H492Z" fill="#efe7d8"/>
+    <path d="M482 289C482 300 490 308 501 308H550C561 308 569 300 569 289"/>
+    <path d="M495 308V337M554 308V337"/>
+    <path d="M422 238H464V285H464"/>
+    <path d="M425 260H462"/>
+  </g>
+
+  <g fill="none" stroke="#1b3e40" stroke-width="2.2" stroke-linecap="round">
+    <ellipse cx="360" cy="300" rx="72" ry="18"/>
+    <path d="M360 282V195"/>
+    <path d="M360 201C338 180 318 176 299 180C305 203 324 217 355 218"/>
+    <path d="M360 218C373 194 392 181 419 178C414 204 398 219 365 226"/>
+    <path d="M360 201C354 179 360 161 378 148C391 166 385 188 368 205"/>
+    <path d="M345 245H375V278H345Z" fill="#f3e5cb"/>
+    <path d="M382 251C392 257 394 267 388 276"/>
+  </g>
+
+  <g fill="none" stroke-linecap="round">
+    <path d="M300 134C325 124 343 124 360 134C377 124 395 124 420 134" stroke="#b98842" stroke-width="2.2"/>
+    <path d="M315 151H337L345 139L354 161L361 145L369 151H405" stroke="#337b71" stroke-width="2.3"/>
+    <path d="M274 119C258 106 253 88 260 70" stroke="#92b0a6" stroke-width="1.4" stroke-dasharray="4 7"/>
+    <path d="M446 119C462 106 467 88 460 70" stroke="#92b0a6" stroke-width="1.4" stroke-dasharray="4 7"/>
+  </g>
+
+  <g fill="#b98842">
+    <circle cx="338" cy="102" r="2.7"/>
+    <circle cx="360" cy="92" r="2"/>
+    <circle cx="382" cy="102" r="2.7"/>
+  </g>
+</svg>
