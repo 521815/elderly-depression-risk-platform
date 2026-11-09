@@ -34,26 +34,26 @@ def inject_css() -> None:
         """
         <style>
         :root {
-            --ink: #18343b;
-            --muted: #667b82;
-            --line: #dce7e5;
+            --ink: #18282b;
+            --muted: #66777b;
+            --line: #d8e1de;
             --panel: #ffffff;
-            --canvas: #f3f7f6;
-            --accent: #0f766e;
-            --accent-strong: #0a5f59;
-            --accent-soft: #e6f4f1;
-            --amber: #a65f00;
-            --amber-soft: #fff5df;
-            --green: #11835f;
-            --green-soft: #e8f7f1;
+            --canvas: #f4f6f3;
+            --accent: #0f6f66;
+            --accent-strong: #0a5650;
+            --accent-soft: #e8f1ee;
+            --amber: #a96d24;
+            --amber-soft: #fbf3e4;
+            --green: #16725a;
+            --green-soft: #e9f4ef;
             --red: #c53d3d;
             --red-soft: #fff0ef;
-            --shadow-sm: 0 1px 2px rgba(16, 24, 40, 0.05), 0 1px 3px rgba(16, 24, 40, 0.06);
-            --shadow-md: 0 12px 28px rgba(22, 58, 63, 0.10);
+            --shadow-sm: 0 1px 2px rgba(16, 24, 40, 0.04);
+            --shadow-md: 0 12px 30px rgba(22, 58, 63, 0.09);
         }
         .stApp {
             background:
-                linear-gradient(180deg, #eaf3f1 0, var(--canvas) 250px, var(--canvas) 100%);
+                linear-gradient(180deg, #f8faf7 0, var(--canvas) 260px, var(--canvas) 100%);
             color: var(--ink);
             font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Segoe UI", sans-serif;
         }
@@ -87,18 +87,15 @@ def inject_css() -> None:
             line-height: 1.55;
         }
         .st-key-app_header {
-            background:
-                linear-gradient(112deg, rgba(18, 63, 59, 0.99), rgba(14, 93, 87, 0.98) 58%, rgba(13, 111, 102, 0.96)),
-                rgba(14, 93, 87, 0.96);
-            border: 1px solid rgba(255, 255, 255, 0.12);
-            border-radius: 14px;
-            padding: 0.95rem 1.1rem;
+            background: rgba(255, 255, 255, 0.92);
+            border: 1px solid var(--line);
+            border-left: 4px solid var(--accent);
+            border-radius: 10px;
+            padding: 0.9rem 1.05rem;
             margin-bottom: 1rem;
             box-shadow:
-                inset 0 1px 0 rgba(255, 255, 255, 0.08),
-                0 18px 38px rgba(15, 72, 69, 0.18);
-            backdrop-filter: blur(18px) saturate(1.12);
-            -webkit-backdrop-filter: blur(18px) saturate(1.12);
+                0 1px 2px rgba(16, 24, 40, 0.04),
+                0 12px 28px rgba(28, 66, 67, 0.07);
         }
         .st-key-app_header [data-testid="stHorizontalBlock"] {
             align-items: center;
@@ -110,11 +107,11 @@ def inject_css() -> None:
             gap: 0.9rem;
         }
         .app-mark {
-            width: 44px;
-            height: 44px;
-            border-radius: 10px;
-            background: rgba(255, 255, 255, 0.12);
-            border: 1px solid rgba(255, 255, 255, 0.18);
+            width: 42px;
+            height: 42px;
+            border-radius: 8px;
+            background: var(--accent-soft);
+            border: 1px solid #d3e4df;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -123,8 +120,8 @@ def inject_css() -> None:
             transition: background 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
         }
         .app-mark:hover {
-            background: rgba(255, 255, 255, 0.17);
-            border-color: rgba(255, 255, 255, 0.30);
+            background: #dfeee9;
+            border-color: #bfd9d2;
             transform: translateY(-1px);
         }
         .app-mark img {
@@ -133,14 +130,21 @@ def inject_css() -> None:
             height: 100%;
         }
         .app-name {
-            color: #ffffff;
-            font-size: 1.2rem;
+            color: var(--ink);
+            font-size: 1.14rem;
             font-weight: 760;
             line-height: 1.25;
         }
         .app-sub {
-            color: rgba(236, 253, 250, 0.76);
-            font-size: 0.84rem;
+            color: var(--muted);
+            font-size: 0.8rem;
+        }
+        .app-kicker {
+            margin-bottom: 0.18rem;
+            color: var(--accent);
+            font-size: 0.68rem;
+            font-weight: 740;
+            letter-spacing: 0.12em;
         }
         .st-key-app_header .status-pill {
             color: rgba(244, 255, 253, 0.9);
@@ -230,9 +234,9 @@ def inject_css() -> None:
             height: 2.2rem;
             padding: 0;
             border-radius: 9px;
-            border: 1px solid rgba(255, 255, 255, 0.20);
-            background: rgba(255, 255, 255, 0.10);
-            color: #ffffff;
+            border: 1px solid #d5e2de;
+            background: #f7faf8;
+            color: var(--accent-strong);
             font-size: 1.18rem;
             line-height: 1;
         }
@@ -240,9 +244,9 @@ def inject_css() -> None:
             display: none;
         }
         .st-key-app_header div[data-testid="stPopover"] button:hover {
-            background: rgba(255, 255, 255, 0.18);
-            border-color: rgba(255, 255, 255, 0.34);
-            color: #ffffff;
+            background: var(--accent-soft);
+            border-color: #bdD8d1;
+            color: var(--accent-strong);
         }
         div[data-testid="stPopoverBody"] {
             min-width: 11rem;
@@ -254,7 +258,7 @@ def inject_css() -> None:
             justify-content: flex-start;
         }
         [data-testid="stSidebar"] {
-            background: linear-gradient(180deg, #fcfefd 0%, #f7fbf9 62%, #eef7f3 100%);
+            background: linear-gradient(180deg, #fbfcfa 0%, #f7f9f6 62%, #f0f4f1 100%);
             border-right: 1px solid var(--line);
         }
         [data-testid="stSidebarContent"] {
@@ -268,17 +272,19 @@ def inject_css() -> None:
             color: var(--muted);
         }
         div[data-testid="stMetric"] {
-            background: linear-gradient(180deg, #ffffff 0%, #fbfdfc 100%);
+            position: relative;
+            overflow: hidden;
+            background: #ffffff;
             border: 1px solid var(--line);
-            border-left: 4px solid var(--accent);
-            border-radius: 10px;
+            border-top: 2px solid var(--accent);
+            border-radius: 8px;
             padding: 0.7rem 0.85rem;
             min-height: 88px;
             height: 88px;
             display: flex;
             flex-direction: column;
             justify-content: center;
-            box-shadow: var(--shadow-sm);
+            box-shadow: 0 1px 2px rgba(16, 24, 40, 0.03);
             transition: box-shadow 0.18s ease, transform 0.18s ease, border-color 0.18s ease;
         }
         div[data-testid="stMetric"]:hover {
@@ -306,7 +312,7 @@ def inject_css() -> None:
             min-height: 2.6rem;
             border-radius: 8px;
             border: 1px solid #d3e1df;
-            background: var(--panel);
+            background: #ffffff;
             color: var(--ink);
             font-weight: 600;
             box-shadow: 0 1px 2px rgba(16, 24, 40, 0.04);
@@ -322,15 +328,15 @@ def inject_css() -> None:
             transform: translateY(0) scale(0.985);
         }
         .stButton button[kind="primary"] {
-            background: linear-gradient(135deg, #11877d 0%, #0f766e 52%, #0a5f59 100%);
+            background: var(--accent);
             border-color: var(--accent);
             color: #ffffff;
             box-shadow:
-                inset 0 1px 0 rgba(255, 255, 255, 0.18),
-                0 8px 18px rgba(15, 118, 110, 0.22);
+                inset 0 1px 0 rgba(255, 255, 255, 0.12),
+                0 6px 14px rgba(15, 111, 102, 0.17);
         }
         .stButton button[kind="primary"]:hover {
-            background: linear-gradient(135deg, #0f7c73 0%, #0b6b64 55%, #084f4b 100%);
+            background: var(--accent-strong);
             border-color: var(--accent-strong);
             color: #ffffff;
         }
@@ -350,7 +356,7 @@ def inject_css() -> None:
             flex-wrap: wrap;
             overflow: visible;
             padding: 0.34rem;
-            background: rgba(255, 255, 255, 0.94);
+            background: rgba(255, 255, 255, 0.90);
             border: 1px solid var(--line);
             border-radius: 10px;
             box-shadow: var(--shadow-sm);
@@ -372,12 +378,10 @@ def inject_css() -> None:
             color: var(--accent-strong);
         }
         [data-testid="stTabs"] button[data-baseweb="tab"][aria-selected="true"] {
-            background: linear-gradient(135deg, #11877d 0%, #0f766e 58%, #0a625c 100%);
-            color: #ffffff;
-            border-color: var(--accent);
-            box-shadow:
-                inset 0 1px 0 rgba(255, 255, 255, 0.18),
-                0 6px 14px rgba(15, 118, 110, 0.20);
+            background: var(--accent-soft);
+            color: var(--accent-strong);
+            border-color: #d2e3de;
+            box-shadow: inset 0 -2px 0 var(--accent);
         }
         [data-testid="stExpander"] {
             background: var(--panel);
@@ -461,14 +465,10 @@ def inject_css() -> None:
             flex-wrap: wrap;
             gap: 0.1rem;
             padding: 0.34rem;
-            background: rgba(255, 255, 255, 0.82);
+            background: rgba(255, 255, 255, 0.94);
             border: 1px solid var(--line);
             border-radius: 12px;
-            box-shadow:
-                inset 0 1px 0 rgba(255, 255, 255, 0.72),
-                0 10px 26px rgba(24, 70, 73, 0.07);
-            backdrop-filter: blur(18px) saturate(1.08);
-            -webkit-backdrop-filter: blur(18px) saturate(1.08);
+            box-shadow: 0 8px 22px rgba(24, 70, 73, 0.06);
         }
         .st-key-main_nav [role="radiogroup"] label {
             display: inline-flex;
@@ -484,22 +484,18 @@ def inject_css() -> None:
             transition: background 0.18s ease, color 0.18s ease, border-color 0.18s ease, transform 0.14s ease;
         }
         .st-key-main_nav [role="radiogroup"] label:hover {
-            background: #edf6f4;
+            background: #f1f6f4;
             color: var(--accent-strong);
-            transform: translateY(-1px);
         }
         .st-key-main_nav [role="radiogroup"] label:has(input:checked),
         .st-key-main_nav [aria-checked="true"] {
-            background: linear-gradient(135deg, #11877d 0%, #0f766e 58%, #0a625c 100%);
-            border-color: var(--accent);
-            box-shadow:
-                inset 0 1px 0 rgba(255, 255, 255, 0.17),
-                0 6px 14px rgba(15, 118, 110, 0.19);
-            transform: translateY(-1px);
+            background: var(--accent-soft);
+            border-color: #d2e2dd;
+            box-shadow: inset 0 -2px 0 var(--accent);
         }
         .st-key-main_nav [role="radiogroup"] label:has(input:checked) *,
         .st-key-main_nav [aria-checked="true"] * {
-            color: #ffffff !important;
+            color: var(--accent-strong) !important;
         }
         .st-key-main_nav [role="radiogroup"] label > div:first-child {
             display: none;
@@ -954,6 +950,7 @@ def render_header(
                 <div class="app-header-title">
                     <div class="app-mark">{logo_mark}</div>
                     <div>
+                        <div class="app-kicker">科研风险筛查</div>
                         <div class="app-name">老年抑郁风险筛查工作台</div>
                         <div class="app-sub">对话 · 量表 · 多模态 · 个体追踪</div>
                     </div>
@@ -1421,7 +1418,7 @@ def inject_auth_css() -> None:
         <style>
         .stApp {
             background:
-                linear-gradient(135deg, #edf7f3 0%, #f8fbfa 52%, #edf4f1 100%);
+                linear-gradient(135deg, #f8faf7 0%, #f2f5f2 58%, #edf2ef 100%);
         }
         .block-container {
             padding-top: 2.2rem;
@@ -1432,26 +1429,15 @@ def inject_auth_css() -> None:
             position: relative;
             min-height: clamp(620px, 78vh, 720px);
             overflow: hidden;
-            border: 1px solid rgba(255, 255, 255, 0.14);
-            border-radius: 22px;
-            padding: 2.3rem;
-            color: #ffffff;
-            background:
-                linear-gradient(142deg, #103f3b 0%, #0d5d56 58%, #0b7a6f 100%);
-            box-shadow: 0 24px 56px rgba(17, 75, 70, 0.20);
+            border: 0;
+            border-radius: 0;
+            padding: 2.2rem 2.9rem 2.2rem 0;
+            color: #18282b;
+            background: transparent;
+            box-shadow: none;
         }
         .auth-brand-card::before {
-            content: "";
-            position: absolute;
-            inset: 0;
-            pointer-events: none;
-            opacity: 0.32;
-            background-image:
-                linear-gradient(rgba(255, 255, 255, 0.08) 1px, transparent 1px),
-                linear-gradient(90deg, rgba(255, 255, 255, 0.08) 1px, transparent 1px);
-            background-size: 28px 28px;
-            mask-image: linear-gradient(180deg, #000 0%, transparent 78%);
-            -webkit-mask-image: linear-gradient(180deg, #000 0%, transparent 78%);
+            display: none;
         }
         .auth-brand-lockup {
             position: relative;
@@ -1462,13 +1448,13 @@ def inject_auth_css() -> None:
             margin-bottom: 2rem;
         }
         .auth-brand-mark {
-            width: 52px;
-            height: 52px;
+            width: 48px;
+            height: 48px;
             padding: 7px;
-            border-radius: 12px;
-            background: rgba(255, 255, 255, 0.12);
-            border: 1px solid rgba(255, 255, 255, 0.18);
-            box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.10);
+            border-radius: 9px;
+            background: #e8f1ee;
+            border: 1px solid #d0e1db;
+            box-shadow: none;
         }
         .auth-brand-mark img {
             display: block;
@@ -1476,23 +1462,25 @@ def inject_auth_css() -> None:
             height: 100%;
         }
         .auth-brand-name {
+            color: #18282b;
             font-size: 1.04rem;
             font-weight: 760;
             letter-spacing: 0;
         }
         .auth-brand-sub {
             margin-top: 0.12rem;
-            color: rgba(235, 255, 249, 0.72);
+            color: #68797c;
             font-size: 0.78rem;
         }
         .auth-brand-card h1 {
             position: relative;
             z-index: 1;
             margin: 0;
-            color: #ffffff;
-            font-size: clamp(2rem, 2.5vw, 2.5rem);
-            font-weight: 760;
-            line-height: 1.18;
+            color: #18282b;
+            font-family: "Songti SC", "STSong", "Noto Serif CJK SC", "Times New Roman", serif;
+            font-size: clamp(2.35rem, 3vw, 3rem);
+            font-weight: 700;
+            line-height: 1.22;
             letter-spacing: 0;
         }
         .auth-brand-copy {
@@ -1500,7 +1488,7 @@ def inject_auth_css() -> None:
             z-index: 1;
             max-width: 31rem;
             margin: 1rem 0 0;
-            color: rgba(235, 255, 249, 0.78);
+            color: #66777b;
             font-size: 0.98rem;
             line-height: 1.7;
         }
@@ -1510,48 +1498,67 @@ def inject_auth_css() -> None:
             margin-top: 1.55rem;
             padding: 0.5rem;
             overflow: hidden;
-            border: 1px solid rgba(255, 255, 255, 0.18);
-            border-radius: 18px;
-            background: rgba(255, 255, 255, 0.10);
-            box-shadow: 0 16px 34px rgba(4, 45, 42, 0.18);
+            border: 1px solid #d8e2de;
+            border-radius: 12px;
+            background: #ffffff;
+            box-shadow: 0 18px 38px rgba(34, 72, 78, 0.09);
         }
         .auth-brand-illustration img {
             display: block;
             width: 100%;
             height: auto;
-            border-radius: 13px;
+            border-radius: 10px;
         }
         .auth-trust-row {
             position: relative;
             z-index: 1;
             display: flex;
             flex-wrap: wrap;
-            gap: 0.45rem;
-            margin-top: 1.15rem;
+            gap: 1rem;
+            margin-top: 1.2rem;
+            padding-top: 0.9rem;
+            border-top: 1px solid #dbe4e1;
         }
         .auth-trust-chip {
-            padding: 0.32rem 0.58rem;
-            border: 1px solid rgba(255, 255, 255, 0.16);
-            border-radius: 999px;
-            background: rgba(255, 255, 255, 0.09);
-            color: rgba(242, 255, 251, 0.90);
-            font-size: 0.76rem;
-            font-weight: 620;
+            padding: 0;
+            border: 0;
+            border-radius: 0;
+            background: transparent;
+            color: #66777b;
+            font-size: 0.74rem;
+            font-weight: 650;
+        }
+        .auth-trust-chip::before {
+            content: "";
+            display: inline-block;
+            width: 5px;
+            height: 5px;
+            margin-right: 0.4rem;
+            border-radius: 50%;
+            background: #b8863c;
+            vertical-align: 0.12em;
+        }
+        .st-key-auth_panel {
+            min-height: clamp(620px, 78vh, 720px);
+            padding-left: 2.35rem;
+            border-left: 1px solid #dbe4e1;
         }
         .auth-form-head {
             margin-bottom: 0.65rem;
         }
         .auth-eyebrow {
             color: #0f766e;
-            font-size: 0.74rem;
+            font-size: 0.7rem;
             font-weight: 740;
-            letter-spacing: 0.12em;
+            letter-spacing: 0.14em;
         }
         .auth-form-head h2 {
             margin: 0.38rem 0 0.3rem;
             color: #18343b;
-            font-size: 1.9rem;
-            font-weight: 760;
+            color: #18282b;
+            font-family: "Songti SC", "STSong", "Noto Serif CJK SC", "Times New Roman", serif;
+            font-size: 2.25rem;
+            font-weight: 700;
             line-height: 1.2;
         }
         .auth-form-head p {
@@ -1561,58 +1568,62 @@ def inject_auth_css() -> None:
         }
         .auth-rule {
             margin: 0.7rem 0 0.9rem;
-            padding: 0.7rem 0.8rem;
-            border: 1px solid #dfeae7;
-            border-radius: 10px;
-            background: rgba(255, 255, 255, 0.64);
-            color: #47636a;
+            padding: 0 0 0 0.8rem;
+            border: 0;
+            border-left: 2px solid #d3a356;
+            border-radius: 0;
+            background: transparent;
+            color: #5d7074;
             font-size: 0.82rem;
             line-height: 1.58;
         }
         [data-testid="stTabs"] [data-baseweb="tab-list"] {
             display: flex;
-            justify-content: stretch;
-            gap: 0.28rem;
-            padding: 0.3rem;
-            border: 1px solid #d9e7e3;
-            border-radius: 12px;
-            background: #edf5f2;
-            box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.72);
+            justify-content: flex-start;
+            gap: 1.2rem;
+            padding: 0;
+            border: 0;
+            border-bottom: 1px solid #d9e2df;
+            border-radius: 0;
+            background: transparent;
+            box-shadow: none;
         }
         [data-testid="stTabs"] button[data-baseweb="tab"] {
-            flex: 1 1 0;
+            flex: 0 0 auto;
             justify-content: center;
             min-width: 0;
-            height: 2.55rem;
-            border: 1px solid transparent;
-            border-radius: 9px;
+            height: 2.6rem;
+            padding: 0.35rem 0.15rem;
+            border: 0;
+            border-bottom: 2px solid transparent;
+            border-radius: 0;
             color: #5f777d;
             background: transparent;
             font-weight: 680;
-            transition: background 0.18s ease, color 0.18s ease, box-shadow 0.18s ease;
+            transition: color 0.18s ease, border-color 0.18s ease;
         }
         [data-testid="stTabs"] button[data-baseweb="tab"]:hover {
             color: #0f6b63;
-            background: rgba(255, 255, 255, 0.68);
+            background: transparent;
+            border-bottom-color: #b9d2cb;
         }
         [data-testid="stTabs"] button[data-baseweb="tab"][aria-selected="true"] {
-            color: #0b655e;
-            background: #ffffff;
-            border-color: #d7e5e1;
-            box-shadow: 0 5px 14px rgba(31, 82, 77, 0.10);
+            color: #18282b;
+            background: transparent;
+            border: 0;
+            border-bottom: 2px solid #0f6f66;
+            box-shadow: none;
         }
         [data-testid="stTabs"] [data-baseweb="tab-highlight"],
         [data-testid="stTabs"] [data-baseweb="tab-border"] {
             display: none;
         }
         div[data-testid="stForm"] {
-            border: 1px solid #dbe8e5;
-            border-radius: 16px;
-            background: rgba(255, 255, 255, 0.94);
-            padding: 1.15rem 1.15rem 1rem;
-            box-shadow: 0 16px 34px rgba(34, 72, 78, 0.09);
-            backdrop-filter: blur(16px);
-            -webkit-backdrop-filter: blur(16px);
+            border: 0;
+            border-radius: 0;
+            background: transparent;
+            padding: 0.5rem 0 0;
+            box-shadow: none;
         }
         div[data-baseweb="tab-list"] {
             justify-content: center;
@@ -1644,12 +1655,12 @@ def inject_auth_css() -> None:
             min-height: 2.75rem;
             border-radius: 10px;
             font-weight: 700;
-            background: linear-gradient(135deg, #11877d 0%, #0f766e 58%, #0a625c 100%);
+            background: #0f6f66;
             border-color: #0f766e;
             color: #ffffff;
             box-shadow:
-                inset 0 1px 0 rgba(255, 255, 255, 0.18),
-                0 8px 18px rgba(15, 118, 110, 0.20);
+                inset 0 1px 0 rgba(255, 255, 255, 0.12),
+                0 6px 14px rgba(15, 111, 102, 0.16);
             transition: transform 0.15s ease, box-shadow 0.18s ease, filter 0.18s ease;
         }
         div[data-testid="stFormSubmitButton"] button:hover {
@@ -1657,8 +1668,8 @@ def inject_auth_css() -> None:
             border-color: #0a625c;
             filter: brightness(0.98);
             box-shadow:
-                inset 0 1px 0 rgba(255, 255, 255, 0.16),
-                0 10px 22px rgba(15, 118, 110, 0.24);
+                inset 0 1px 0 rgba(255, 255, 255, 0.10),
+                0 8px 18px rgba(15, 111, 102, 0.20);
             transform: translateY(-1px);
         }
         div[data-testid="stFormSubmitButton"] button:active {
@@ -1666,10 +1677,11 @@ def inject_auth_css() -> None:
         }
         .auth-security-note {
             margin-top: 0.8rem;
-            padding: 0.62rem 0.72rem;
-            border-left: 3px solid #78b9ab;
-            background: rgba(236, 246, 243, 0.78);
-            color: #587076;
+            padding: 0.8rem 0 0;
+            border-top: 1px solid #dbe4e1;
+            border-left: 0;
+            background: transparent;
+            color: #68797c;
             font-size: 0.78rem;
             line-height: 1.55;
         }
@@ -1770,7 +1782,7 @@ def render_auth_gate() -> None:
     with shell:
         brand_col, auth_col = st.columns([1.03, 0.97], gap="large")
         logo_path = PROJECT_ROOT / "webapp" / "assets" / "logo-mark.svg"
-        illustration_path = PROJECT_ROOT / "webapp" / "assets" / "sidebar-conversation.svg"
+        illustration_path = PROJECT_ROOT / "webapp" / "assets" / "conversation-editorial.svg"
         logo_uri = ""
         illustration_uri = ""
         if logo_path.exists():
@@ -1809,7 +1821,8 @@ def render_auth_gate() -> None:
             """,
             unsafe_allow_html=True,
         )
-        auth_col.markdown(
+        auth_panel = auth_col.container(key="auth_panel")
+        auth_panel.markdown(
             """
             <div class="auth-form-head">
                 <div class="auth-eyebrow">账号入口</div>
@@ -1824,8 +1837,8 @@ def render_auth_gate() -> None:
         )
         flash = st.session_state.pop("auth_flash", None)
         if flash:
-            auth_col.error(flash)
-        login_tab, register_tab, recovery_tab = auth_col.tabs(
+            auth_panel.error(flash)
+        login_tab, register_tab, recovery_tab = auth_panel.tabs(
             ["登录", "注册", "找回密码"]
         )
 
@@ -1989,7 +2002,7 @@ def render_auth_gate() -> None:
                             st.session_state.auth_flash = result.get("error") or "密码重置失败"
                     st.rerun()
 
-        auth_col.markdown(
+        auth_panel.markdown(
             """
             <div class="auth-security-note">
                 本系统仅用于科研风险筛查和辅助沟通，不替代医生诊断。对话默认在本地处理；
@@ -2313,7 +2326,7 @@ def render_sidebar() -> str:
                 st.caption("已填写，用于对话 Agent 与风险摘要。")
             else:
                 st.caption("留空时使用本地 .env 配置。")
-            visual_path = PROJECT_ROOT / "webapp" / "assets" / "sidebar-conversation.svg"
+            visual_path = PROJECT_ROOT / "webapp" / "assets" / "conversation-editorial.svg"
             if visual_path.exists():
                 visual_data = base64.b64encode(visual_path.read_bytes()).decode("ascii")
                 st.markdown(
