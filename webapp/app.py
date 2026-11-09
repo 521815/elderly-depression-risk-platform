@@ -97,15 +97,17 @@ def inject_css() -> None:
             line-height: 1.55;
         }
         .st-key-app_header {
-            background: rgba(255, 255, 255, 0.92);
-            border: 1px solid var(--line);
-            border-left: 4px solid var(--accent);
-            border-radius: 10px;
-            padding: 0.9rem 1.05rem;
-            margin-bottom: 1rem;
+            padding: 1rem 0 1.05rem;
+            margin-bottom: 0.35rem;
+            border: 1px solid rgba(53, 107, 99, 0.16);
+            border-radius: 11px;
+            background:
+                linear-gradient(112deg, rgba(255, 255, 255, 0.94), rgba(240, 249, 246, 0.84) 60%, rgba(225, 242, 236, 0.76));
             box-shadow:
-                0 1px 2px rgba(16, 24, 40, 0.04),
-                0 12px 28px rgba(28, 66, 67, 0.07);
+                inset 0 1px 0 rgba(255, 255, 255, 0.82),
+                0 12px 30px rgba(28, 70, 70, 0.07);
+            backdrop-filter: blur(18px) saturate(1.08);
+            -webkit-backdrop-filter: blur(18px) saturate(1.08);
         }
         .st-key-app_header [data-testid="stHorizontalBlock"] {
             align-items: center;
@@ -114,13 +116,13 @@ def inject_css() -> None:
         .app-header-title {
             display: flex;
             align-items: center;
-            gap: 0.9rem;
+            gap: 0.8rem;
         }
         .app-mark {
             width: 42px;
             height: 42px;
             border-radius: 8px;
-            background: var(--accent-soft);
+            background: linear-gradient(145deg, #eff8f5 0%, #dcece7 100%);
             border: 1px solid #d3e4df;
             display: flex;
             align-items: center;
@@ -130,7 +132,7 @@ def inject_css() -> None:
             transition: background 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
         }
         .app-mark:hover {
-            background: #dfeee9;
+            background: linear-gradient(145deg, #e8f5f1 0%, #d2e7e1 100%);
             border-color: #bfd9d2;
             transform: translateY(-1px);
         }
@@ -142,7 +144,7 @@ def inject_css() -> None:
         .app-name {
             color: var(--ink);
             font-family: "Songti SC", "STSong", "Noto Serif CJK SC", "Times New Roman", serif;
-            font-size: 1.22rem;
+            font-size: 1.3rem;
             font-weight: 700;
             line-height: 1.25;
         }
@@ -151,11 +153,20 @@ def inject_css() -> None:
             font-size: 0.8rem;
         }
         .app-kicker {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
             margin-bottom: 0.18rem;
             color: var(--accent);
             font-size: 0.68rem;
             font-weight: 740;
             letter-spacing: 0.16em;
+        }
+        .app-kicker::after {
+            content: "";
+            width: 1.9rem;
+            height: 1px;
+            background: #b6cdc7;
         }
         .assessment-hero {
             padding: 0.25rem 0 1rem;
@@ -366,13 +377,13 @@ def inject_css() -> None:
             transform: scale(1.012);
         }
         .st-key-app_header div[data-testid="stPopover"] button {
-            width: 2.2rem;
-            min-width: 2.2rem;
-            height: 2.2rem;
+            width: 2rem;
+            min-width: 2rem;
+            height: 2rem;
             padding: 0;
-            border-radius: 9px;
-            border: 1px solid #d5e2de;
-            background: #f7faf8;
+            border-radius: 7px;
+            border: 1px solid rgba(99, 133, 127, 0.20);
+            background: rgba(255, 255, 255, 0.58);
             color: var(--accent-strong);
             font-size: 1.18rem;
             line-height: 1;
@@ -381,7 +392,7 @@ def inject_css() -> None:
             display: none;
         }
         .st-key-app_header div[data-testid="stPopover"] button:hover {
-            background: var(--accent-soft);
+            background: rgba(223, 240, 235, 0.90);
             border-color: #bdD8d1;
             color: var(--accent-strong);
         }
@@ -404,6 +415,69 @@ def inject_css() -> None:
         }
         [data-testid="stSidebar"] [data-testid="stImage"] {
             padding: 0.3rem 0 0.55rem;
+        }
+        .sidebar-brand {
+            display: flex;
+            align-items: center;
+            gap: 0.78rem;
+            padding: 0.9rem 0.15rem 1rem;
+            border-bottom: 1px solid var(--line);
+        }
+        .sidebar-brand-mark {
+            width: 46px;
+            height: 46px;
+            flex: 0 0 auto;
+            padding: 5px;
+            border: 1px solid #d2e3dd;
+            border-radius: 8px;
+            background: #ffffff;
+            box-shadow: 0 5px 14px rgba(26, 74, 73, 0.07);
+        }
+        .sidebar-brand-mark img {
+            display: block;
+            width: 100%;
+            height: 100%;
+        }
+        .sidebar-brand-kicker {
+            color: var(--accent);
+            font-size: 0.62rem;
+            font-weight: 760;
+            letter-spacing: 0.13em;
+        }
+        .sidebar-brand-name {
+            margin-top: 0.12rem;
+            color: var(--ink);
+            font-family: "Songti SC", "STSong", "Noto Serif CJK SC", "Times New Roman", serif;
+            font-size: 1.08rem;
+            font-weight: 700;
+            line-height: 1.25;
+        }
+        .sidebar-brand-sub {
+            margin-top: 0.12rem;
+            color: var(--muted);
+            font-size: 0.7rem;
+        }
+        .sidebar-account {
+            padding: 0.82rem 0.15rem 0.78rem;
+            border-bottom: 1px solid var(--line);
+        }
+        .sidebar-account-label {
+            color: var(--muted);
+            font-size: 0.68rem;
+            font-weight: 650;
+            letter-spacing: 0.05em;
+        }
+        .sidebar-account-name {
+            margin-top: 0.24rem;
+            color: var(--ink);
+            font-size: 0.96rem;
+            font-weight: 720;
+        }
+        .sidebar-account-handle {
+            margin-left: 0.34rem;
+            color: var(--muted);
+            font-size: 0.78rem;
+            font-weight: 500;
         }
         [data-testid="stSidebar"] .stCaption {
             color: var(--muted);
@@ -466,7 +540,7 @@ def inject_css() -> None:
             transform: translateY(0) scale(0.985);
         }
         .stButton button[kind="primary"] {
-            background: var(--accent);
+            background: linear-gradient(135deg, #13857b 0%, #0f6f66 58%, #0a5d57 100%);
             border-color: var(--accent);
             color: #ffffff;
             box-shadow:
@@ -474,7 +548,7 @@ def inject_css() -> None:
                 0 6px 14px rgba(15, 111, 102, 0.17);
         }
         .stButton button[kind="primary"]:hover {
-            background: var(--accent-strong);
+            background: linear-gradient(135deg, #0f786f 0%, #0b625c 58%, #084d48 100%);
             border-color: var(--accent-strong);
             color: #ffffff;
         }
@@ -702,11 +776,16 @@ def inject_css() -> None:
             flex-wrap: wrap;
             gap: 0.12rem;
             padding: 0 0 0.55rem;
-            background: transparent;
-            border: 0;
-            border-bottom: 1px solid var(--line);
-            border-radius: 0;
-            box-shadow: none;
+            background:
+                linear-gradient(120deg, rgba(255, 255, 255, 0.90), rgba(241, 248, 245, 0.78));
+            border: 1px solid rgba(53, 107, 99, 0.13);
+            border-radius: 10px;
+            padding: 0.28rem 0.34rem;
+            box-shadow:
+                inset 0 1px 0 rgba(255, 255, 255, 0.82),
+                0 8px 22px rgba(24, 70, 73, 0.05);
+            backdrop-filter: blur(16px) saturate(1.08);
+            -webkit-backdrop-filter: blur(16px) saturate(1.08);
         }
         .st-key-main_nav [role="radiogroup"] label {
             display: inline-flex;
@@ -729,10 +808,10 @@ def inject_css() -> None:
         }
         .st-key-main_nav [role="radiogroup"] label:has(input:checked),
         .st-key-main_nav [aria-checked="true"] {
-            background: transparent;
-            border-color: transparent;
+            background: linear-gradient(135deg, #e7f3ef 0%, #dbece7 100%);
+            border-color: rgba(91, 143, 133, 0.13);
             border-bottom-color: var(--accent);
-            box-shadow: none;
+            box-shadow: 0 3px 8px rgba(31, 91, 85, 0.06);
         }
         .st-key-main_nav [role="radiogroup"] label:has(input:checked) *,
         .st-key-main_nav [aria-checked="true"] * {
@@ -1685,7 +1764,7 @@ def inject_auth_css() -> None:
         <style>
         .stApp {
             background:
-                linear-gradient(135deg, #f8faf7 0%, #f2f5f2 58%, #edf2ef 100%);
+                linear-gradient(135deg, #f8faf7 0%, #f1f5f2 52%, #e9f2ee 100%);
         }
         .block-container {
             padding-top: 2.2rem;
@@ -1767,7 +1846,8 @@ def inject_auth_css() -> None:
             overflow: hidden;
             border: 1px solid #d8e2de;
             border-radius: 12px;
-            background: #ffffff;
+            background:
+                linear-gradient(145deg, rgba(255, 255, 255, 0.96), rgba(237, 247, 243, 0.88));
             box-shadow: 0 18px 38px rgba(34, 72, 78, 0.09);
         }
         .auth-brand-illustration img {
@@ -1807,8 +1887,16 @@ def inject_auth_css() -> None:
         }
         .st-key-auth_panel {
             min-height: clamp(620px, 78vh, 720px);
-            padding-left: 2.35rem;
-            border-left: 1px solid #dbe4e1;
+            padding: 1.8rem 2rem 1.6rem;
+            border: 1px solid rgba(58, 111, 103, 0.14);
+            border-radius: 14px;
+            background:
+                linear-gradient(145deg, rgba(255, 255, 255, 0.86), rgba(245, 250, 248, 0.70));
+            box-shadow:
+                inset 0 1px 0 rgba(255, 255, 255, 0.82),
+                0 16px 38px rgba(34, 72, 78, 0.07);
+            backdrop-filter: blur(18px) saturate(1.08);
+            -webkit-backdrop-filter: blur(18px) saturate(1.08);
         }
         .auth-form-head {
             margin-bottom: 0.65rem;
@@ -1922,7 +2010,7 @@ def inject_auth_css() -> None:
             min-height: 2.75rem;
             border-radius: 10px;
             font-weight: 700;
-            background: #0f6f66;
+            background: linear-gradient(135deg, #13857b 0%, #0f6f66 58%, #0a5d57 100%);
             border-color: #0f766e;
             color: #ffffff;
             box-shadow:
@@ -2561,20 +2649,34 @@ def render_sidebar() -> str:
     account = st.session_state.get("auth_account") or {}
     is_admin = account.get("role") == "admin"
     with st.sidebar:
-        logo_path = PROJECT_ROOT / "webapp" / "assets" / "logo.svg"
-        logo_png = PROJECT_ROOT / "webapp" / "assets" / "previews" / "logo-zh.png"
-        if logo_png.exists():
-            st.image(str(logo_png), width=260)
-        elif logo_path.exists():
-            logo_svg = logo_path.read_text(encoding="utf-8")
-            st.markdown(f'<div class="logo-lockup">{logo_svg}</div>', unsafe_allow_html=True)
-        else:
-            st.title("筛查工作台")
-        st.caption("老年抑郁风险多模态评估")
+        logo_path = PROJECT_ROOT / "webapp" / "assets" / "logo-mark.svg"
+        logo_uri = ""
+        if logo_path.exists():
+            logo_uri = (
+                "data:image/svg+xml;base64,"
+                + base64.b64encode(logo_path.read_bytes()).decode("ascii")
+            )
+        st.markdown(
+            f"""
+            <div class="sidebar-brand">
+                <div class="sidebar-brand-mark"><img src="{logo_uri}" alt=""></div>
+                <div>
+                    <div class="sidebar-brand-kicker">科研风险筛查</div>
+                    <div class="sidebar-brand-name">老年抑郁风险筛查</div>
+                    <div class="sidebar-brand-sub">多模态评估工作台</div>
+                </div>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
         role_text = "管理员" if is_admin else "普通用户"
         st.markdown(
-            f'<div class="auth-account"><b>{account.get("display_name") or account.get("username")}</b>'
-            f'<br><span class="role-pill">{role_text}</span> · {account.get("username", "")}</div>',
+            f'<div class="sidebar-account">'
+            f'<div class="sidebar-account-label">当前账号 · {role_text}</div>'
+            f'<div class="sidebar-account-name">'
+            f'{account.get("display_name") or account.get("username")}'
+            f'<span class="sidebar-account-handle">@{account.get("username", "")}</span>'
+            f"</div></div>",
             unsafe_allow_html=True,
         )
         if st.button("退出登录", width="stretch", key="logout_button"):
