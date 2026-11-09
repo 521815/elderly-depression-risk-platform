@@ -1420,38 +1420,199 @@ def inject_auth_css() -> None:
         """
         <style>
         .stApp {
-            background: #f6faf9;
+            background:
+                linear-gradient(135deg, #edf7f3 0%, #f8fbfa 52%, #edf4f1 100%);
         }
-        .auth-hero {
-            padding: 1.6rem 1.7rem 1.35rem;
-            border: 1px solid #d5e6e2;
-            border-radius: 20px;
-            background: linear-gradient(145deg, #ffffff 0%, #eefaf6 58%, #eaf1fb 100%);
-            box-shadow: 0 18px 42px rgba(30, 74, 80, .10);
-            margin-bottom: 1rem;
+        .block-container {
+            padding-top: 2.2rem;
+            padding-bottom: 2.5rem;
+            max-width: 1480px;
         }
-        .auth-hero h1 {
-            margin: 0 0 .35rem 0;
-            color: #18343b;
-            font-size: 1.78rem;
+        .auth-brand-card {
+            position: relative;
+            min-height: clamp(620px, 78vh, 720px);
+            overflow: hidden;
+            border: 1px solid rgba(255, 255, 255, 0.14);
+            border-radius: 22px;
+            padding: 2.3rem;
+            color: #ffffff;
+            background:
+                linear-gradient(142deg, #103f3b 0%, #0d5d56 58%, #0b7a6f 100%);
+            box-shadow: 0 24px 56px rgba(17, 75, 70, 0.20);
+        }
+        .auth-brand-card::before {
+            content: "";
+            position: absolute;
+            inset: 0;
+            pointer-events: none;
+            opacity: 0.32;
+            background-image:
+                linear-gradient(rgba(255, 255, 255, 0.08) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255, 255, 255, 0.08) 1px, transparent 1px);
+            background-size: 28px 28px;
+            mask-image: linear-gradient(180deg, #000 0%, transparent 78%);
+            -webkit-mask-image: linear-gradient(180deg, #000 0%, transparent 78%);
+        }
+        .auth-brand-lockup {
+            position: relative;
+            z-index: 1;
+            display: flex;
+            align-items: center;
+            gap: 0.9rem;
+            margin-bottom: 2rem;
+        }
+        .auth-brand-mark {
+            width: 52px;
+            height: 52px;
+            padding: 7px;
+            border-radius: 12px;
+            background: rgba(255, 255, 255, 0.12);
+            border: 1px solid rgba(255, 255, 255, 0.18);
+            box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.10);
+        }
+        .auth-brand-mark img {
+            display: block;
+            width: 100%;
+            height: 100%;
+        }
+        .auth-brand-name {
+            font-size: 1.04rem;
+            font-weight: 760;
             letter-spacing: 0;
         }
-        .auth-hero p {
+        .auth-brand-sub {
+            margin-top: 0.12rem;
+            color: rgba(235, 255, 249, 0.72);
+            font-size: 0.78rem;
+        }
+        .auth-brand-card h1 {
+            position: relative;
+            z-index: 1;
             margin: 0;
-            color: #5c7379;
-            line-height: 1.65;
+            color: #ffffff;
+            font-size: clamp(2rem, 2.5vw, 2.5rem);
+            font-weight: 760;
+            line-height: 1.18;
+            letter-spacing: 0;
+        }
+        .auth-brand-copy {
+            position: relative;
+            z-index: 1;
+            max-width: 31rem;
+            margin: 1rem 0 0;
+            color: rgba(235, 255, 249, 0.78);
+            font-size: 0.98rem;
+            line-height: 1.7;
+        }
+        .auth-brand-illustration {
+            position: relative;
+            z-index: 1;
+            margin-top: 1.55rem;
+            padding: 0.5rem;
+            overflow: hidden;
+            border: 1px solid rgba(255, 255, 255, 0.18);
+            border-radius: 18px;
+            background: rgba(255, 255, 255, 0.10);
+            box-shadow: 0 16px 34px rgba(4, 45, 42, 0.18);
+        }
+        .auth-brand-illustration img {
+            display: block;
+            width: 100%;
+            height: auto;
+            border-radius: 13px;
+        }
+        .auth-trust-row {
+            position: relative;
+            z-index: 1;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.45rem;
+            margin-top: 1.15rem;
+        }
+        .auth-trust-chip {
+            padding: 0.32rem 0.58rem;
+            border: 1px solid rgba(255, 255, 255, 0.16);
+            border-radius: 999px;
+            background: rgba(255, 255, 255, 0.09);
+            color: rgba(242, 255, 251, 0.90);
+            font-size: 0.76rem;
+            font-weight: 620;
+        }
+        .auth-form-head {
+            margin-bottom: 0.65rem;
+        }
+        .auth-eyebrow {
+            color: #0f766e;
+            font-size: 0.74rem;
+            font-weight: 740;
+            letter-spacing: 0.12em;
+        }
+        .auth-form-head h2 {
+            margin: 0.38rem 0 0.3rem;
+            color: #18343b;
+            font-size: 1.9rem;
+            font-weight: 760;
+            line-height: 1.2;
+        }
+        .auth-form-head p {
+            margin: 0;
+            color: #667b82;
+            line-height: 1.62;
         }
         .auth-rule {
-            margin: .75rem 0 0;
-            color: #38575f;
-            font-size: .86rem;
+            margin: 0.7rem 0 0.9rem;
+            padding: 0.7rem 0.8rem;
+            border: 1px solid #dfeae7;
+            border-radius: 10px;
+            background: rgba(255, 255, 255, 0.64);
+            color: #47636a;
+            font-size: 0.82rem;
+            line-height: 1.58;
+        }
+        [data-testid="stTabs"] [data-baseweb="tab-list"] {
+            display: flex;
+            justify-content: stretch;
+            gap: 0.28rem;
+            padding: 0.3rem;
+            border: 1px solid #d9e7e3;
+            border-radius: 12px;
+            background: #edf5f2;
+            box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.72);
+        }
+        [data-testid="stTabs"] button[data-baseweb="tab"] {
+            flex: 1 1 0;
+            justify-content: center;
+            min-width: 0;
+            height: 2.55rem;
+            border: 1px solid transparent;
+            border-radius: 9px;
+            color: #5f777d;
+            background: transparent;
+            font-weight: 680;
+            transition: background 0.18s ease, color 0.18s ease, box-shadow 0.18s ease;
+        }
+        [data-testid="stTabs"] button[data-baseweb="tab"]:hover {
+            color: #0f6b63;
+            background: rgba(255, 255, 255, 0.68);
+        }
+        [data-testid="stTabs"] button[data-baseweb="tab"][aria-selected="true"] {
+            color: #0b655e;
+            background: #ffffff;
+            border-color: #d7e5e1;
+            box-shadow: 0 5px 14px rgba(31, 82, 77, 0.10);
+        }
+        [data-testid="stTabs"] [data-baseweb="tab-highlight"],
+        [data-testid="stTabs"] [data-baseweb="tab-border"] {
+            display: none;
         }
         div[data-testid="stForm"] {
             border: 1px solid #dbe8e5;
             border-radius: 16px;
-            background: rgba(255, 255, 255, .92);
-            padding: 1.05rem 1.1rem .9rem;
-            box-shadow: 0 12px 30px rgba(34, 72, 78, .08);
+            background: rgba(255, 255, 255, 0.94);
+            padding: 1.15rem 1.15rem 1rem;
+            box-shadow: 0 16px 34px rgba(34, 72, 78, 0.09);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
         }
         div[data-baseweb="tab-list"] {
             justify-content: center;
@@ -1463,11 +1624,54 @@ def inject_auth_css() -> None:
         div[data-testid="stTextInput"] input {
             min-height: 2.7rem;
             border-radius: 10px;
+            background: transparent;
+            border: 0;
+            transition: border-color 0.18s ease, box-shadow 0.18s ease, background 0.18s ease;
+        }
+        div[data-testid="stTextInput"] div[data-baseweb="input"] {
+            border: 1px solid #cddeda;
+            border-radius: 10px;
+            background: #fbfdfc;
+            box-shadow: inset 0 1px 2px rgba(24, 70, 73, 0.03);
+            transition: border-color 0.18s ease, box-shadow 0.18s ease, background 0.18s ease;
+        }
+        div[data-testid="stTextInput"] div[data-baseweb="input"]:focus-within {
+            border-color: #0f766e;
+            box-shadow: 0 0 0 3px rgba(15, 118, 110, 0.11);
+            background: #ffffff;
         }
         div[data-testid="stFormSubmitButton"] button {
-            min-height: 2.65rem;
+            min-height: 2.75rem;
             border-radius: 10px;
-            font-weight: 650;
+            font-weight: 700;
+            background: linear-gradient(135deg, #11877d 0%, #0f766e 58%, #0a625c 100%);
+            border-color: #0f766e;
+            color: #ffffff;
+            box-shadow:
+                inset 0 1px 0 rgba(255, 255, 255, 0.18),
+                0 8px 18px rgba(15, 118, 110, 0.20);
+            transition: transform 0.15s ease, box-shadow 0.18s ease, filter 0.18s ease;
+        }
+        div[data-testid="stFormSubmitButton"] button:hover {
+            color: #ffffff;
+            border-color: #0a625c;
+            filter: brightness(0.98);
+            box-shadow:
+                inset 0 1px 0 rgba(255, 255, 255, 0.16),
+                0 10px 22px rgba(15, 118, 110, 0.24);
+            transform: translateY(-1px);
+        }
+        div[data-testid="stFormSubmitButton"] button:active {
+            transform: translateY(0) scale(0.99);
+        }
+        .auth-security-note {
+            margin-top: 0.8rem;
+            padding: 0.62rem 0.72rem;
+            border-left: 3px solid #78b9ab;
+            background: rgba(236, 246, 243, 0.78);
+            color: #587076;
+            font-size: 0.78rem;
+            line-height: 1.55;
         }
         .auth-account {
             padding: .55rem .7rem;
@@ -1486,6 +1690,33 @@ def inject_auth_css() -> None:
             color: #17635e;
             font-size: .78rem;
             font-weight: 600;
+        }
+        @media (max-width: 900px) {
+            .block-container {
+                padding-top: 1rem;
+            }
+            .auth-brand-card {
+                min-height: auto;
+                padding: 1.35rem;
+                margin-bottom: 1rem;
+            }
+            .auth-brand-card h1 {
+                font-size: 1.85rem;
+            }
+            .auth-brand-illustration {
+                max-height: 260px;
+                overflow: hidden;
+            }
+        }
+        @media (prefers-reduced-motion: reduce) {
+            div[data-testid="stFormSubmitButton"] button,
+            [data-testid="stTabs"] button[data-baseweb="tab"] {
+                transition: none !important;
+            }
+            div[data-testid="stFormSubmitButton"] button:hover,
+            div[data-testid="stFormSubmitButton"] button:active {
+                transform: none !important;
+            }
         }
         </style>
         """,
@@ -1535,31 +1766,68 @@ def ensure_auth_session() -> bool:
 
 def render_auth_gate() -> None:
     inject_auth_css()
-    _, center, _ = st.columns([0.6, 1.55, 0.6])
-    with center:
-        logo_png = PROJECT_ROOT / "webapp" / "assets" / "previews" / "logo-zh.png"
-        if logo_png.exists():
-            logo_left, logo_mid, logo_right = st.columns([1, 1.4, 1])
-            with logo_mid:
-                st.image(str(logo_png), width=240)
-        st.markdown(
-            """
-            <div class="auth-hero">
-                <h1>老年抑郁风险筛查工作台</h1>
-                <p>请先登录。管理员可使用完整工作台和账号管理；普通用户只进入评估与个人记录功能。</p>
-                <div class="auth-rule">用户名允许 @ _ - &amp; ¥ $ # 和数字、大小写字母；密码至少 8 位，并同时包含大写和小写字母。</div>
+    _, shell, _ = st.columns([0.16, 2.68, 0.16])
+    with shell:
+        brand_col, auth_col = st.columns([1.03, 0.97], gap="large")
+        logo_path = PROJECT_ROOT / "webapp" / "assets" / "logo-mark.svg"
+        illustration_path = PROJECT_ROOT / "webapp" / "assets" / "sidebar-conversation.svg"
+        logo_uri = ""
+        illustration_uri = ""
+        if logo_path.exists():
+            logo_uri = (
+                "data:image/svg+xml;base64,"
+                + base64.b64encode(logo_path.read_bytes()).decode("ascii")
+            )
+        if illustration_path.exists():
+            illustration_uri = (
+                "data:image/svg+xml;base64,"
+                + base64.b64encode(illustration_path.read_bytes()).decode("ascii")
+            )
+        brand_col.markdown(
+            f"""
+            <div class="auth-brand-card">
+                <div class="auth-brand-lockup">
+                    <div class="auth-brand-mark"><img src="{logo_uri}" alt=""></div>
+                    <div>
+                        <div class="auth-brand-name">老年抑郁风险筛查</div>
+                        <div class="auth-brand-sub">多模态抑郁风险评估平台</div>
+                    </div>
+                </div>
+                <h1>老年抑郁风险<br>筛查工作台</h1>
+                <p class="auth-brand-copy">
+                    对话、量表与多模态信号协同，为科研风险筛查提供可解释的风险参考。
+                </p>
+                <div class="auth-brand-illustration">
+                    <img src="{illustration_uri}" alt="两位长者相对而坐、交流对话的插画">
+                </div>
+                <div class="auth-trust-row">
+                    <span class="auth-trust-chip">本地处理优先</span>
+                    <span class="auth-trust-chip">科研风险筛查</span>
+                    <span class="auth-trust-chip">不替代诊断</span>
+                </div>
             </div>
             """,
             unsafe_allow_html=True,
         )
-        st.caption(
-            "本系统仅用于科研风险筛查和辅助沟通，不替代医生诊断。"
-            "对话默认在本地处理；启用第三方大模型前需要单独同意，并自动隐藏姓名、住址、电话、证件号和邮箱。"
+        auth_col.markdown(
+            """
+            <div class="auth-form-head">
+                <div class="auth-eyebrow">账号入口</div>
+                <h2>进入工作台</h2>
+                <p>登录已有账号，或创建普通用户账号。管理员账号拥有完整数据和账号管理权限。</p>
+            </div>
+            <div class="auth-rule">
+                用户名允许 @ _ - &amp; ¥ $ # 和数字、大小写字母；密码至少 8 位，并同时包含大写和小写字母。
+            </div>
+            """,
+            unsafe_allow_html=True,
         )
         flash = st.session_state.pop("auth_flash", None)
         if flash:
-            st.error(flash)
-        login_tab, register_tab, recovery_tab = st.tabs(["登录", "注册", "找回密码"])
+            auth_col.error(flash)
+        login_tab, register_tab, recovery_tab = auth_col.tabs(
+            ["登录", "注册", "找回密码"]
+        )
 
         with login_tab:
             with st.form("auth_login_form"):
@@ -1571,7 +1839,11 @@ def render_auth_gate() -> None:
                 else:
                     st.error("无法连接后端获取人机验证，请确认桌面版后端已启动。")
                 answer = st.text_input("请输入计算结果", key="login_answer")
-                submitted = st.form_submit_button("登录", width="stretch")
+                submitted = st.form_submit_button(
+                    "登录",
+                    width="stretch",
+                    type="primary",
+                )
             if submitted:
                 if challenge is None:
                     st.session_state.auth_flash = "无法获取人机验证，请稍后重试"
@@ -1630,7 +1902,11 @@ def render_auth_gate() -> None:
                         )
                     security_questions.append(question)
                     security_answers.append(answer)
-                register_submitted = st.form_submit_button("注册并登录", width="stretch")
+                register_submitted = st.form_submit_button(
+                    "注册并登录",
+                    width="stretch",
+                    type="primary",
+                )
             if register_submitted:
                 if reg_challenge is None:
                     st.session_state.auth_flash = "无法获取人机验证，请稍后重试"
@@ -1692,7 +1968,9 @@ def render_auth_gate() -> None:
                         key="recovery_confirm_password",
                     )
                     reset_submitted = st.form_submit_button(
-                        "重置密码", width="stretch"
+                        "重置密码",
+                        width="stretch",
+                        type="primary",
                     )
                 if reset_submitted:
                     if new_password != confirm_new_password:
@@ -1710,6 +1988,16 @@ def render_auth_gate() -> None:
                         else:
                             st.session_state.auth_flash = result.get("error") or "密码重置失败"
                     st.rerun()
+
+        auth_col.markdown(
+            """
+            <div class="auth-security-note">
+                本系统仅用于科研风险筛查和辅助沟通，不替代医生诊断。对话默认在本地处理；
+                启用第三方大模型前需要单独同意，并自动隐藏姓名、住址、电话、证件号和邮箱。
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
 
 
 def risk_gauge(probability: float) -> go.Figure:
