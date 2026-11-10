@@ -131,6 +131,8 @@ class CMDCModelTests(unittest.TestCase):
         self.assertIn("text_audio", set(report["variant_name"]))
         self.assertTrue(model_files)
         self.assertIn("age_scope_warning", summary)
+        self.assertEqual(len(summary["dataset_fingerprint"]), 64)
+        self.assertEqual(summary["schema_version"], 1)
 
     def test_advanced_analysis_writes_robustness_reports(self):
         rng = np.random.default_rng(7)
@@ -187,6 +189,8 @@ class CMDCModelTests(unittest.TestCase):
         self.assertTrue(summary["ready"])
         self.assertIn("primary_bootstrap_ci", summary)
         self.assertIn("implemented_measures", summary)
+        self.assertEqual(len(summary["dataset_fingerprint"]), 64)
+        self.assertEqual(summary["schema_version"], 1)
 
     def test_locked_holdout_is_deterministic_and_writes_artifacts(self):
         rng = np.random.default_rng(19)
@@ -238,6 +242,10 @@ class CMDCModelTests(unittest.TestCase):
         self.assertTrue(first["ready"])
         self.assertEqual(first["holdout_seed"], second["holdout_seed"])
         self.assertEqual(first["locked_threshold"], second["locked_threshold"])
+        self.assertEqual(
+            first["dataset_fingerprint"],
+            second["dataset_fingerprint"],
+        )
         self.assertEqual(first["train_subjects"], 32)
         self.assertEqual(first["test_subjects"], 8)
         self.assertEqual(len(predictions), 8)

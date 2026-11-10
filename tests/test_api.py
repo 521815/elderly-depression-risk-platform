@@ -4,7 +4,7 @@ import unittest
 from pathlib import Path
 from unittest import mock
 
-from backend_api.app import app
+from backend_api.app import _job_tasks, app
 from elderly_depression import auth as account_auth
 from elderly_depression import records, services
 
@@ -590,6 +590,11 @@ class ApiTests(unittest.TestCase):
         self.assertIsInstance(resp.json, list)
 
     def test_background_job_echo(self):
+        self.assertTrue(
+            {"cmdc_train", "cmdc_advanced", "cmdc_holdout"}.issubset(
+                _job_tasks()
+            )
+        )
         resp = self.client.post(
             "/api/jobs",
             json={"task": "echo", "payload": {"x": 1}},

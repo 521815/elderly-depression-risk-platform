@@ -1229,6 +1229,24 @@ def _job_tasks() -> dict:
         ),
         "tabular_synthetic": lambda p: _records(services.train_tabular_synthetic()),
         "imbalance": lambda p: _records(services.run_imbalance_comparison()),
+        "cmdc_train": lambda p: services.train_cmdc_external_models(
+            repeats=max(1, min(30, int(p.get("repeats", 10))))
+        ),
+        "cmdc_advanced": lambda p: services.run_cmdc_advanced_analysis(
+            repeats=max(1, min(20, int(p.get("repeats", 10)))),
+            model_repeats=max(1, min(10, int(p.get("model_repeats", 5)))),
+            bootstrap_iterations=max(
+                50,
+                min(5000, int(p.get("bootstrap_iterations", 1000))),
+            ),
+        ),
+        "cmdc_holdout": lambda p: services.run_cmdc_locked_holdout(
+            repeats=max(1, min(20, int(p.get("repeats", 10)))),
+            bootstrap_iterations=max(
+                50,
+                min(5000, int(p.get("bootstrap_iterations", 1000))),
+            ),
+        ),
         "mpdd_build": lambda p: services.mpdd_summary(),
         "mpdd_augmentation": lambda p: {
             "validation": services.run_segment_augmentation(

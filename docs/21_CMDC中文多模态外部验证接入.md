@@ -61,6 +61,7 @@ CMDC 评估严格按 `subject_id` 聚合，每位受试者只出现一次。使�
 5. 报告 AUC、PR-AUC、平衡准确率、灵敏度、特异度、F1 和 Brier。
 
 没有按 936 个问题随机切分，也没有在验证折上填补或标准化。
+评估摘要和模型包同时记录数据集指纹、特征模式版本 `1`、随机状态和评估协议编号，便于确认结果对应哪一版派生数据。
 
 ## 5 结果
 
@@ -169,6 +170,8 @@ python scripts/51_train_cmdc_models.py --repeats 10
 python scripts/55_run_cmdc_advanced_analysis.py
 python scripts/56_run_cmdc_locked_holdout.py --repeats 10 --bootstrap-iterations 1000
 ```
+
+耗时分析也可在管理员“后台任务”页使用 `cmdc_train`、`cmdc_advanced` 或 `cmdc_holdout` 运行，支持去重、取消、超时和状态追踪。
 
 前端入口：管理员登录 →“多模态数据”→“CMDC｜中文外部验证”。
 

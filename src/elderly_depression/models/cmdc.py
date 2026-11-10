@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import hashlib
 import json
 from collections import defaultdict
 from datetime import datetime
@@ -43,6 +44,20 @@ CMDC_VARIANTS = {
 }
 
 CMDC_PRIMARY_VARIANT = "text_audio"
+CMDC_SCHEMA_VERSION = 1
+CMDC_EVALUATION_PROTOCOL = "subject_aware_repeated_stratified_cv_v1"
+CMDC_RANDOM_STATE = 42
+
+
+def dataset_fingerprint(df: pd.DataFrame) -> str:
+    """Return a stable fingerprint for schema and subject-level feature values."""
+    frame = df.reindex(sorted(df.columns), axis=1)
+    digest = hashlib.sha256()
+    digest.update("\x1f".join(str(column) for column in frame.columns).encode("utf-8"))
+    digest.update(
+        pd.util.hash_pandas_object(frame, index=True).to_numpy().tobytes()
+    )
+    return digest.hexdigest()
 
 
 def _modality_features(df: pd.DataFrame, modality: str) -> list[str]:
@@ -111,7 +126,7 @@ def _evaluate_variant(
     cv = RepeatedStratifiedKFold(
         n_splits=folds,
         n_repeats=max(1, repeats),
-        random_state=42,
+        random_state=CMDC_RANDOM_STATE,
     )
     metrics: defaultdict[str, list[float]] = defaultdict(list)
     for train_index, test_index in cv.split(X, y):
@@ -177,6 +192,7 @@ def train_cmdc_models(
     if df.empty or "label" not in df.columns:
         raise ValueError("CMDC 特征表为空或缺少 label")
 
+    fingerprint = dataset_fingerprint(df)
     report_rows = []
     trained_models: dict[str, dict] = {}
     for name, modalities in CMDC_VARIANTS.items():
@@ -191,6 +207,10 @@ def train_cmdc_models(
                 "features": columns,
                 "variant": name,
                 "trained_at": datetime.now().isoformat(timespec="seconds"),
+                "schema_version": CMDC_SCHEMA_VERSION,
+                "dataset_fingerprint": fingerprint,
+                "random_state": CMDC_RANDOM_STATE,
+                "evaluation_protocol": CMDC_EVALUATION_PROTOCOL,
                 "note": "仅用于 CMDC 外部验证，不进入老年主风险评估。",
             }
 
@@ -226,6 +246,10 @@ def train_cmdc_models(
         "hc_subjects": int(label_counts.get(0, 0)),
         "mdd_subjects": int(label_counts.get(1, 0)),
         "primary_variant": CMDC_PRIMARY_VARIANT,
+        "schema_version": CMDC_SCHEMA_VERSION,
+        "dataset_fingerprint": fingerprint,
+        "random_state": CMDC_RANDOM_STATE,
+        "evaluation_protocol_id": CMDC_EVALUATION_PROTOCOL,
         "primary_result": (
             primary.iloc[0].to_dict() if not primary.empty else None
         ),

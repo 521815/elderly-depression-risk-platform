@@ -31,6 +31,8 @@ from sklearn.model_selection import (
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import StandardScaler
 
+from .cmdc import CMDC_SCHEMA_VERSION, dataset_fingerprint
+
 
 AUDIO_MODALITIES = ("audio_deep", "acoustic")
 SINGLE_MODALITIES = {
@@ -38,6 +40,7 @@ SINGLE_MODALITIES = {
     "visual": ("visual",),
     "audio": AUDIO_MODALITIES,
 }
+ADVANCED_PROTOCOL_ID = "subject_aware_advanced_analysis_v1"
 
 
 def _modality_columns(df: pd.DataFrame, modalities: tuple[str, ...]) -> list[str]:
@@ -623,6 +626,7 @@ def run_cmdc_advanced_analysis(
 ) -> dict:
     if df.empty or "label" not in df.columns:
         raise ValueError("CMDC 特征表为空或缺少 label")
+    fingerprint = dataset_fingerprint(df)
 
     output = Path(output_dir)
     output.mkdir(parents=True, exist_ok=True)
@@ -689,6 +693,9 @@ def run_cmdc_advanced_analysis(
                 "model_name": best_model_name,
                 "features": model_columns,
                 "trained_at": datetime.now().isoformat(timespec="seconds"),
+                "schema_version": CMDC_SCHEMA_VERSION,
+                "dataset_fingerprint": fingerprint,
+                "evaluation_protocol": ADVANCED_PROTOCOL_ID,
                 "note": "仅用于 CMDC 外部验证，不进入老年主风险评估。",
             },
             model_artifact,
@@ -699,6 +706,9 @@ def run_cmdc_advanced_analysis(
         "ready": True,
         "created_at": datetime.now().isoformat(timespec="seconds"),
         "subjects": int(len(df)),
+        "schema_version": CMDC_SCHEMA_VERSION,
+        "dataset_fingerprint": fingerprint,
+        "evaluation_protocol_id": ADVANCED_PROTOCOL_ID,
         "primary_subjects": int(len(primary_subset)),
         "bootstrap_iterations": int(max(50, bootstrap_iterations)),
         "primary_bootstrap_ci": bootstrap,

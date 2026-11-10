@@ -4363,6 +4363,9 @@ def render_jobs() -> None:
         "tabular_longitudinal": "表格纵向轨迹",
         "tabular_synthetic": "表格模拟组训练",
         "imbalance": "不平衡方法对比",
+        "cmdc_train": "CMDC 外部验证训练",
+        "cmdc_advanced": "CMDC 稳健性分析",
+        "cmdc_holdout": "CMDC 锁定留出验证",
         "mpdd_build": "MPDD 特征构建",
         "mpdd_augmentation": "MPDD 片段增强",
         "synthetic_generate": "生成模拟数据",
@@ -4924,6 +4927,14 @@ def render_cmdc_external() -> None:
         "适用边界：CMDC 为混合成人样本，不能代表中国老年人；"
         "当前仅作为中文多模态外部验证数据。"
     )
+    benchmark_meta = summary.get("benchmark") or {}
+    fingerprint = str(benchmark_meta.get("dataset_fingerprint") or "")
+    if fingerprint:
+        st.caption(
+            f"数据指纹：{fingerprint[:12]}…{fingerprint[-8:]} · "
+            f"特征模式 v{benchmark_meta.get('schema_version', '-')} · "
+            f"{benchmark_meta.get('evaluation_protocol_id', '评估协议')}"
+        )
 
     modality_rows = []
     for key, meta in (summary.get("modalities") or {}).items():

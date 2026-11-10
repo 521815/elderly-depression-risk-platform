@@ -42,6 +42,7 @@ streamlit run webapp/app.py
 - `POST /api/jobs`：提交后台任务；相同任务和参数的运行中实例会复用，返回 `deduplicated=true`
 - `GET /api/jobs/<job_id>`：查询后台任务状态
 - `POST /api/jobs/<job_id>/cancel`：请求取消任务；取消或超时后，后台线程不能覆盖最终状态
+- 后台任务支持 `cmdc_train`、`cmdc_advanced` 和 `cmdc_holdout`，CMDC 长分析不再阻塞同步 API
 - `GET /api/charls/summary`：CHARLS 标准表概览
 - `POST /api/charls/build`：构建 CHARLS 标准表
 - `POST /api/charls/train`：训练表格基线，body 为 `{"resample_method": "smote"}`

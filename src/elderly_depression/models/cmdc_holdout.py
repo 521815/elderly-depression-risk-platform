@@ -20,6 +20,10 @@ from .cmdc_advanced import (
     _prepare_subset,
     _repeated_oof,
 )
+from .cmdc import (
+    CMDC_SCHEMA_VERSION,
+    dataset_fingerprint,
+)
 
 
 HOLDOUT_SEED = 20261109
@@ -101,6 +105,7 @@ def run_cmdc_locked_holdout(
     bootstrap_iterations: int = 1000,
     test_size: float = 0.2,
 ) -> dict:
+    fingerprint = dataset_fingerprint(df)
     subset, labels, columns = _prepare_subset(
         df,
         ("text", "audio_deep", "acoustic"),
@@ -195,6 +200,8 @@ def run_cmdc_locked_holdout(
             "threshold": threshold,
             "minimum_sensitivity": MIN_SCREENING_SENSITIVITY,
             "holdout_seed": HOLDOUT_SEED,
+            "schema_version": CMDC_SCHEMA_VERSION,
+            "dataset_fingerprint": fingerprint,
             "trained_at": datetime.now().isoformat(timespec="seconds"),
             "note": "锁定留出评估模型，不进入老年主风险评估。",
         },
@@ -206,6 +213,8 @@ def run_cmdc_locked_holdout(
         "ready": True,
         "created_at": datetime.now().isoformat(timespec="seconds"),
         "holdout_seed": HOLDOUT_SEED,
+        "schema_version": CMDC_SCHEMA_VERSION,
+        "dataset_fingerprint": fingerprint,
         "variant": "text_audio",
         "subjects": int(len(subset)),
         "train_subjects": int(len(train)),
