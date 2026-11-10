@@ -14,11 +14,12 @@ PROJECT_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(PROJECT_ROOT / "src"))
 
 from elderly_depression.data.feature_cache import load_parquet_features
-from elderly_depression.models.multimodal import predict_subject_pipeline
-from elderly_depression.multimodal_synthetic_v3 import (
-    build_augmented_pipeline,
-    split_subject_holdout,
+from elderly_depression.models.multimodal import (
+    predict_subject_pipeline,
+    train_subject_late_fusion,
 )
+from elderly_depression.multimodal_synthetic_v3 import split_subject_holdout
+from elderly_depression.smoothing import aggregate_mpdd_subjects
 
 
 def _calibration_rows(y, prob):
@@ -66,40 +67,41 @@ def main() -> None:
     real = load_parquet_features("mpdd_utterance_features")
     if real is None:
         real = pd.read_csv(PROJECT_ROOT / "data" / "mpdd_utterance_features.csv")
-    real = real.dropna(subset=["hamd_score"]).copy()
+    real = aggregate_mpdd_subjects(
+        PROJECT_ROOT / "data" / "mpdd_utterance_features.csv",
+        method="mean",
+    )
     tune, test = split_subject_holdout(real, test_ratio=0.2, seed=42)
-    y = test.groupby("subject_id")["hamd_score"].apply(lambda s: int((s >= 8).any()))
+    y = test.groupby("subject_id")["_label"].first().astype(int)
 
     result = {
         "tune_subjects": int(tune["subject_id"].nunique()),
         "test_subjects": int(len(y)),
+        "model": "regularized_subject_pipeline",
+        "label": "official_label2",
+        "threshold": 0.5,
         "pipelines": {},
     }
-    pipelines = {
-        "real": build_augmented_pipeline(tune, augment=False),
-        "augmented": build_augmented_pipeline(
-            tune,
-            k=3,
-            noise_scale=0.03,
-            modality_noise_scales={
-                "face_": 0.03,
-                "audio_": 0.03,
-                "gait_": 0.005,
-                "personality_": 0.005,
-            },
-        ),
+    trained = train_subject_late_fusion(
+        tune,
+        prefixes=["face", "audio", "gait", "personality"],
+        label_col="_label",
+        output_dir=None,
+        n_splits=5,
+        n_repeats=5,
+        pca_dims=64,
+        threshold_policy="fixed",
+    )
+    pred = predict_subject_pipeline(trained["pipeline"], test).set_index("subject_id")
+    prob = pred["calibrated_prob"].reindex(y.index)
+    mask = y.notna() & prob.notna()
+    yy, pp = y[mask].to_numpy(), prob[mask].to_numpy()
+    result["pipelines"]["regularized"] = {
+        "auc": round(float(roc_auc_score(yy, pp)), 4),
+        "brier": round(float(brier_score_loss(yy, pp)), 4),
+        "calibration": _calibration_rows(yy, pp),
+        "decision_curve": _dca_rows(yy, pp),
     }
-    for name, pipeline in pipelines.items():
-        pred = predict_subject_pipeline(pipeline, test).set_index("subject_id")
-        prob = pred["calibrated_prob"].reindex(y.index)
-        mask = y.notna() & prob.notna()
-        yy, pp = y[mask].to_numpy(), prob[mask].to_numpy()
-        result["pipelines"][name] = {
-            "auc": round(float(roc_auc_score(yy, pp)), 4),
-            "brier": round(float(brier_score_loss(yy, pp)), 4),
-            "calibration": _calibration_rows(yy, pp),
-            "decision_curve": _dca_rows(yy, pp),
-        }
     out = PROJECT_ROOT / "output" / "mpdd_calibration_dca.json"
     out.write_text(json.dumps(result, ensure_ascii=False, indent=2), encoding="utf-8")
     print(json.dumps(result, ensure_ascii=False, indent=2)[:3000])

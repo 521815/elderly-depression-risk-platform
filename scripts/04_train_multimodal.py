@@ -11,6 +11,7 @@ import pandas as pd
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(PROJECT_ROOT / "src"))
 
+from elderly_depression.data.mpdd import add_mpdd_binary_target
 from elderly_depression.models.multimodal import train_late_fusion
 
 
@@ -28,10 +29,13 @@ def main() -> None:
             "scripts/02_build_mpdd_dataset.py."
         )
 
-    df = pd.read_csv(input_path)
-    if "hamd_score" not in df.columns:
-        raise SystemExit("MPDD table must contain hamd_score.")
-    df["hamd_binary"] = (df["hamd_score"] >= args.hamd_threshold).astype(int)
+    df = add_mpdd_binary_target(
+        pd.read_csv(input_path),
+        threshold=args.hamd_threshold,
+    )
+    df = df.dropna(subset=["mpdd_binary"]).copy()
+    if df.empty:
+        raise SystemExit("MPDD table has no usable label2 or PHQ-9 score.")
 
     prefixes = []
     for prefix in ["face", "audio", "gait", "personality"]:
@@ -42,7 +46,7 @@ def main() -> None:
     result = train_late_fusion(
         df,
         prefixes=prefixes,
-        label_col="hamd_binary",
+        label_col="mpdd_binary",
         output_dir=args.output,
     )
     print("\nMultimodal report:")

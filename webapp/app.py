@@ -4694,10 +4694,13 @@ def render_mpdd_dataset() -> None:
     cols = st.columns(4)
     cols[0].metric("样本量", len(df))
     cols[1].metric("特征数", len(df.columns))
-    if "hamd_score" in df.columns:
-        cols[2].metric("PHQ-9 量表均值", f"{df['hamd_score'].mean():.1f}")
-        binary = (df["hamd_score"] >= 8).astype(int)
-        cols[3].metric("PHQ-9 ≥8 比例", f"{binary.mean():.1%}")
+    subject_df = (
+        df.drop_duplicates("subject_id") if "subject_id" in df.columns else df
+    )
+    official = pd.to_numeric(subject_df.get("label2"), errors="coerce")
+    if official is not None:
+        cols[2].metric("官方标签覆盖", f"{official.notna().sum()} / {len(subject_df)}")
+        cols[3].metric("官方二分类阳性率", f"{official.mean():.1%}")
 
     prefixes = []
     for prefix, label in [
@@ -4715,16 +4718,31 @@ def render_mpdd_dataset() -> None:
         else "**未检测到面部/语音/步态/人格特征列**"
     )
 
-    if "hamd_score" in df.columns:
+    score_col = "phq9_score" if "phq9_score" in df.columns else "hamd_score"
+    if score_col in df.columns:
         fig_hamd = px.histogram(
             df,
-            x="hamd_score",
+            x=score_col,
             nbins=24,
             color_discrete_sequence=["#7c3aed"],
-            labels={"hamd_score": "汉密尔顿量表总分", "count": "样本数"},
+            labels={score_col: "PHQ-9 量表总分", "count": "样本数"},
         )
         fig_hamd.update_layout(height=300, margin=dict(l=10, r=10, t=30, b=10))
         st.plotly_chart(fig_hamd, width="stretch")
+    if official is not None and score_col in subject_df.columns:
+        threshold_positive = pd.to_numeric(
+            subject_df[score_col], errors="coerce"
+        ) >= 8
+        disagreement = int(
+            (
+                official.notna()
+                & (official.astype(float) != threshold_positive.astype(float))
+            ).sum()
+        )
+        st.caption(
+            "二分类训练优先使用官方 label2；PHQ-9 ≥8 仅在官方标签缺失时回退。"
+            f"当前有 {disagreement} 名受试者的两种口径不一致。"
+        )
 
     if st.session_state.get("multimodal_report") is None:
         st.session_state.multimodal_report = backend.load_csv(backend.MULTIMODAL_REPORT)
@@ -4750,7 +4768,10 @@ def render_mpdd_dataset() -> None:
 
     st.markdown("---")
     st.markdown("#### 改进版：被试级 utterance 基线")
-    st.caption("每段 A/V/IMU 特征单独建模，按被试分组重复交叉验证，再对被试概率求平均；结果带均值和波动范围。")
+    st.caption(
+        "先把每名受试者的片段特征做均值聚合，再用 PCA + 强正则化逻辑回归建模；"
+        "按受试者分组做 5×5 重复交叉验证，阈值固定为 0.5，不使用评估折调参。"
+    )
     subj_action_cols = st.columns(2)
     with subj_action_cols[0]:
         if st.button("构建 utterance 特征表", width="stretch"):
@@ -4759,7 +4780,7 @@ def render_mpdd_dataset() -> None:
                 st.cache_data.clear()
             st.rerun()
     with subj_action_cols[1]:
-        if st.button("训练被试级基线（重复交叉验证）", type="primary", width="stretch"):
+        if st.button("训练受试者级正则化基线", type="primary", width="stretch"):
             with st.spinner("正在做分组重复交叉验证并训练推理管线..."):
                 st.session_state.multimodal_subject_report = backend.train_mpdd_subject()
             st.rerun()
@@ -4785,6 +4806,48 @@ def render_mpdd_dataset() -> None:
     else:
         st.info("还没有被试级基线结果，先构建 utterance 特征表，再点击训练。")
 
+    label_comparison = backend.load_csv(backend.MPDD_LABEL_COMPARISON_REPORT)
+    if label_comparison is not None and not label_comparison.empty:
+        st.markdown("#### 标签口径复核")
+        comparison_fusion = label_comparison[
+            label_comparison["modality"] == "fusion"
+        ].copy()
+        comparison_fusion["标签口径"] = comparison_fusion[
+            "label_protocol"
+        ].map(
+            {
+                "official_label2": "官方 label2（正式）",
+                "legacy_phq9_ge_8": "旧 PHQ-9 ≥8（仅对照）",
+            }
+        )
+        display_comparison = comparison_fusion[
+            [
+                "标签口径",
+                "accuracy_mean",
+                "f1_mean",
+                "auc_mean",
+                "pr_auc_mean",
+                "brier_mean",
+            ]
+        ].rename(
+            columns={
+                "accuracy_mean": "准确率",
+                "f1_mean": "F1",
+                "auc_mean": "AUC",
+                "pr_auc_mean": "PR-AUC",
+                "brier_mean": "Brier",
+            }
+        )
+        for column in ["准确率", "F1", "AUC", "PR-AUC", "Brier"]:
+            display_comparison[column] = display_comparison[column].map(
+                lambda value: f"{float(value):.3f}"
+            )
+        st.dataframe(display_comparison, width="stretch", hide_index=True)
+        st.caption(
+            "两行使用相同受试者、PCA 维度、模型和阈值，仅标签不同。"
+            "旧 PHQ-9 阈值只用于解释历史差异，不作为正式评测口径。"
+        )
+
     st.markdown("---")
     st.markdown("#### 三分类与 PHQ-9 回归")
     advanced_cols = st.columns(2)
@@ -4794,7 +4857,7 @@ def render_mpdd_dataset() -> None:
                 st.session_state.mpdd_advanced_reports = backend.train_mpdd_advanced()
             st.rerun()
     with advanced_cols[1]:
-        st.caption("使用同一套 utterance 特征和被试分组，不重复使用测试集。")
+        st.caption("使用同一套受试者级聚合特征和分组切分，不重复使用测试集。")
 
     advanced = st.session_state.mpdd_advanced_reports
     if advanced:
@@ -5973,6 +6036,10 @@ def data_health_markdown(report: dict) -> str:
         f"- 样本量：{mpdd.get('rows', 0)}",
         f"- 缺失率：{float(mpdd.get('missing_rate', 0)):.1%}",
         f"- 标签：{mpdd.get('has_label', False)}",
+        f"- 官方标签受试者：{(mpdd.get('label_audit') or {}).get('labeled_subjects', 0)}",
+        f"- 未标注受试者：{(mpdd.get('label_audit') or {}).get('unlabeled_subjects', 0)}",
+        f"- 官方阳性 / 阴性：{(mpdd.get('label_audit') or {}).get('label2_positive', 0)} / {(mpdd.get('label_audit') or {}).get('label2_negative', 0)}",
+        f"- 与 PHQ-9 阈值口径不一致：{(mpdd.get('label_audit') or {}).get('threshold_disagreement', 0)}",
         "",
         "## CMDC 中文外部验证",
         "",
@@ -6052,7 +6119,7 @@ def render_data_health() -> None:
             mpdd_cols[0].metric("样本量", mpdd.get("rows", 0))
             mpdd_cols[1].metric("缺失率", f"{float(mpdd.get('missing_rate', 0)):.1%}")
             mpdd_cols[2].metric(
-                "阳性率",
+                "官方 label2 阳性率",
                 f"{float(mpdd.get('positive_rate') or 0):.1%}"
                 if mpdd.get("positive_rate") is not None
                 else "无标签",
@@ -6061,6 +6128,13 @@ def render_data_health() -> None:
             mpdd_cols[3].metric(
                 "训练/测试",
                 f"{fold_counts.get('train', 0)}/{fold_counts.get('test', 0)}",
+            )
+            audit = mpdd.get("label_audit") or {}
+            st.caption(
+                f"官方标签 {audit.get('labeled_subjects', 0)} 人，"
+                f"未标注 {audit.get('unlabeled_subjects', 0)} 人；"
+                f"PHQ-9 ≥{audit.get('phq9_threshold', 8)} 与官方 label2 "
+                f"不一致 {audit.get('threshold_disagreement', 0)} 人。"
             )
             modalities = mpdd.get("modalities") or {}
             if modalities:
@@ -6149,6 +6223,47 @@ def render_data_health() -> None:
                 width="stretch",
                 hide_index=True,
             )
+
+    cards = backend.model_cards()
+    if cards:
+        with st.expander("模型卡与用途边界", expanded=False):
+            for card in cards:
+                st.markdown(f"**{card.get('name', card.get('id', '模型'))}**")
+                st.caption(
+                    f"{card.get('dataset', '-')} · {card.get('population', '-')} · "
+                    f"{card.get('role', '-')}"
+                )
+                metrics = card.get("metrics") or {}
+                if metrics:
+                    metric_cols = st.columns(min(4, len(metrics)))
+                    for index, (name, value) in enumerate(metrics.items()):
+                        label = {
+                            "auc": "AUC",
+                            "pr_auc": "PR-AUC",
+                            "f1": "F1",
+                            "accuracy": "准确率",
+                            "sensitivity": "灵敏度",
+                            "specificity": "特异度",
+                            "brier": "Brier",
+                        }.get(name, name)
+                        shown = f"{float(value):.3f}" if isinstance(value, (int, float)) else str(value)
+                        metric_cols[index % len(metric_cols)].metric(label, shown)
+                st.caption(f"适用：{card.get('intended_use', '-')}")
+                st.caption(f"禁止用途：{card.get('not_intended_for', '-')}")
+                artifact = card.get("artifact") or {}
+                digest = str(artifact.get("sha256") or "")
+                if digest:
+                    st.caption(
+                        f"报告哈希：{digest[:12]}… · "
+                        f"{human_bytes(int(artifact.get('size_bytes', 0)))}"
+                    )
+                fingerprint = str(card.get("dataset_fingerprint") or "")
+                if fingerprint:
+                    st.caption(
+                        f"数据指纹：{fingerprint[:12]}… · "
+                        f"特征模式 v{card.get('schema_version', '-')}"
+                    )
+                st.divider()
 
     st.download_button(
         "导出体检报告",

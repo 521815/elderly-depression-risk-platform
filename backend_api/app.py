@@ -1215,6 +1215,11 @@ def models_registry():
     return jsonify(services.model_registry())
 
 
+@app.get("/api/models/cards")
+def models_cards():
+    return jsonify(services.model_cards())
+
+
 def _job_tasks() -> dict:
     return {
         "echo": lambda p: {"echo": p},

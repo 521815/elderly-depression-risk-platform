@@ -25,6 +25,7 @@ from sklearn.preprocessing import StandardScaler
 
 from .config import DATA_DIR, OUTPUT_DIR
 from .data.feature_cache import load_parquet_features
+from .data.mpdd import add_mpdd_binary_target
 from .imbalance import best_threshold
 
 SYNTHETIC_V3_PARQUET = DATA_DIR / "synthetic" / "mpdd_synthetic_v3.parquet"
@@ -40,7 +41,8 @@ def _feature_cols(df: pd.DataFrame) -> list[str]:
 
 
 def _subject_binary(df: pd.DataFrame) -> pd.Series:
-    return df.groupby("subject_id")["hamd_binary"].first()
+    target_col = "mpdd_binary" if "mpdd_binary" in df.columns else "hamd_binary"
+    return df.groupby("subject_id")[target_col].first()
 
 
 def _cov_psd(cov: np.ndarray, scale: float = 0.05) -> np.ndarray:
@@ -63,8 +65,8 @@ def generate_hierarchical_synthetic(
     residual_scales: dict[str, float] | None = None,
     calibrate_marginals: bool = False,
 ) -> pd.DataFrame:
-    df = df.dropna(subset=["hamd_score"]).copy()
-    df["hamd_binary"] = (df["hamd_score"] >= 8).astype(int)
+    df = add_mpdd_binary_target(df).dropna(subset=["mpdd_binary"]).copy()
+    df["hamd_binary"] = df["mpdd_binary"].astype(int)
     feat_cols = _feature_cols(df)
     df[feat_cols] = df[feat_cols].fillna(0)
     rng = np.random.default_rng(seed)
@@ -200,8 +202,8 @@ def generate_segment_augmented(
     balance_classes: bool = False,
 ) -> pd.DataFrame:
     """Augment real utterance segments within subjects with small feature noise."""
-    df = df.dropna(subset=["hamd_score"]).copy()
-    df["hamd_binary"] = (df["hamd_score"] >= 8).astype(int)
+    df = add_mpdd_binary_target(df).dropna(subset=["mpdd_binary"]).copy()
+    df["hamd_binary"] = df["mpdd_binary"].astype(int)
     feat_cols = _feature_cols(df)
     if not feat_cols:
         raise ValueError("多模态输入缺少 face_/audio_/gait_/personality_ 特征列")
@@ -296,10 +298,9 @@ def _cross_modal_corr(df: pd.DataFrame, real_fit: pd.DataFrame) -> float:
 
 def validate_vs_real(syn_df: pd.DataFrame, real_df: pd.DataFrame) -> dict:
     def ensure_binary(df: pd.DataFrame) -> pd.DataFrame:
-        if "hamd_binary" not in df.columns and "hamd_score" in df.columns:
-            df = df.copy()
-            df["hamd_binary"] = (df["hamd_score"] >= 8).astype(int)
-        return df
+        out = add_mpdd_binary_target(df)
+        out["hamd_binary"] = out["mpdd_binary"]
+        return out
 
     real_df = ensure_binary(real_df)
     syn_df = ensure_binary(syn_df)
@@ -402,8 +403,8 @@ def evaluate_subject_aware(
     augmentation_noise: float = 0.03,
     augmentation_modality_scales: dict[str, float] | None = None,
 ) -> pd.DataFrame:
-    real = real_df.dropna(subset=["hamd_score"]).copy()
-    real["hamd_binary"] = (real["hamd_score"] >= 8).astype(int)
+    real = add_mpdd_binary_target(real_df).dropna(subset=["mpdd_binary"]).copy()
+    real["hamd_binary"] = real["mpdd_binary"].astype(int)
     syn = syn_df.copy()
     sgkf = StratifiedGroupKFold(n_splits=n_splits, shuffle=True, random_state=42)
     fold_rows = []
@@ -522,7 +523,7 @@ def grid_search_v3(
     real = load_parquet_features("mpdd_utterance_features")
     if real is None:
         real = pd.read_csv(DATA_DIR / "mpdd_utterance_features.csv")
-    real = real.dropna(subset=["hamd_score"]).copy()
+    real = add_mpdd_binary_target(real).dropna(subset=["mpdd_binary"]).copy()
 
     rows = []
     best = None
@@ -604,7 +605,7 @@ def run_augmentation_pipeline(
     real = load_parquet_features("mpdd_utterance_features")
     if real is None:
         real = pd.read_csv(DATA_DIR / "mpdd_utterance_features.csv")
-    real = real.dropna(subset=["hamd_score"]).copy()
+    real = add_mpdd_binary_target(real).dropna(subset=["mpdd_binary"]).copy()
     source = real[real["fold"] == "train"] if "fold" in real.columns else real
     augmented = generate_segment_augmented(
         source,
@@ -664,10 +665,10 @@ def evaluate_final_holdout(
     balance_classes: bool = False,
     seed: int = 42,
 ) -> pd.DataFrame:
-    train_df = train_df.dropna(subset=["hamd_score"]).copy()
-    train_df["hamd_binary"] = (train_df["hamd_score"] >= 8).astype(int)
-    test_df = test_df.dropna(subset=["hamd_score"]).copy()
-    test_df["hamd_binary"] = (test_df["hamd_score"] >= 8).astype(int)
+    train_df = add_mpdd_binary_target(train_df).dropna(subset=["mpdd_binary"]).copy()
+    train_df["hamd_binary"] = train_df["mpdd_binary"].astype(int)
+    test_df = add_mpdd_binary_target(test_df).dropna(subset=["mpdd_binary"]).copy()
+    test_df["hamd_binary"] = test_df["mpdd_binary"].astype(int)
     aug_train = generate_segment_augmented(
         train_df,
         k=k,
@@ -771,7 +772,7 @@ def run_augmentation_optimization(
     real = load_parquet_features("mpdd_utterance_features")
     if real is None:
         real = pd.read_csv(DATA_DIR / "mpdd_utterance_features.csv")
-    real = real.dropna(subset=["hamd_score"]).copy()
+    real = add_mpdd_binary_target(real).dropna(subset=["mpdd_binary"]).copy()
     tune_df, test_df = split_subject_holdout(real, test_ratio=test_ratio)
 
     settings = settings or [
@@ -891,7 +892,7 @@ def run_repeated_holdout(n_repeats: int = 5, params: dict | None = None) -> dict
     real = load_parquet_features("mpdd_utterance_features")
     if real is None:
         real = pd.read_csv(DATA_DIR / "mpdd_utterance_features.csv")
-    real = real.dropna(subset=["hamd_score"]).copy()
+    real = add_mpdd_binary_target(real).dropna(subset=["mpdd_binary"]).copy()
     params = params or _default_best_augmentation_params()
     scales = params.get("modality_noise_scales", {})
     k = int(params.get("k", 3))
@@ -939,8 +940,8 @@ def build_augmented_pipeline(
     augment: bool = True,
 ) -> dict:
     """Train a deployable subject pipeline on augmented segments."""
-    df = df.dropna(subset=["hamd_score"]).copy()
-    df["hamd_binary"] = (df["hamd_score"] >= 8).astype(int)
+    df = add_mpdd_binary_target(df).dropna(subset=["mpdd_binary"]).copy()
+    df["hamd_binary"] = df["mpdd_binary"].astype(int)
     aug = (
         generate_segment_augmented(
             df,

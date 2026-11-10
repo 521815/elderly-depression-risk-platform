@@ -13,7 +13,7 @@ from elderly_depression.models.multimodal import (
 
 
 class MultimodalTests(unittest.TestCase):
-    def test_threshold_is_selected_on_validation(self):
+    def test_threshold_is_selected_without_evaluation_fold(self):
         rng = np.random.default_rng(7)
         y = np.array([0] * 28 + [1] * 12, dtype=int)
         face = y + rng.normal(0, 0.15, size=len(y))
@@ -80,6 +80,9 @@ class MultimodalTests(unittest.TestCase):
         self.assertIn("repeat", result["report"].columns)
         self.assertIn("fold", result["report"].columns)
         self.assertFalse(result["summary"].empty)
+        fusion_spec = next(iter(result["pipeline"]["fusion"].values()))
+        self.assertEqual(fusion_spec["mode"], "mean")
+        self.assertEqual(fusion_spec["threshold"], 0.5)
         self.assertEqual(len(out), 1)
         self.assertIn("fusion_prob", out.columns)
         self.assertIn("prediction", out.columns)

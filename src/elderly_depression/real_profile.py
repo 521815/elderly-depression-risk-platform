@@ -11,6 +11,7 @@ from sklearn.decomposition import PCA
 
 from .config import DATA_DIR, OUTPUT_DIR
 from .data.feature_cache import load_parquet_features
+from .data.mpdd import add_mpdd_binary_target
 
 PROFILE_DIR = OUTPUT_DIR / "real_data_profile"
 PROFILE_JSON = PROFILE_DIR / "real_data_profile.json"
@@ -134,9 +135,8 @@ def _modality_profile(df: pd.DataFrame, prefix: str) -> dict:
 
 
 def analyze_multimodal(df: pd.DataFrame) -> dict:
-    df = df.copy()
-    if "hamd_binary" not in df.columns and "hamd_score" in df.columns:
-        df["hamd_binary"] = (df["hamd_score"] >= 8).astype(int)
+    df = add_mpdd_binary_target(df)
+    df["hamd_binary"] = df["mpdd_binary"]
     return {
         prefix.rstrip("_"): _modality_profile(df, prefix)
         for prefix in MODALITY_PREFIXES

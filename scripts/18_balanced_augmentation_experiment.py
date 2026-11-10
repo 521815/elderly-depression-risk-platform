@@ -13,6 +13,7 @@ sys.path.insert(0, str(PROJECT_ROOT / "src"))
 
 from elderly_depression.config import DATA_DIR
 from elderly_depression.data.feature_cache import load_parquet_features
+from elderly_depression.data.mpdd import add_mpdd_binary_target
 from elderly_depression.multimodal_synthetic_v3 import (
     evaluate_final_holdout,
     generate_segment_augmented,
@@ -25,7 +26,7 @@ def main() -> None:
     real = load_parquet_features("mpdd_utterance_features")
     if real is None:
         real = pd.read_csv(DATA_DIR / "mpdd_utterance_features.csv")
-    real = real.dropna(subset=["hamd_score"]).copy()
+    real = add_mpdd_binary_target(real).dropna(subset=["mpdd_binary"]).copy()
     tune_df, test_df = split_subject_holdout(real, test_ratio=0.2, seed=42)
 
     best_path = DATA_DIR / "synthetic" / "augmentation_best_params.json"

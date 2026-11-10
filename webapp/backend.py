@@ -41,6 +41,7 @@ MULTIMODAL_SUBJECT_REPORT = _local.MULTIMODAL_SUBJECT_REPORT
 MULTIMODAL_SUBJECT_LABEL3_REPORT = _local.MULTIMODAL_SUBJECT_LABEL3_REPORT
 MULTIMODAL_SUBJECT_PHQ9_REPORT = _local.MULTIMODAL_SUBJECT_PHQ9_REPORT
 MPDD_TEST_PREDICTIONS = _local.MPDD_TEST_PREDICTIONS
+MPDD_LABEL_COMPARISON_REPORT = _local.MPDD_LABEL_COMPARISON_REPORT
 MULTIMODAL_MODEL_DIR = _local.MULTIMODAL_MODEL_DIR
 FUSION_DIR = _local.FUSION_DIR
 FUSION_REPORT = _local.FUSION_REPORT
@@ -426,6 +427,13 @@ def run_cmdc_holdout(
         repeats=repeats,
         bootstrap_iterations=bootstrap_iterations,
     )
+
+
+def model_cards() -> list[dict]:
+    data = _api("GET", "/api/models/cards")
+    if data is not None:
+        return data
+    return _local.model_cards()
 
 
 def mpdd_cache_status() -> dict:

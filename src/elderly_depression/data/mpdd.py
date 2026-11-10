@@ -10,6 +10,7 @@ import pandas as pd
 
 
 SEQUENCE_STATS = ["mean", "std", "min", "max"]
+MPDD_BINARY_COLUMN = "mpdd_binary"
 
 MODALITY_NAMES = {
     "mfcc": ("audio", "mfcc"),
@@ -50,6 +51,106 @@ def _infer_label_col(df: pd.DataFrame) -> str | None:
         if any(k in low for k in ["hamd", "label", "depress", "severity", "score"]):
             return c
     return None
+
+
+def add_mpdd_binary_target(
+    df: pd.DataFrame,
+    threshold: int = 8,
+) -> pd.DataFrame:
+    """Add a canonical MPDD binary target with official labels taking precedence."""
+    out = df.copy()
+    target = pd.Series(pd.NA, index=out.index, dtype="Float64")
+    source = pd.Series("missing", index=out.index, dtype="object")
+
+    if "label2" in out.columns:
+        official = pd.to_numeric(out["label2"], errors="coerce")
+        official = official.where(official.isin([0, 1]))
+        target = official.astype("Float64")
+        source.loc[official.notna()] = "label2"
+
+    score_col = next(
+        (
+            column
+            for column in ("phq9_score", "hamd_score")
+            if column in out.columns
+        ),
+        None,
+    )
+    if score_col is not None:
+        score = pd.to_numeric(out[score_col], errors="coerce")
+        fallback = (score >= float(threshold)).astype("Float64")
+        fallback = fallback.where(score.notna())
+        use_fallback = target.isna() & fallback.notna()
+        target.loc[use_fallback] = fallback.loc[use_fallback]
+        source.loc[use_fallback] = f"{score_col}>={threshold}"
+
+    out[MPDD_BINARY_COLUMN] = target.astype("Int64")
+    out["mpdd_label_source"] = source
+    return out
+
+
+def mpdd_label_audit(
+    df: pd.DataFrame,
+    threshold: int = 8,
+) -> dict:
+    """Summarize official-label coverage and PHQ-9 threshold disagreement."""
+    if df.empty:
+        return {
+            "labeled_subjects": 0,
+            "unlabeled_subjects": 0,
+            "label2_positive": 0,
+            "label2_negative": 0,
+            "threshold_positive": 0,
+            "threshold_disagreement": 0,
+            "phq9_threshold": int(threshold),
+            "label_semantics": "official label2 when available; PHQ-9 threshold only as fallback",
+        }
+
+    subject_col = "subject_id" if "subject_id" in df.columns else None
+    subjects = df.drop_duplicates(subject_col) if subject_col else df
+    official = (
+        pd.to_numeric(subjects["label2"], errors="coerce")
+        if "label2" in subjects.columns
+        else pd.Series(np.nan, index=subjects.index, dtype=float)
+    )
+    official = official.where(official.isin([0, 1]))
+    score_col = next(
+        (
+            column
+            for column in ("phq9_score", "hamd_score")
+            if column in subjects.columns
+        ),
+        None,
+    )
+    threshold_label = (
+        pd.to_numeric(subjects[score_col], errors="coerce") >= float(threshold)
+        if score_col is not None
+        else pd.Series(np.nan, index=subjects.index, dtype=float)
+    )
+    if score_col is None:
+        threshold_label[:] = np.nan
+    threshold_label = threshold_label.where(
+        pd.to_numeric(subjects[score_col], errors="coerce").notna()
+        if score_col is not None
+        else pd.Series(False, index=subjects.index)
+    )
+
+    comparable = official.notna() & threshold_label.notna()
+    return {
+        "labeled_subjects": int(official.notna().sum()),
+        "unlabeled_subjects": int(official.isna().sum()),
+        "label2_positive": int((official == 1).sum()),
+        "label2_negative": int((official == 0).sum()),
+        "threshold_positive": int(threshold_label.fillna(False).sum()),
+        "threshold_disagreement": int(
+            (
+                comparable
+                & (official.astype(float) != threshold_label.astype(float))
+            ).sum()
+        ),
+        "phq9_threshold": int(threshold),
+        "label_semantics": "official label2 when available; PHQ-9 threshold only as fallback",
+    }
 
 
 def _load_csv_or_parquet(path: Path) -> pd.DataFrame:
@@ -257,6 +358,7 @@ def _build_official_table(mpdd_root: Path) -> pd.DataFrame | None:
         for col in ["phq9_score", "hamd_score", "label2", "label3"]:
             if col not in table.columns:
                 table[col] = pd.NA
+        table = add_mpdd_binary_target(table)
         frames.append(table)
 
     return pd.concat(frames, ignore_index=True) if frames else pd.DataFrame()
@@ -360,6 +462,7 @@ def build_utterance_feature_table(
         for col in ["phq9_score", "hamd_score", "label2", "label3"]:
             if col not in table.columns:
                 table[col] = pd.NA
+        table = add_mpdd_binary_target(table)
         frames.append(table)
 
     table = pd.concat(frames, ignore_index=True)

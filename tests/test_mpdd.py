@@ -5,10 +5,39 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
-from elderly_depression.data.mpdd import build_feature_table, build_utterance_feature_table
+from elderly_depression.data.mpdd import (
+    add_mpdd_binary_target,
+    build_feature_table,
+    build_utterance_feature_table,
+    mpdd_label_audit,
+)
 
 
 class MPDDLoaderTests(unittest.TestCase):
+    def test_official_label2_takes_precedence_over_score_threshold(self):
+        df = pd.DataFrame(
+            {
+                "subject_id": ["a", "b", "c"],
+                "label2": [1, 0, np.nan],
+                "phq9_score": [5, 2, 12],
+                "hamd_score": [5, 2, 12],
+            }
+        )
+
+        labeled = add_mpdd_binary_target(df)
+
+        self.assertEqual(labeled["mpdd_binary"].tolist(), [1, 0, 1])
+        self.assertEqual(
+            labeled["mpdd_label_source"].tolist(),
+            ["label2", "label2", "phq9_score>=8"],
+        )
+        audit = mpdd_label_audit(labeled)
+        self.assertEqual(audit["labeled_subjects"], 2)
+        self.assertEqual(audit["unlabeled_subjects"], 1)
+        self.assertEqual(audit["label2_positive"], 1)
+        self.assertEqual(audit["threshold_positive"], 1)
+        self.assertEqual(audit["threshold_disagreement"], 1)
+
     def test_build_table_from_official_npy_layout(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp) / "mpdd"
@@ -40,6 +69,8 @@ class MPDDLoaderTests(unittest.TestCase):
 
         self.assertEqual(len(df), 1)
         self.assertEqual(int(df.loc[0, "hamd_score"]), 5)
+        self.assertEqual(int(df.loc[0, "mpdd_binary"]), 0)
+        self.assertEqual(df.loc[0, "mpdd_label_source"], "label2")
         self.assertIn("audio_mfcc_mean_0", df.columns)
         self.assertIn("audio_mfcc_max_1", df.columns)
         self.assertIn("face_densenet_std_2", df.columns)
@@ -78,6 +109,7 @@ class MPDDLoaderTests(unittest.TestCase):
         self.assertEqual(set(df["modality"]), {"audio_mfcc", "face_densenet", "gait_imu"})
         self.assertEqual(set(df["fold"]), {"train"})
         self.assertEqual(int(df.loc[0, "hamd_score"]), 5)
+        self.assertEqual(int(df.loc[0, "mpdd_binary"]), 0)
         self.assertIn("personality_1", df.columns)
 
 

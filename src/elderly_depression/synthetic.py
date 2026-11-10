@@ -21,6 +21,7 @@ from scipy.stats import ks_2samp
 from sklearn.decomposition import PCA
 
 from .config import DATA_DIR
+from .data.mpdd import add_mpdd_binary_target
 from .features.text_features import extract_text_features
 from .models.tabular import prepare_X
 
@@ -318,8 +319,8 @@ def generate_multimodal_synthetic(
     n_per_class: int = 300,
     seed: int = 42,
 ) -> pd.DataFrame:
-    df = df.dropna(subset=["hamd_score"]).copy()
-    df["hamd_binary"] = (df["hamd_score"] >= 8).astype(int)
+    df = add_mpdd_binary_target(df).dropna(subset=["mpdd_binary"]).copy()
+    df["hamd_binary"] = df["mpdd_binary"].astype(int)
     feature_cols = [
         c
         for c in df.columns
@@ -351,8 +352,8 @@ def generate_multimodal_synthetic_enhanced(
     seed: int = 42,
 ) -> pd.DataFrame:
     """Generate in the real PCA subspace with class-conditional covariance."""
-    df = df.dropna(subset=["hamd_score"]).copy()
-    df["hamd_binary"] = (df["hamd_score"] >= 8).astype(int)
+    df = add_mpdd_binary_target(df).dropna(subset=["mpdd_binary"]).copy()
+    df["hamd_binary"] = df["mpdd_binary"].astype(int)
     feature_cols = [
         c
         for c in df.columns

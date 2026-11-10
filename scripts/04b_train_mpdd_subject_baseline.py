@@ -11,7 +11,10 @@ import pandas as pd
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(PROJECT_ROOT / "src"))
 
-from elderly_depression.data.mpdd import build_utterance_feature_table
+from elderly_depression.data.mpdd import (
+    add_mpdd_binary_target,
+    build_utterance_feature_table,
+)
 from elderly_depression.models.multimodal import train_subject_late_fusion
 from elderly_depression.smoothing import aggregate_mpdd_subjects
 
@@ -27,9 +30,9 @@ def main() -> None:
     parser.add_argument("--train", default="real", choices=["real", "synthetic"])
     parser.add_argument(
         "--subject-aggregation",
-        default="none",
+        default="mean",
         choices=["none", "mean", "median", "trimmed_mean"],
-        help="none keeps utterance-level rows; other modes aggregate features per subject.",
+        help="Mean aggregation is the validated default; none keeps utterance-level rows.",
     )
     args = parser.parse_args()
 
@@ -47,9 +50,11 @@ def main() -> None:
         build_utterance_feature_table(output_path=utterance_csv)
 
     if args.subject_aggregation == "none":
-        df = pd.read_csv(utterance_csv).dropna(subset=["hamd_score"])
-        df["hamd_binary"] = (df["hamd_score"] >= args.threshold).astype(int)
-        label_col = "hamd_binary"
+        df = add_mpdd_binary_target(
+            pd.read_csv(utterance_csv),
+            threshold=args.threshold,
+        ).dropna(subset=["mpdd_binary"])
+        label_col = "mpdd_binary"
     else:
         df = aggregate_mpdd_subjects(
             utterance_csv,

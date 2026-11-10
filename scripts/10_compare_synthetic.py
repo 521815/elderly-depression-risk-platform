@@ -19,6 +19,7 @@ PROJECT_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(PROJECT_ROOT / "src"))
 
 from elderly_depression.imbalance import best_threshold
+from elderly_depression.data.mpdd import add_mpdd_binary_target
 from elderly_depression.models.tabular import prepare_X
 from elderly_depression.synthetic import TABULAR_CSV, MULTIMODAL_PARQUET
 from elderly_depression import services
@@ -111,11 +112,11 @@ def _modality_model(prefix: str, X_syn, y_syn, X_real_train, y_real_train):
 
 
 def compare_multimodal() -> list[dict]:
-    real = services.load_mpdd_utterance_features().dropna(subset=["hamd_score"])
-    real["hamd_binary"] = (real["hamd_score"] >= 8).astype(int)
+    real = add_mpdd_binary_target(services.load_mpdd_utterance_features())
+    real = real.dropna(subset=["mpdd_binary"])
     ids = real["subject_id"].astype(str)
     split = GroupShuffleSplit(n_splits=1, test_size=0.2, random_state=42)
-    train_idx, test_idx = next(split.split(real, real["hamd_binary"], groups=ids))
+    train_idx, test_idx = next(split.split(real, real["mpdd_binary"], groups=ids))
     train = real.iloc[train_idx]
     test = real.iloc[test_idx]
     syn = pd.read_parquet(MULTIMODAL_PARQUET)
@@ -126,11 +127,11 @@ def compare_multimodal() -> list[dict]:
         if not cols:
             continue
         X_te = test[cols].fillna(0).astype("float32").to_numpy()
-        y_te = test["hamd_binary"].to_numpy()
+        y_te = test["mpdd_binary"].astype(int).to_numpy()
 
         # real baseline
         X_tr = train[cols].fillna(0).astype("float32").to_numpy()
-        y_tr = train["hamd_binary"].to_numpy()
+        y_tr = train["mpdd_binary"].astype(int).to_numpy()
         scaler_r, pca_r, model_r = _modality_model(prefix, X_tr, y_tr, X_tr, y_tr)
         prob_r = model_r.predict_proba(pca_r.transform(scaler_r.transform(X_te)))[:, 1]
         thr_r = best_threshold(y_tr, model_r.predict_proba(pca_r.transform(scaler_r.transform(X_tr)))[:, 1], metric="f1")

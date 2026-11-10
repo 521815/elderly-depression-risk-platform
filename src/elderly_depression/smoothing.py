@@ -9,6 +9,7 @@ import numpy as np
 import pandas as pd
 
 from .config import DATA_DIR, OUTPUT_DIR
+from .data.mpdd import add_mpdd_binary_target
 from .models.multimodal import train_subject_late_fusion
 
 
@@ -129,13 +130,12 @@ def _aggregate_subjects(
     method: str,
     threshold: int = 8,
 ) -> pd.DataFrame:
-    df = pd.read_csv(utterance_path)
-    score_col = "hamd_score" if "hamd_score" in df.columns else "phq9_score"
-    if score_col not in df.columns:
-        raise ValueError("MPDD utterance table has no hamd_score or phq9_score")
-    df = df.dropna(subset=[score_col]).copy()
+    df = add_mpdd_binary_target(pd.read_csv(utterance_path), threshold=threshold)
+    if df["mpdd_binary"].notna().sum() == 0:
+        raise ValueError("MPDD utterance table has no usable label2 or PHQ-9 score")
+    df = df.dropna(subset=["mpdd_binary"]).copy()
     df["subject_id"] = df["subject_id"].astype(str)
-    df["_label"] = (pd.to_numeric(df[score_col], errors="coerce") >= threshold).astype(int)
+    df["_label"] = df["mpdd_binary"].astype(int)
     feature_cols = [
         col
         for col in df.columns
@@ -157,13 +157,22 @@ def _aggregate_subjects(
     else:
         features = values.mean()
     labels = grouped["_label"].first().astype(int)
-    subject = features.join(labels).reset_index()
+    metadata_cols = [
+        col
+        for col in ["label2", "label3", "phq9_score", "fold"]
+        if col in df.columns
+    ]
+    metadata = grouped[metadata_cols].first() if metadata_cols else None
+    subject = pd.concat(
+        [features, labels.rename("_label"), metadata],
+        axis=1,
+    ).reset_index()
     return subject
 
 
 def aggregate_mpdd_subjects(
     utterance_path: Path | str,
-    method: str = "median",
+    method: str = "mean",
     threshold: int = 8,
 ) -> pd.DataFrame:
     """Public wrapper for subject-level robust feature aggregation."""

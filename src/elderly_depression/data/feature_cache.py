@@ -117,18 +117,23 @@ def load_parquet_features(name: str) -> pd.DataFrame | None:
     meta_path = PARQUET_DIR / f"{name}_meta.parquet"
     if not meta_path.exists():
         return None
-    meta = pd.read_parquet(meta_path)
-    for prefix in MODALITY_PREFIXES:
-        path = PARQUET_DIR / f"{name}_{prefix.rstrip('_')}.parquet"
-        if not path.exists():
-            continue
-        part = pd.read_parquet(path)
-        feat_cols = [c for c in part.columns if c.startswith(prefix)]
-        meta = pd.concat(
-            [meta.reset_index(drop=True), part[feat_cols].reset_index(drop=True)],
-            axis=1,
-        )
-    return meta
+    try:
+        meta = pd.read_parquet(meta_path)
+        for prefix in MODALITY_PREFIXES:
+            path = PARQUET_DIR / f"{name}_{prefix.rstrip('_')}.parquet"
+            if not path.exists():
+                continue
+            part = pd.read_parquet(path)
+            feat_cols = [c for c in part.columns if c.startswith(prefix)]
+            meta = pd.concat(
+                [meta.reset_index(drop=True), part[feat_cols].reset_index(drop=True)],
+                axis=1,
+            )
+        return meta
+    except (ImportError, OSError, ValueError):
+        # CSV remains the canonical fallback when the optional Parquet engine
+        # is unavailable or a cache is stale/corrupt.
+        return None
 
 
 def build_feature_cache(force: bool = False) -> dict:

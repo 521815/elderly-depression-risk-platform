@@ -39,6 +39,7 @@ streamlit run webapp/app.py
 - `GET /ready`：应用就绪检查，验证认证库、用户记录库和输出目录是否可读可写
 - `GET /api/models/list`：已保存的模型文件列表
 - `GET /api/models/registry`：模型注册表（模型、指标、路径）
+- `GET /api/models/cards`：CHARLS、MPDD、CMDC、融合层和模拟组的模型卡，包含适用人群、角色、指标、禁止用途、报告 SHA-256 和数据指纹
 - `POST /api/jobs`：提交后台任务；相同任务和参数的运行中实例会复用，返回 `deduplicated=true`
 - `GET /api/jobs/<job_id>`：查询后台任务状态
 - `POST /api/jobs/<job_id>/cancel`：请求取消任务；取消或超时后，后台线程不能覆盖最终状态

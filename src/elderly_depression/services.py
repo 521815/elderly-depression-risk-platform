@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import hashlib
 import json
 import os
 from datetime import datetime
@@ -20,6 +21,7 @@ from .evaluation import classification_report_frame, imbalanced_metrics_frame
 from .imbalance import best_threshold, resample_train, scale_pos_weight
 from .models.llm_assessor import DialogueAssessor
 from .models.tabular import prepare_X
+from .data.mpdd import add_mpdd_binary_target, mpdd_label_audit
 from .data.feature_cache import load_parquet_features
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
@@ -52,6 +54,7 @@ MULTIMODAL_SUBJECT_FOLD_REPORT = OUTPUT_DIR / "multimodal_subject_fold_report.cs
 MULTIMODAL_SUBJECT_LABEL3_REPORT = OUTPUT_DIR / "multimodal_subject_label3_report.csv"
 MULTIMODAL_SUBJECT_PHQ9_REPORT = OUTPUT_DIR / "multimodal_subject_phq9_score_report.csv"
 MPDD_TEST_PREDICTIONS = OUTPUT_DIR / "mpdd_test_predictions.csv"
+MPDD_LABEL_COMPARISON_REPORT = OUTPUT_DIR / "mpdd_label_protocol_comparison.csv"
 TABULAR_MODEL_DIR = OUTPUT_DIR / "tabular_models"
 MULTIMODAL_MODEL_DIR = OUTPUT_DIR / "multimodal_models"
 FUSION_DIR = OUTPUT_DIR / "fusion_models"
@@ -70,6 +73,7 @@ DIALOGUE_RESPONSE_POLICY_REPORT = OUTPUT_DIR / "dialogue_response_policy_report.
 ETHICS_AUDIT_REPORT = OUTPUT_DIR / "ethics_security_audit.json"
 MEDICAL_KB_PATH = DATA_DIR / "medical_kb" / "medlineplus_topics.json"
 _REPORTS_CACHE: dict = {"sig": None, "data": None}
+_ARTIFACT_HASH_CACHE: dict[tuple[str, int, int], str] = {}
 
 
 def charls_exists() -> bool:
@@ -104,6 +108,33 @@ def read_json_file(path: Path) -> dict | None:
     return payload if isinstance(payload, dict) else None
 
 
+def artifact_metadata(path: Path | str) -> dict:
+    target = Path(path)
+    if not target.exists() or not target.is_file():
+        return {}
+    stat = target.stat()
+    cache_key = (str(target.resolve()), stat.st_mtime_ns, stat.st_size)
+    digest = _ARTIFACT_HASH_CACHE.get(cache_key)
+    if digest is None:
+        hasher = hashlib.sha256()
+        with target.open("rb") as handle:
+            for chunk in iter(lambda: handle.read(1024 * 1024), b""):
+                hasher.update(chunk)
+        digest = hasher.hexdigest()
+        _ARTIFACT_HASH_CACHE[cache_key] = digest
+        if len(_ARTIFACT_HASH_CACHE) > 256:
+            _ARTIFACT_HASH_CACHE.pop(next(iter(_ARTIFACT_HASH_CACHE)))
+    return {
+        "path": str(target),
+        "name": target.name,
+        "size_bytes": int(stat.st_size),
+        "modified_at": datetime.fromtimestamp(stat.st_mtime).isoformat(
+            timespec="seconds"
+        ),
+        "sha256": digest,
+    }
+
+
 def model_registry() -> list[dict]:
     entries = []
 
@@ -130,6 +161,7 @@ def model_registry() -> list[dict]:
                     "source": str(row.get("source") or row.get("resample_method") or ""),
                     "metrics": metrics,
                     "report": str(path),
+                    "artifact": artifact_metadata(path),
                 }
             )
 
@@ -142,6 +174,153 @@ def model_registry() -> list[dict]:
     add_report(CMDC_REPORT, "cmdc_external_validation")
     add_report(CMDC_MODEL_COMPARISON_REPORT, "cmdc_model_comparison")
     return entries
+
+
+def model_cards() -> list[dict]:
+    cards = []
+
+    def rounded_metrics(row: pd.Series, mapping: dict[str, str]) -> dict:
+        metrics = {}
+        for output_name, source_name in mapping.items():
+            value = row.get(source_name)
+            if value is not None and pd.notna(value):
+                metrics[output_name] = round(float(value), 4)
+        return metrics
+
+    tabular = load_csv(MODEL_REPORT)
+    if tabular is not None and not tabular.empty and "auc" in tabular.columns:
+        auc_values = pd.to_numeric(tabular["auc"], errors="coerce")
+    else:
+        auc_values = pd.Series(dtype=float)
+    if not auc_values.dropna().empty:
+        best = tabular.loc[auc_values.idxmax()]
+        cards.append(
+            {
+                "id": "charls_tabular",
+                "name": "CHARLS 老年表格风险模型",
+                "dataset": "CHARLS",
+                "population": "中国老年人",
+                "role": "老年主风险评估的表格基线",
+                "label": "CHARLS 抑郁风险标签",
+                "status": "available",
+                "metrics": rounded_metrics(
+                    best,
+                    {
+                        "auc": "auc",
+                        "accuracy": "accuracy",
+                        "f1": "f1",
+                        "sensitivity": "recall",
+                    },
+                ),
+                "artifact": artifact_metadata(MODEL_REPORT),
+                "intended_use": "老年人群科研风险筛查与因素解释",
+                "not_intended_for": "个体临床诊断、自动治疗决策",
+            }
+        )
+
+    subject_report = load_csv(MULTIMODAL_SUBJECT_REPORT)
+    if subject_report is not None and not subject_report.empty:
+        fusion = subject_report.loc[
+            subject_report.get("modality", pd.Series(dtype=str)).eq("fusion")
+        ]
+        row = fusion.iloc[0] if not fusion.empty else subject_report.iloc[0]
+        cards.append(
+            {
+                "id": "mpdd_multimodal",
+                "name": "MPDD 老年多模态模型",
+                "dataset": "MPDD",
+                "population": "中国老年慢病人群",
+                "role": "语音、面部、步态和人格信号的多模态基线",
+                "label": "MPDD 官方 label2 二分类标签；PHQ-9 仅作为缺失时回退",
+                "status": "available" if mpdd_exists() else "artifact_only",
+                "metrics": rounded_metrics(
+                    row,
+                    {
+                        "auc": "auc_mean",
+                        "pr_auc": "pr_auc_mean",
+                        "f1": "f1_mean",
+                        "sensitivity": "sensitivity_mean",
+                        "specificity": "specificity_mean",
+                    },
+                ),
+                "artifact": artifact_metadata(MULTIMODAL_SUBJECT_REPORT),
+                "intended_use": "老年多模态科研评估与缺失模态敏感性分析",
+                "not_intended_for": "替代量表、临床诊断或跨中心直接部署",
+            }
+        )
+
+    cmdc_benchmark = read_json_file(CMDC_MODEL_SUMMARY) or {}
+    cmdc_holdout = read_json_file(CMDC_HOLDOUT_SUMMARY) or {}
+    if cmdc_benchmark:
+        primary = cmdc_benchmark.get("primary_result") or {}
+        cards.append(
+            {
+                "id": "cmdc_external",
+                "name": "CMDC 中文多模态外部验证模型",
+                "dataset": "CMDC",
+                "population": "中文混合成人样本",
+                "role": "独立外部验证，不进入老年主风险融合",
+                "label": "HC / MDD 二分类",
+                "status": "available",
+                "metrics": {
+                    key: round(float(primary[key]), 4)
+                    for key in (
+                        "auc_mean",
+                        "pr_auc_mean",
+                        "sensitivity_mean",
+                        "specificity_mean",
+                        "brier_mean",
+                    )
+                    if primary.get(key) is not None
+                },
+                "holdout_metrics": (
+                    cmdc_holdout.get("holdout_metrics") or {}
+                ),
+                "dataset_fingerprint": cmdc_benchmark.get(
+                    "dataset_fingerprint", ""
+                ),
+                "schema_version": cmdc_benchmark.get("schema_version"),
+                "artifact": artifact_metadata(CMDC_MODEL_SUMMARY),
+                "intended_use": "中文访谈多模态外部验证和领域适配",
+                "not_intended_for": "代表中国老年人、替代老年主模型或临床部署",
+            }
+        )
+
+    fusion_meta = read_json_file(FUSION_WEIGHTS_JSON) or {}
+    if fusion_meta:
+        cards.append(
+            {
+                "id": "assessment_fusion",
+                "name": "风险评估融合层",
+                "dataset": "CHARLS + MPDD + 对话 + 量表",
+                "population": "老年科研风险筛查",
+                "role": "将文本、量表、背景、表情和可选多模态信号融合为总风险",
+                "label": "综合抑郁风险概率",
+                "status": "available",
+                "metrics": {},
+                "artifact": artifact_metadata(FUSION_WEIGHTS_JSON),
+                "intended_use": "科研风险筛查、解释和人工复核",
+                "not_intended_for": "自动诊断、自动处方或无人监督决策",
+            }
+        )
+
+    if SYNTHETIC_AUGMENTATION_REPORT.exists():
+        cards.append(
+            {
+                "id": "synthetic_training_only",
+                "name": "模拟数据增强组",
+                "dataset": "由真实数据元素重组的模拟数据",
+                "population": "仅用于训练侧增强",
+                "role": "补充训练样本，不作为验证或测试",
+                "label": "继承真实数据标签结构",
+                "status": "training_only",
+                "metrics": {},
+                "artifact": artifact_metadata(SYNTHETIC_AUGMENTATION_REPORT),
+                "intended_use": "训练侧增强与鲁棒性实验",
+                "not_intended_for": "验证集、测试集、外部验证或临床性能声明",
+            }
+        )
+    return cards
 
 
 def code_signature() -> str:
@@ -189,6 +368,9 @@ def data_signature() -> str:
         IMBALANCE_REPORT,
         MULTIMODAL_REPORT,
         MULTIMODAL_SUBJECT_REPORT,
+        OUTPUT_DIR / "mpdd_label_audit.json",
+        MPDD_LABEL_COMPARISON_REPORT,
+        MPDD_TEST_PREDICTIONS,
         DIALOGUE_INTENT_MODEL,
         DIALOGUE_INTENT_REPORT,
         DIALOGUE_RESPONSE_POLICY_MODEL,
@@ -495,10 +677,13 @@ def load_mpdd_subject_features() -> pd.DataFrame:
 
 def train_mpdd_subject_baseline() -> pd.DataFrame:
     from .models.multimodal import train_subject_late_fusion
+    from .smoothing import aggregate_mpdd_subjects
 
-    df = load_mpdd_utterance_features()
-    df = df.dropna(subset=["hamd_score"]).copy()
-    df["hamd_binary"] = (df["hamd_score"] >= 8).astype(int)
+    raw = load_mpdd_utterance_features()
+    audit = mpdd_label_audit(raw)
+    if not MPDD_UTTERANCE_CSV.exists():
+        build_mpdd_utterance_dataset()
+    df = aggregate_mpdd_subjects(MPDD_UTTERANCE_CSV, method="mean")
     prefixes = []
     for prefix in ["face", "audio", "gait", "personality"]:
         if any(c.startswith(prefix + "_") for c in df.columns):
@@ -506,8 +691,12 @@ def train_mpdd_subject_baseline() -> pd.DataFrame:
     result = train_subject_late_fusion(
         df,
         prefixes=prefixes,
-        label_col="hamd_binary",
+        label_col="_label",
         output_dir=OUTPUT_DIR,
+    )
+    (OUTPUT_DIR / "mpdd_label_audit.json").write_text(
+        json.dumps(audit, ensure_ascii=False, indent=2),
+        encoding="utf-8",
     )
     MULTIMODAL_MODEL_DIR.mkdir(parents=True, exist_ok=True)
     pipeline_src = OUTPUT_DIR / "subject_fusion_pipeline.pkl"
@@ -519,10 +708,12 @@ def train_mpdd_subject_baseline() -> pd.DataFrame:
 
 def train_mpdd_subject_advanced() -> dict:
     from .models.multimodal import train_subject_target
+    from .smoothing import aggregate_mpdd_subjects
 
-    df = load_mpdd_utterance_features()
-    df = df.dropna(subset=["hamd_score"]).copy()
-    df["hamd_binary"] = (df["hamd_score"] >= 8).astype(int)
+    if not MPDD_UTTERANCE_CSV.exists():
+        build_mpdd_utterance_dataset()
+    df = aggregate_mpdd_subjects(MPDD_UTTERANCE_CSV, method="mean")
+    df["mpdd_binary"] = df["_label"].astype(int)
     prefixes = []
     for prefix in ["face", "audio", "gait", "personality"]:
         if any(c.startswith(prefix + "_") for c in df.columns):
@@ -722,6 +913,7 @@ def research_reports() -> dict:
         OUTPUT_DIR / "charls_subgroup_shrunk.json",
         OUTPUT_DIR / "robust_aggregation_report.csv",
         OUTPUT_DIR / "robust_aggregation_report.json",
+        MPDD_LABEL_COMPARISON_REPORT,
         DIALOGUE_INTENT_REPORT,
         OUTPUT_DIR / "dialogue_intent_optimization_report.json",
         OUTPUT_DIR / "dialogue_self_evaluation.json",
@@ -753,6 +945,12 @@ def research_reports() -> dict:
         "robust_aggregation": read_csv(OUTPUT_DIR / "robust_aggregation_report.csv"),
         "robust_aggregation_meta": read_json(
             OUTPUT_DIR / "robust_aggregation_report.json"
+        ),
+        "mpdd_label_protocol_comparison": read_csv(
+            MPDD_LABEL_COMPARISON_REPORT
+        ),
+        "mpdd_label_protocol_comparison_meta": read_json(
+            OUTPUT_DIR / "mpdd_label_protocol_comparison.json"
         ),
         "dialogue_intent": read_json(DIALOGUE_INTENT_REPORT),
         "dialogue_intent_optimization": read_json(
@@ -951,10 +1149,10 @@ def expression_risk_from_openface(df: pd.DataFrame) -> dict:
 def train_multimodal(df: pd.DataFrame, threshold: int = 8) -> pd.DataFrame:
     from .models.multimodal import train_late_fusion
 
-    if "hamd_score" not in df.columns:
-        raise ValueError("MPDD 表格需要包含 hamd_score 列")
-    df = df.copy()
-    df["hamd_binary"] = (df["hamd_score"] >= threshold).astype(int)
+    df = add_mpdd_binary_target(df, threshold=threshold)
+    df = df.dropna(subset=["mpdd_binary"]).copy()
+    if df.empty:
+        raise ValueError("MPDD 表格没有可用的 label2 或 PHQ-9 标签")
     prefixes = []
     for prefix in ["face", "audio", "gait", "personality"]:
         if any(c.startswith(prefix + "_") for c in df.columns):
@@ -964,7 +1162,7 @@ def train_multimodal(df: pd.DataFrame, threshold: int = 8) -> pd.DataFrame:
     result = train_late_fusion(
         df,
         prefixes=prefixes,
-        label_col="hamd_binary",
+        label_col="mpdd_binary",
         output_dir=OUTPUT_DIR,
     )
     MULTIMODAL_MODEL_DIR.mkdir(parents=True, exist_ok=True)
@@ -1116,12 +1314,22 @@ def mpdd_summary() -> dict:
     if not path.exists():
         return {"ready": False}
     df = pd.read_csv(path)
+    labeled = add_mpdd_binary_target(df)
+    audit = mpdd_label_audit(labeled)
+    subjects = (
+        labeled.drop_duplicates("subject_id")
+        if "subject_id" in labeled.columns
+        else labeled
+    )
+    target = pd.to_numeric(subjects["mpdd_binary"], errors="coerce")
     return {
         "ready": True,
         "path": str(path),
         "rows": int(len(df)),
         "columns": int(len(df.columns)),
-        "has_hamd": "hamd_score" in df.columns,
+        "has_label": bool(target.notna().any()),
+        "positive_rate": float(target.mean()) if target.notna().any() else None,
+        "label_audit": audit,
         "modalities": [
             p
             for p in ["face", "audio", "gait", "personality"]
@@ -1289,12 +1497,16 @@ def data_health_report() -> dict:
             cols = [c for c in df.columns if c.startswith(prefix + "_")]
             coverage = float(df[cols].notna().mean().mean()) if cols else 0.0
             modalities[prefix] = {"columns": len(cols), "coverage": coverage}
-        has_label = "hamd_score" in df.columns
-        pos_rate = (
-            float((df["hamd_score"] >= 8).mean())
-            if has_label and len(df)
-            else None
+        labeled = add_mpdd_binary_target(df)
+        audit = mpdd_label_audit(labeled)
+        subjects = (
+            labeled.drop_duplicates("subject_id")
+            if "subject_id" in labeled.columns
+            else labeled
         )
+        target = pd.to_numeric(subjects["mpdd_binary"], errors="coerce")
+        has_label = bool(target.notna().any())
+        pos_rate = float(target.mean()) if has_label else None
         fold_counts = (
             df["fold"].value_counts().to_dict() if "fold" in df.columns else {}
         )
@@ -1304,6 +1516,7 @@ def data_health_report() -> dict:
             missing_rate=missing_rate,
             has_label=has_label,
             positive_rate=pos_rate,
+            label_audit=audit,
             fold_counts={str(k): int(v) for k, v in fold_counts.items()},
             modalities=modalities,
         )
@@ -1319,6 +1532,17 @@ def data_health_report() -> dict:
                 {
                     "source": "MPDD",
                     "message": f"抑郁标签阳性率 {pos_rate:.1%}，类别失衡明显",
+                }
+            )
+        if audit["threshold_disagreement"]:
+            warnings.append(
+                {
+                    "source": "MPDD",
+                    "message": (
+                        f"官方 label2 与 PHQ-9 阈值口径有 "
+                        f"{audit['threshold_disagreement']} 名受试者不一致；"
+                        "训练已优先使用官方 label2"
+                    ),
                 }
             )
         for mod, info in modalities.items():

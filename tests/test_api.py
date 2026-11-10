@@ -588,6 +588,17 @@ class ApiTests(unittest.TestCase):
         resp = self.client.get("/api/models/registry", headers=self.admin_headers)
         self.assertEqual(resp.status_code, 200)
         self.assertIsInstance(resp.json, list)
+        with mock.patch.object(
+            services,
+            "model_cards",
+            return_value=[{"id": "cmdc_external", "name": "CMDC"}],
+        ):
+            cards = self.client.get(
+                "/api/models/cards",
+                headers=self.admin_headers,
+            )
+        self.assertEqual(cards.status_code, 200)
+        self.assertEqual(cards.json[0]["id"], "cmdc_external")
 
     def test_background_job_echo(self):
         self.assertTrue(

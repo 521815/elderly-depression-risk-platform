@@ -11,7 +11,10 @@ import pandas as pd
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(PROJECT_ROOT / "src"))
 
-from elderly_depression.data.mpdd import build_utterance_feature_table
+from elderly_depression.data.mpdd import (
+    add_mpdd_binary_target,
+    build_utterance_feature_table,
+)
 from elderly_depression.models.multimodal import train_subject_target
 
 
@@ -26,8 +29,7 @@ def main() -> None:
     utterance_csv = Path(args.utterance_csv)
     if not utterance_csv.exists():
         build_utterance_feature_table(output_path=utterance_csv)
-    df = pd.read_csv(utterance_csv)
-    df["hamd_binary"] = (df["hamd_score"] >= 8).astype(int)
+    df = add_mpdd_binary_target(pd.read_csv(utterance_csv))
     prefixes = ["face", "audio", "gait", "personality"]
 
     label3 = train_subject_target(

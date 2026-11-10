@@ -34,7 +34,7 @@ def split_modalities(df: pd.DataFrame, prefixes: list[str], label_col: str) -> d
 def train_late_fusion(
     df: pd.DataFrame,
     prefixes: list[str],
-    label_col: str = "hamd_binary",
+    label_col: str = "mpdd_binary",
     output_dir: Path | str | None = None,
 ) -> dict:
     df = df.dropna(subset=[label_col]).copy()
@@ -107,8 +107,7 @@ def _fit_modality(
     x_tr: np.ndarray,
     y_tr: pd.Series,
     pca_dims: int,
-    n_estimators: int = 150,
-) -> tuple[StandardScaler, PCA, RandomForestClassifier]:
+) -> tuple[StandardScaler, PCA, LogisticRegression]:
     scaler = StandardScaler()
     x_scaled = scaler.fit_transform(x_tr)
     pca = PCA(
@@ -116,10 +115,10 @@ def _fit_modality(
         random_state=RANDOM_STATE,
     )
     x_pca = pca.fit_transform(x_scaled)
-    model = RandomForestClassifier(
-        n_estimators=n_estimators,
+    model = LogisticRegression(
+        C=0.05,
         class_weight="balanced",
-        n_jobs=-1,
+        max_iter=3000,
         random_state=RANDOM_STATE,
     )
     model.fit(x_pca, y_tr)
@@ -148,15 +147,38 @@ def _fit_regression(
     return scaler, pca, model
 
 
+def _subject_threshold(
+    groups: pd.Series,
+    labels: pd.Series | np.ndarray,
+    probabilities: np.ndarray,
+    policy: str = "prevalence",
+) -> float:
+    """Select a decision threshold without consulting the evaluation fold."""
+    probability = pd.Series(probabilities, index=groups.index)
+    subject_prob = probability.groupby(groups, sort=False).mean()
+    subject_label = pd.Series(np.asarray(labels), index=groups.index).groupby(
+        groups, sort=False
+    ).first()
+    if policy == "fixed":
+        return 0.5
+    if policy == "youden":
+        return float(best_threshold(subject_label, subject_prob.to_numpy(), metric="youden"))
+    if policy == "prevalence":
+        prevalence = float(subject_label.mean())
+        return float(np.quantile(subject_prob.to_numpy(), 1.0 - prevalence))
+    raise ValueError("threshold_policy must be prevalence, youden, or fixed")
+
+
 def train_subject_late_fusion(
     df: pd.DataFrame,
     prefixes: list[str],
-    label_col: str = "hamd_binary",
+    label_col: str = "mpdd_binary",
     subject_col: str = "subject_id",
     output_dir: Path | str | None = None,
     n_splits: int = 5,
     n_repeats: int = 5,
     pca_dims: int = 64,
+    threshold_policy: str = "fixed",
 ) -> dict:
     """Repeated subject-grouped CV with PCA and subject-level probability aggregation."""
     df = df.dropna(subset=[label_col]).copy()
@@ -181,9 +203,15 @@ def train_subject_late_fusion(
                 if not cols:
                     continue
                 x_all = df[cols].fillna(0).select_dtypes(include=[np.number]).values
-                scaler, pca, model = _fit_modality(x_all[train_idx], y_tr, pca_dims)
-                p_tr = model.predict_proba(pca.transform(scaler.transform(x_all[train_idx])))[:, 1]
-                p_va = model.predict_proba(pca.transform(scaler.transform(x_all[val_idx])))[:, 1]
+                scaler, pca, model = _fit_modality(
+                    x_all[train_idx], y_tr, pca_dims
+                )
+                p_tr = model.predict_proba(
+                    pca.transform(scaler.transform(x_all[train_idx]))
+                )[:, 1]
+                p_va = model.predict_proba(
+                    pca.transform(scaler.transform(x_all[val_idx]))
+                )[:, 1]
                 train_probs[prefix] = p_tr
                 val_probs[prefix] = p_va
 
@@ -192,7 +220,12 @@ def train_subject_late_fusion(
                 subj_y = pd.Series(y[val_idx], index=groups.iloc[val_idx].index).groupby(
                     groups.iloc[val_idx], sort=False
                 ).first()
-                threshold = best_threshold(subj_y, subj_prob.values, metric="youden")
+                threshold = _subject_threshold(
+                    groups.iloc[train_idx],
+                    y_tr,
+                    p_tr,
+                    policy=threshold_policy,
+                )
                 pred = (subj_prob.values >= threshold).astype(int)
                 metrics = imbalanced_metrics_frame(subj_y, pred, subj_prob.values)
                 metrics.insert(0, "positive_rate", float(pred.mean()))
@@ -203,15 +236,19 @@ def train_subject_late_fusion(
                 fold_reports.append(metrics)
 
             if train_probs:
-                fusion = LogisticRegression(class_weight="balanced", max_iter=2000)
-                fusion.fit(np.column_stack(list(train_probs.values())), y_tr)
-                f_va = fusion.predict_proba(np.column_stack(list(val_probs.values())))[:, 1]
+                f_tr = np.column_stack(list(train_probs.values())).mean(axis=1)
+                f_va = np.column_stack(list(val_probs.values())).mean(axis=1)
                 prob = pd.Series(f_va, index=groups.iloc[val_idx].index)
                 subj_prob = prob.groupby(groups.iloc[val_idx], sort=False).mean()
                 subj_y = pd.Series(y[val_idx], index=groups.iloc[val_idx].index).groupby(
                     groups.iloc[val_idx], sort=False
                 ).first()
-                threshold = best_threshold(subj_y, subj_prob.values, metric="youden")
+                threshold = _subject_threshold(
+                    groups.iloc[train_idx],
+                    y_tr,
+                    f_tr,
+                    policy=threshold_policy,
+                )
                 pred = (subj_prob.values >= threshold).astype(int)
                 metrics = imbalanced_metrics_frame(subj_y, pred, subj_prob.values)
                 metrics.insert(0, "positive_rate", float(pred.mean()))
@@ -258,12 +295,12 @@ def train_subject_late_fusion(
 def fit_subject_pipeline(
     df: pd.DataFrame,
     prefixes: list[str],
-    label_col: str = "hamd_binary",
+    label_col: str = "mpdd_binary",
     subject_col: str = "subject_id",
     pca_dims: int = 64,
     n_splits: int = 5,
 ) -> dict:
-    """Fit per-modality models plus an OOF-trained fusion model for new-subject inference."""
+    """Fit regularized modality models and an OOF-weighted mean fusion for inference."""
     df = df.dropna(subset=[label_col]).copy()
     y = df[label_col].astype(int)
     groups = df[subject_col].astype(str)
@@ -272,7 +309,11 @@ def fit_subject_pipeline(
         for prefix in prefixes
     }
 
-    oof = {prefix: np.full(len(df), np.nan) for prefix in feature_cols if feature_cols[prefix]}
+    oof = {
+        prefix: np.full(len(df), np.nan)
+        for prefix in feature_cols
+        if feature_cols[prefix]
+    }
     if oof:
         sgkf = StratifiedGroupKFold(n_splits=n_splits, shuffle=True, random_state=RANDOM_STATE)
         for train_idx, val_idx in sgkf.split(df, y, groups):
@@ -280,7 +321,11 @@ def fit_subject_pipeline(
                 if not cols:
                     continue
                 x_all = df[cols].fillna(0).select_dtypes(include=[np.number]).values
-                scaler, pca, model = _fit_modality(x_all[train_idx], y.iloc[train_idx], pca_dims)
+                scaler, pca, model = _fit_modality(
+                    x_all[train_idx],
+                    y.iloc[train_idx],
+                    pca_dims,
+                )
                 oof[prefix][val_idx] = model.predict_proba(
                     pca.transform(scaler.transform(x_all[val_idx]))
                 )[:, 1]
@@ -291,8 +336,8 @@ def fit_subject_pipeline(
             continue
         x_all = df[cols].fillna(0).select_dtypes(include=[np.number]).values
         scaler, pca, model = _fit_modality(x_all, y, pca_dims)
-        importances = model.feature_importances_
-        top_idx = np.argsort(importances)[::-1][:5]
+        importance = np.abs(model.coef_[0])
+        top_idx = np.argsort(importance)[::-1][:5]
         top_features = []
         for idx in top_idx:
             component = pca.components_[idx]
@@ -304,7 +349,9 @@ def fit_subject_pipeline(
             "model": model,
             "missing_prob": 0.5,
             "top_features": top_features,
-            "pca_importance": {f"pc{idx}": float(importances[idx]) for idx in top_idx},
+            "pca_importance": {
+                f"pc{idx}": float(importance[idx]) for idx in top_idx
+            },
         }
 
     prefixes_used = list(modalities.keys())
@@ -313,23 +360,16 @@ def fit_subject_pipeline(
     for size in range(1, len(prefixes_used) + 1):
         for subset in combinations(prefixes_used, size):
             subset = list(subset)
-            matrix = np.column_stack([oof[p] for p in subset])
-            model = LogisticRegression(class_weight="balanced", max_iter=2000)
-            model.fit(matrix, y)
-            prob = model.predict_proba(matrix)[:, 1]
-            calibrator = IsotonicRegression(out_of_bounds="clip")
-            calibrator.fit(prob, y)
-            calibrated = calibrator.predict(prob)
-            calib_pool.extend(calibrated.tolist())
+            prob = np.column_stack([oof[p] for p in subset]).mean(axis=1)
+            calib_pool.extend(prob.tolist())
             fusion_options["|".join(subset)] = {
                 "prefixes": subset,
-                "model": model,
-                "threshold": float(best_threshold(y, calibrated, metric="youden")),
-                "calibrator": calibrator,
+                "mode": "mean",
+                "threshold": 0.5,
             }
     risk_bins = {"low": float(np.quantile(calib_pool, 0.4)), "medium": float(np.quantile(calib_pool, 0.8))}
     return {
-        "version": 2,
+        "version": 4,
         "subject_col": subject_col,
         "label_col": label_col,
         "prefixes": prefixes_used,
@@ -346,12 +386,14 @@ def predict_subject_pipeline(pipeline: dict, df: pd.DataFrame) -> pd.DataFrame:
     for subject, sub in df.groupby(subject_col, sort=False):
         row = {"subject_id": subject}
         modality_probs = {}
+        fusion_inputs = {}
         available = []
         for prefix in pipeline["prefixes"]:
             spec = pipeline["modalities"][prefix]
             cols = [c for c in spec["columns"] if c in sub.columns]
             if not cols or sub[cols].notna().sum().sum() == 0:
                 modality_probs[prefix] = spec.get("missing_prob", 0.5)
+                fusion_inputs[prefix] = modality_probs[prefix]
             else:
                 available.append(prefix)
                 x = sub[cols].fillna(0).select_dtypes(include=[np.number]).values
@@ -359,6 +401,7 @@ def predict_subject_pipeline(pipeline: dict, df: pd.DataFrame) -> pd.DataFrame:
                     spec["pca"].transform(spec["scaler"].transform(x))
                 )[:, 1]
                 modality_probs[prefix] = float(np.mean(prob))
+                fusion_inputs[prefix] = modality_probs[prefix]
             row[f"{prefix}_prob"] = modality_probs[prefix]
             row[f"{prefix}_top_features"] = "、".join(spec.get("top_features", [])[:3])
         fusion_prefixes = available if available else [pipeline["prefixes"][0]]
@@ -366,12 +409,20 @@ def predict_subject_pipeline(pipeline: dict, df: pd.DataFrame) -> pd.DataFrame:
         if fusion_key not in pipeline["fusion"]:
             fusion_key = "|".join(pipeline["prefixes"])
         fusion_spec = pipeline["fusion"][fusion_key]
-        vector = np.array([modality_probs[p] for p in fusion_prefixes]).reshape(1, -1)
-        fusion_prob = float(fusion_spec["model"].predict_proba(vector)[:, 1][0])
+        if fusion_spec.get("mode") == "mean":
+            fusion_prob = float(np.mean([fusion_inputs[p] for p in fusion_prefixes]))
+            fusion_head_prob = fusion_prob
+        else:
+            vector = np.array([fusion_inputs[p] for p in fusion_prefixes]).reshape(1, -1)
+            fusion_prob = float(
+                fusion_spec["model"].predict_proba(vector)[:, 1][0]
+            )
+            fusion_head_prob = fusion_prob
         calibrator = fusion_spec.get("calibrator")
         calibrated_prob = float(calibrator.predict(np.array([fusion_prob]))[0]) if calibrator else fusion_prob
         threshold = fusion_spec["threshold"]
         row["fusion_prob"] = fusion_prob
+        row["fusion_head_prob"] = fusion_head_prob
         row["calibrated_prob"] = calibrated_prob
         row["prediction"] = int(calibrated_prob >= threshold)
         row["threshold"] = threshold
@@ -414,7 +465,14 @@ def train_subject_target(
         sgkf = StratifiedGroupKFold(
             n_splits=n_splits, shuffle=True, random_state=RANDOM_STATE + 1000 + repeat
         )
-        strat_y = y if task == "class" else df.get("hamd_binary", y).fillna(0).astype(int)
+        if task == "class":
+            strat_y = y
+        elif "mpdd_binary" in df.columns:
+            strat_y = df["mpdd_binary"].fillna(0).astype(int)
+        elif "hamd_binary" in df.columns:
+            strat_y = df["hamd_binary"].fillna(0).astype(int)
+        else:
+            strat_y = (pd.to_numeric(y, errors="coerce").fillna(0) >= 8).astype(int)
         for fold, (train_idx, val_idx) in enumerate(sgkf.split(df, strat_y, groups)):
             y_tr = y.iloc[train_idx]
             y_va = y.iloc[val_idx]
