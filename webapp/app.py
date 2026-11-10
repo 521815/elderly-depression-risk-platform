@@ -932,6 +932,7 @@ def inject_css() -> None:
             grid-template-columns: minmax(0, 1fr) auto;
             grid-template-areas:
                 "factor-label factor-value"
+                "factor-bar factor-bar"
                 "factor-delta factor-delta";
             gap: 0.22rem 0.7rem;
             align-items: center;
@@ -954,6 +955,20 @@ def inject_css() -> None:
             font-size: 0.94rem;
             white-space: nowrap;
         }
+        .factor-bar {
+            grid-area: factor-bar;
+            display: block;
+            width: 100%;
+            height: 3px;
+            overflow: hidden;
+            border-radius: 999px;
+            background: #e4ebe8;
+        }
+        .factor-bar i {
+            display: block;
+            height: 100%;
+            border-radius: inherit;
+        }
         .factor-delta {
             grid-area: factor-delta;
             color: var(--muted);
@@ -961,6 +976,25 @@ def inject_css() -> None:
             text-align: left;
             white-space: normal;
             overflow: visible;
+        }
+        .scale-score-inline {
+            display: flex;
+            align-items: baseline;
+            gap: 0.55rem;
+            margin-top: 0.55rem;
+            padding-top: 0.75rem;
+            border-top: 1px solid var(--line);
+            color: var(--muted);
+            font-size: 0.82rem;
+        }
+        .scale-score-inline strong {
+            color: var(--ink);
+            font-size: 1.2rem;
+            font-variant-numeric: tabular-nums;
+        }
+        .scale-score-inline span:last-child {
+            color: var(--accent-strong);
+            font-weight: 650;
         }
         .user-card {
             background: var(--panel);
@@ -3601,49 +3635,59 @@ def render_assessment(api_key: str) -> None:
             st.markdown("#### 风险构成")
             scale_level_cn = SCALE_LEVEL_LABELS.get(result.get("scale_level"), result.get("scale_level"))
             factor_items = [
-                ("语言线索", f"{result['text_risk']:.0%}", ""),
-                ("量表风险", f"{result['scale_risk']:.0%}", ""),
-                ("背景 / 共病", f"{result['context_risk']:.0%}", ""),
-                ("量表分", f"{result['scale_score']}", f"等级: {scale_level_cn}"),
+                ("语言线索", float(result["text_risk"]), "#0f766e"),
+                ("量表风险", float(result["scale_risk"]), "#b7863e"),
+                ("背景 / 共病", float(result["context_risk"]), "#55788a"),
             ]
             if mpdd_risk is not None:
-                factor_items.append(("MPDD 多模态", f"{mpdd_risk:.0%}", "来自被试级推理管线"))
+                factor_items.append(("MPDD 多模态", float(mpdd_risk), "#8a6b4f"))
             if result.get("expression_risk") is not None:
-                factor_items.append(("表情/行为", f"{result['expression_risk']:.0%}", ""))
-            for label, value, delta in factor_items:
+                factor_items.append(
+                    ("表情 / 行为", float(result["expression_risk"]), "#9c6b73")
+                )
+            for label, value, color in factor_items:
                 st.markdown(
                     f'<div class="factor-row"><span class="factor-label">{label}</span>'
-                    f'<span class="factor-value">{value}</span>'
-                    f'<span class="factor-delta">{delta}</span></div>',
+                    f'<span class="factor-value">{value:.0%}</span>'
+                    f'<span class="factor-bar"><i style="width:{value:.1%};background:{color};"></i></span>'
+                    f"</div>",
                     unsafe_allow_html=True,
                 )
-            fusion_mode_cn = "已学习融合权重" if result.get("fusion_mode") == "learned" else "文献先验权重"
-            st.caption(f"当前融合方式：{fusion_mode_cn}")
-            text_method_cn = (
-                "规则 + LLM 线索" if result.get("text_method") == "rule_llm" else "规则词典"
+            st.markdown(
+                f'<div class="scale-score-inline"><span>量表得分</span>'
+                f'<strong>{result["scale_score"]}</strong>'
+                f'<span>{scale_level_cn}</span></div>',
+                unsafe_allow_html=True,
             )
-            st.caption(f"语言评分方式：{text_method_cn}")
-            if result.get("fusion_weights"):
-                weight_text = "，".join(
-                    f"{k} {v:+.3f}" for k, v in result["fusion_weights"].items()
+            with st.expander("查看详细判断依据", expanded=False):
+                fusion_mode_cn = "已学习融合权重" if result.get("fusion_mode") == "learned" else "文献先验权重"
+                st.caption(f"当前融合方式：{fusion_mode_cn}")
+                text_method_cn = (
+                    "规则 + LLM 线索" if result.get("text_method") == "rule_llm" else "规则词典"
                 )
-                st.caption(f"权重/系数：{weight_text}")
-            if result.get("language_cues"):
-                cue_text = "、".join(
-                    f"{c['cue']}（{c['confidence']:.0%}）" for c in result["language_cues"]
-                )
-                st.markdown(f"**语言线索：** {cue_text}")
-            if result.get("llm_summary"):
-                st.markdown("**大模型摘要**")
-                st.markdown(result["llm_summary"])
-            else:
-                st.markdown("**当前判断依据**")
-                st.markdown(
-                    "- 对话中的负面表达、睡眠/兴趣/躯体线索\n"
-                    "- 量表作答对应的风险分\n"
-                    "- 年龄、性别、婚姻与慢性病共病\n"
-                    "- 表情/行为风险摘要"
-                )
+                st.caption(f"语言评分方式：{text_method_cn}")
+                if result.get("fusion_weights"):
+                    weight_text = "，".join(
+                        f"{k} {v:+.3f}" for k, v in result["fusion_weights"].items()
+                    )
+                    st.caption(f"权重/系数：{weight_text}")
+                if result.get("language_cues"):
+                    cue_text = "、".join(
+                        f"{c['cue']}（{c['confidence']:.0%}）"
+                        for c in result["language_cues"]
+                    )
+                    st.markdown(f"**语言线索：** {cue_text}")
+                if result.get("llm_summary"):
+                    st.markdown("**大模型摘要**")
+                    st.markdown(result["llm_summary"])
+                else:
+                    st.markdown("**当前判断依据**")
+                    st.markdown(
+                        "- 对话中的负面表达、睡眠/兴趣/躯体线索\n"
+                        "- 量表作答对应的风险分\n"
+                        "- 年龄、性别、婚姻与慢性病共病\n"
+                        "- 表情/行为风险摘要"
+                    )
             report_md = assessment_report_markdown(
                 active_user,
                 demographics,
