@@ -867,7 +867,7 @@ def run_assessment(
     llm_complete=None,
 ) -> dict:
     assessor = DialogueAssessor(llm_complete=llm_complete)
-    return assessor.assess(
+    result = assessor.assess(
         transcript=transcript,
         scale_answers=scale_answers,
         demographics=demographics,
@@ -876,6 +876,52 @@ def run_assessment(
         mpdd_risk=mpdd_risk,
         language_cues=language_cues,
     )
+    expected_items = {
+        "cesd10": 10,
+        "phq9": 9,
+        "gds15": 15,
+        "hamd24": 24,
+    }.get(scale_name, 0)
+    scale_items = (scale_answers or {}).get(scale_name, [])
+    answered_items = sum(value is not None for value in scale_items)
+    scale_complete = expected_items > 0 and answered_items >= expected_items
+    user_messages = [
+        item for item in transcript if item.get("role") == "user"
+    ]
+    available_signals = []
+    if any(str(item.get("text") or "").strip() for item in user_messages):
+        available_signals.append("dialogue")
+    if scale_complete:
+        available_signals.append("scale")
+    if demographics:
+        available_signals.append("demographics")
+    if expression_summary.get("risk") is not None:
+        available_signals.append("expression")
+    if mpdd_risk is not None:
+        available_signals.append("mpdd")
+    warnings = []
+    if not scale_complete:
+        warnings.append(
+            f"量表仅完成 {answered_items}/{expected_items} 项，当前结果仅供预览。"
+        )
+    if not user_messages:
+        warnings.append("尚未进行对话访谈，语言线索可能不足。")
+    result["data_quality"] = {
+        "schema_version": "assessment-2026-11-10",
+        "scale_name": scale_name,
+        "scale_items_expected": int(expected_items),
+        "scale_items_answered": int(answered_items),
+        "scale_completion": (
+            float(answered_items / expected_items) if expected_items else 0.0
+        ),
+        "scale_complete": bool(scale_complete),
+        "available_signals": available_signals,
+        "warnings": warnings,
+        "evidence_scope": (
+            "老年科研风险筛查；CMDC 混合成人样本未直接进入本次风险概率。"
+        ),
+    }
+    return result
 
 
 def expression_risk_from_openface(df: pd.DataFrame) -> dict:

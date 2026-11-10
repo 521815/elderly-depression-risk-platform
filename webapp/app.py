@@ -264,6 +264,24 @@ def inject_css() -> None:
             padding-top: 1.05rem;
             border-top: 1px solid var(--line);
         }
+        .quality-strip {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.45rem 1.1rem;
+            margin: 0.6rem 0 0.2rem;
+            color: var(--muted);
+            font-size: 0.76rem;
+        }
+        .quality-strip span::before {
+            content: "";
+            display: inline-block;
+            width: 5px;
+            height: 5px;
+            margin-right: 0.38rem;
+            border-radius: 50%;
+            background: #86a99f;
+            vertical-align: 0.1em;
+        }
         .st-key-assessment_privacy_panel [data-testid="stVerticalBlockBorderWrapper"],
         .st-key-assessment_mode_panel [data-testid="stVerticalBlockBorderWrapper"],
         .st-key-assessment_storage_panel [data-testid="stVerticalBlockBorderWrapper"],
@@ -731,6 +749,30 @@ def inject_css() -> None:
         }
         [class*="st-key-scale_item_"] [role="radiogroup"] label > div:first-child {
             display: none;
+        }
+        .scale-progress {
+            height: 3px;
+            margin-top: 0.9rem;
+            overflow: hidden;
+            border-radius: 999px;
+            background: #e3eae7;
+        }
+        .scale-progress span {
+            display: block;
+            height: 100%;
+            border-radius: inherit;
+            background: linear-gradient(90deg, #178477, #7caf9f);
+            transition: width 0.2s ease;
+        }
+        .scale-progress-label {
+            margin-top: 0.32rem;
+            color: var(--muted);
+            font-size: 0.76rem;
+            text-align: right;
+        }
+        .scale-progress-label b {
+            color: var(--ink);
+            font-variant-numeric: tabular-nums;
         }
         .st-key-conversation_mode_selector [role="radiogroup"] {
             display: grid;
@@ -3314,7 +3356,7 @@ def render_assessment(api_key: str) -> None:
                                 st.radio(
                                     question_label,
                                     options=list(range(item_max + 1)),
-                                    index=0,
+                                    index=None,
                                     format_func=lambda value, labels=answer_labels: labels[value],
                                     key=f"scale_choice_{scale_key}_{i}",
                                     horizontal=True,
@@ -3340,6 +3382,16 @@ def render_assessment(api_key: str) -> None:
                 st.caption("部分题目会反向计分，系统按量表规则自动处理。")
             if scale_key == "hamd24":
                 st.caption("选项：0=无症状，1=轻度，2=中度，3=重度，4=极重度。")
+            answered_count = sum(answer is not None for answer in answers)
+            scale_complete = answered_count == item_n
+            st.markdown(
+                f'<div class="scale-progress">'
+                f'<span style="width:{answered_count / item_n:.1%};"></span>'
+                f"</div>"
+                f'<div class="scale-progress-label">量表完成度 '
+                f"<b>{answered_count}/{item_n}</b></div>",
+                unsafe_allow_html=True,
+            )
 
         with st.expander("表情 / 行为线索", expanded=False):
             face_file = st.file_uploader("上传面部特征数据表（可选）", type=["csv"])
@@ -3623,6 +3675,28 @@ def render_assessment(api_key: str) -> None:
             f"<span style='color:var(--muted);font-size:0.85rem;'>依据对话、量表、共病与表情线索</span>",
             unsafe_allow_html=True,
         )
+        quality = result.get("data_quality") or {}
+        signal_labels = {
+            "dialogue": "对话",
+            "scale": "量表",
+            "demographics": "背景",
+            "expression": "表情",
+            "mpdd": "MPDD",
+        }
+        available_signal_labels = [
+            signal_labels.get(item, item)
+            for item in quality.get("available_signals", [])
+        ]
+        st.markdown(
+            f'<div class="quality-strip">'
+            f'<span>量表 {quality.get("scale_items_answered", answered_count)}/'
+            f'{quality.get("scale_items_expected", item_n)}</span>'
+            f'<span>有效信号：{" · ".join(available_signal_labels) or "暂无"}</span>'
+            f"</div>",
+            unsafe_allow_html=True,
+        )
+        if not quality.get("scale_complete", scale_complete):
+            st.warning("量表尚未完成，当前风险仅供预览；保存按钮将在全部作答后启用。")
 
         gauge_col, factor_col = st.columns([0.46, 0.54], gap="large")
         with gauge_col:
@@ -3734,7 +3808,10 @@ def render_assessment(api_key: str) -> None:
                     "保存到用户记录",
                     key="save_assessment",
                     width="stretch",
-                    disabled=not storage_consent,
+                    disabled=(
+                        not storage_consent
+                        or not quality.get("scale_complete", scale_complete)
+                    ),
                 ):
                     if persist_assessment(active_user, record, signature):
                         st.toast("已保存到用户记录")
@@ -3762,7 +3839,10 @@ def render_assessment(api_key: str) -> None:
                 "保存并查看记录",
                 key="save_and_view_records",
                 width="stretch",
-                disabled=not storage_consent,
+                disabled=(
+                    not storage_consent
+                    or not quality.get("scale_complete", scale_complete)
+                ),
             ):
                 persist_assessment(active_user, record, signature)
                 st.session_state.selected_user_id = active_user["id"]

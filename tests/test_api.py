@@ -394,6 +394,10 @@ class ApiTests(unittest.TestCase):
         )
         self.assertEqual(assessment.status_code, 200)
         self.assertIn("depression_probability", assessment.json)
+        self.assertTrue(assessment.json["data_quality"]["scale_complete"])
+        self.assertEqual(
+            assessment.json["data_quality"]["scale_items_answered"], 10
+        )
 
         agent = self.client.post(
             "/api/agent/chat",
@@ -440,11 +444,25 @@ class ApiTests(unittest.TestCase):
             json={"scale": "cesd10", "items": [0, 1, 2, 3, 0, 1, 2, 3, 0, 1]},
             headers=self.admin_headers,
         )
+        partial_assessment = self.client.post(
+            "/api/assessment",
+            json={
+                "transcript": [],
+                "scale_answers": {"cesd10": [0, 1, 2, 3, 0]},
+                "scale_name": "cesd10",
+            },
+            headers=self.admin_headers,
+        )
         self.assertEqual(bad_transcript.status_code, 400)
         self.assertEqual(bad_scale_name.status_code, 400)
         self.assertEqual(bad_scale_item.status_code, 400)
         self.assertEqual(valid_scale.status_code, 200)
         self.assertIsNotNone(valid_scale.json["score"])
+        self.assertEqual(partial_assessment.status_code, 200)
+        self.assertFalse(partial_assessment.json["data_quality"]["scale_complete"])
+        self.assertEqual(
+            partial_assessment.json["data_quality"]["scale_items_answered"], 5
+        )
 
     def test_agent_memory_and_session_reset(self):
         chat = self.client.post(
