@@ -35,6 +35,12 @@ def replace_text(paragraph, text: str) -> None:
         run.text = ""
 
 
+def remove_paragraph(paragraph) -> None:
+    parent = paragraph._p.getparent()
+    if parent is not None:
+        parent.remove(paragraph._p)
+
+
 def format_body_paragraph(paragraph) -> None:
     paragraph.style = paragraph.style
     paragraph.alignment = WD_ALIGN_PARAGRAPH.JUSTIFY
@@ -192,25 +198,31 @@ def main() -> None:
             for item in document.paragraphs[index + 1 : index + 3]
         )
     )
-    if not any(
-        paragraph.text.strip().startswith("正式预测流程改为")
-        for paragraph in document.paragraphs
-    ):
-        first_insert = image_paragraph.insert_paragraph_before(
-        "正式预测流程改为先将 utterance 特征按受试者均值聚合，再在训练折内做"
-        "标准化、64 维 PCA 和强正则化 L2 逻辑回归（C=0.05），最后对可用模态"
-        "概率等权融合，固定阈值 0.5。5×5 受试者分组验证结果为：准确率 0.656、"
-        "平衡准确率 0.557、F1 0.333、AUC 0.627、PR-AUC 0.531、Brier 0.212。"
-        )
-        second_insert = image_paragraph.insert_paragraph_before(
-        "在同一协议下，旧 PHQ-9 阈值标签的融合 AUC 为 0.747，官方 label2 为 0.627；"
-        "两者不是同一任务，旧数字只用于解释历史差异。Wilcoxon/Holm 检验显示，"
-        "融合 Brier 显著低于四个单模态，AUC 相对面部有显著优势，其余 AUC 差异"
-        "方向一致但尚未达到显著。固定 70/17 受试者留出 AUC 0.571、Brier 0.245，"
-        "17 人样本仅用于流程和校准方向检查，不能替代外部验证。"
-        )
-        format_body_paragraph(first_insert)
-        format_body_paragraph(second_insert)
+    model_paragraph = next(
+        (
+            paragraph
+            for paragraph in document.paragraphs
+            if paragraph.text.strip().startswith(
+                ("正式预测流程改为", "在同一协议下")
+            )
+        ),
+        None,
+    )
+    if model_paragraph is None:
+        model_paragraph = image_paragraph.insert_paragraph_before()
+        format_body_paragraph(model_paragraph)
+    replace_text(
+        model_paragraph,
+        "本次模型改为受试者片段均值聚合、训练折内 64 维 PCA 和强正则化 L2 "
+        "逻辑回归，可用模态等权融合并固定阈值 0.5。5×5 受试者分组验证得到 "
+        "AUC 0.627、PR-AUC 0.531、Brier 0.212、准确率 0.656；同协议旧 PHQ-9 "
+        "阈值标签的 AUC 0.747 只作口径对照，不作为正式结果。",
+    )
+    for paragraph in list(document.paragraphs):
+        if paragraph is model_paragraph:
+            continue
+        if paragraph.text.strip().startswith("在同一协议下"):
+            remove_paragraph(paragraph)
 
     replace_figure(document, "图 4", DATA_HEALTH_FIGURE_PATH)
     replace_figure(document, "图 9", FIGURE_PATH, width=Inches(5.2))
@@ -230,10 +242,9 @@ def main() -> None:
         raise ValueError("Fusion paragraph not found")
     replace_text(
         fusion_paragraph,
-        "MPDD 组内采用等权概率融合；最终多源风险仍保留文献先验权重、"
-        "学习型逻辑回归和 Isotonic 校准。校准检查必须在真实标签上进行，"
-        "当前 17 人留出只能验证流程和方向；后续需要独立老年队列重新锁定"
-        "阈值并评估灵敏度、特异度、Brier 与决策曲线。",
+        "MPDD 组内采用等权概率融合，最终多源风险仍保留文献先验或学习型融合。"
+        "本次 17 人留出 AUC 0.571、Brier 0.245，仅用于流程检查，"
+        "稳定性能仍需外部真实数据验证。",
     )
 
     conclusion_paragraph = next(
