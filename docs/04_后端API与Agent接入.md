@@ -36,10 +36,12 @@ streamlit run webapp/app.py
 ### 数据与训练
 
 - `GET /api/status`：数据与模型状态
+- `GET /ready`：应用就绪检查，验证认证库、用户记录库和输出目录是否可读可写
 - `GET /api/models/list`：已保存的模型文件列表
 - `GET /api/models/registry`：模型注册表（模型、指标、路径）
-- `POST /api/jobs`：提交后台任务，body 为 `{"task": "...", "payload": {...}}`
+- `POST /api/jobs`：提交后台任务；相同任务和参数的运行中实例会复用，返回 `deduplicated=true`
 - `GET /api/jobs/<job_id>`：查询后台任务状态
+- `POST /api/jobs/<job_id>/cancel`：请求取消任务；取消或超时后，后台线程不能覆盖最终状态
 - `GET /api/charls/summary`：CHARLS 标准表概览
 - `POST /api/charls/build`：构建 CHARLS 标准表
 - `POST /api/charls/train`：训练表格基线，body 为 `{"resample_method": "smote"}`
@@ -72,8 +74,8 @@ streamlit run webapp/app.py
 
 ### 评估与量表
 
-- `POST /api/assessment`：对话 + 量表 + 人口学/共病 + 表情摘要 -> 抑郁概率
-- `POST /api/scales/score`：CESD-10 / PHQ-9 / GDS-15 / HAMD-24 计分
+- `POST /api/assessment`：对话 + 量表 + 人口学/共病 + 表情摘要 -> 抑郁概率；校验消息结构、量表名称与题数、分值范围、年龄、性别、共病、睡眠、自评健康和风险概率范围
+- `POST /api/scales/score`：CESD-10 / PHQ-9 / GDS-15 / HAMD-24 计分；非法量表、超量题目和越界分值返回 400
 
 ### 用户记录
 

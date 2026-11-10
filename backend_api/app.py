@@ -2,8 +2,11 @@
 
 from __future__ import annotations
 
+import hashlib
 import json
 import logging
+import math
+import os
 import sys
 import threading
 import time
@@ -39,6 +42,7 @@ _RATE_LOCK = threading.Lock()
 
 PUBLIC_API_PATHS = {
     "/health",
+    "/ready",
     "/api/status",
     "/api/version",
     "/api/auth/challenge",
@@ -132,6 +136,150 @@ def _coerce_user_fields(payload: dict) -> dict:
     return fields
 
 
+SCALE_ITEM_LIMITS = {
+    "cesd10": (10, 3),
+    "phq9": (9, 3),
+    "gds15": (15, 1),
+    "hamd24": (24, 4),
+}
+
+
+def _finite_number(value, field: str, minimum: float, maximum: float) -> float:
+    try:
+        number = float(value)
+    except (TypeError, ValueError) as exc:
+        raise ValueError(f"{field} 必须是数字") from exc
+    if not math.isfinite(number) or number < minimum or number > maximum:
+        raise ValueError(f"{field} 必须在 {minimum:g} 到 {maximum:g} 之间")
+    return number
+
+
+def _validated_scale_items(scale: str, items) -> tuple[str, list[float | None]]:
+    scale_name = str(scale or "cesd10").lower()
+    if scale_name not in SCALE_ITEM_LIMITS:
+        raise ValueError("不支持的量表名称")
+    if not isinstance(items, list):
+        raise ValueError("items 必须是数组")
+    item_count, item_max = SCALE_ITEM_LIMITS[scale_name]
+    if len(items) > item_count:
+        raise ValueError(f"{scale_name} 最多包含 {item_count} 道题")
+    normalized = []
+    for index, value in enumerate(items):
+        if value is None or value == "":
+            normalized.append(None)
+            continue
+        normalized.append(
+            _finite_number(value, f"items[{index}]", 0, item_max)
+        )
+    return scale_name, normalized
+
+
+def _validated_assessment_payload(payload: dict) -> dict:
+    if not isinstance(payload, dict):
+        raise ValueError("请求体必须是对象")
+    transcript = payload.get("transcript", [])
+    if not isinstance(transcript, list) or len(transcript) > 200:
+        raise ValueError("transcript 必须是最多 200 条消息的数组")
+    normalized_transcript = []
+    for index, message in enumerate(transcript):
+        if not isinstance(message, dict):
+            raise ValueError(f"transcript[{index}] 必须是对象")
+        role = message.get("role")
+        text = message.get("text")
+        if role not in {"user", "assistant"}:
+            raise ValueError(f"transcript[{index}].role 必须是 user 或 assistant")
+        if not isinstance(text, str) or len(text) > 4000:
+            raise ValueError(f"transcript[{index}].text 必须是最多 4000 字的文本")
+        normalized_transcript.append({"role": role, "text": text})
+
+    scale_answers = payload.get("scale_answers", {})
+    if not isinstance(scale_answers, dict):
+        raise ValueError("scale_answers 必须是对象")
+    scale_name = str(payload.get("scale_name", "cesd10")).lower()
+    if scale_name not in SCALE_ITEM_LIMITS:
+        raise ValueError("不支持的量表名称")
+    normalized_answers = {}
+    for key, items in scale_answers.items():
+        normalized_key, normalized_items = _validated_scale_items(key, items)
+        normalized_answers[normalized_key] = normalized_items
+    if scale_name not in normalized_answers:
+        normalized_answers[scale_name] = []
+
+    demographics = payload.get("demographics", {})
+    if not isinstance(demographics, dict):
+        raise ValueError("demographics 必须是对象")
+    normalized_demographics = {}
+    if demographics.get("age") not in (None, ""):
+        normalized_demographics["age"] = _finite_number(
+            demographics["age"], "age", 18, 120
+        )
+    if demographics.get("gender") not in (None, ""):
+        if demographics["gender"] not in {"female", "male", "女", "男"}:
+            raise ValueError("gender 必须是 female、male、女或男")
+        normalized_demographics["gender"] = demographics["gender"]
+    if "married" in demographics:
+        normalized_demographics["married"] = bool(demographics["married"])
+    for key, minimum, maximum in [
+        ("comorbidity_count", 0, 30),
+        ("sleep_quality", 1, 4),
+        ("self_rated_health", 1, 5),
+    ]:
+        if demographics.get(key) not in (None, ""):
+            normalized_demographics[key] = _finite_number(
+                demographics[key], key, minimum, maximum
+            )
+
+    expression = payload.get("expression_summary", {})
+    if not isinstance(expression, dict):
+        raise ValueError("expression_summary 必须是对象")
+    if expression.get("risk") is not None:
+        expression = {
+            **expression,
+            "risk": _finite_number(expression["risk"], "expression_summary.risk", 0, 1),
+        }
+    mpdd_risk = payload.get("mpdd_risk")
+    if mpdd_risk is not None:
+        mpdd_risk = _finite_number(mpdd_risk, "mpdd_risk", 0, 1)
+    language_cues = payload.get("language_cues", [])
+    if language_cues is not None and not isinstance(language_cues, list):
+        raise ValueError("language_cues 必须是数组")
+    normalized_cues = []
+    for index, cue in enumerate(language_cues or []):
+        if isinstance(cue, str):
+            text = cue.strip()
+            if not text or len(text) > 100:
+                raise ValueError(f"language_cues[{index}] 长度无效")
+            normalized_cues.append(text)
+            continue
+        if not isinstance(cue, dict):
+            raise ValueError(f"language_cues[{index}] 必须是文本或对象")
+        text = str(cue.get("cue") or cue.get("label") or "").strip()
+        if not text or len(text) > 100:
+            raise ValueError(f"language_cues[{index}] 名称无效")
+        confidence = cue.get("confidence", 1.0)
+        normalized_cues.append(
+            {
+                "cue": text,
+                "confidence": _finite_number(
+                    confidence,
+                    f"language_cues[{index}].confidence",
+                    0,
+                    1,
+                ),
+            }
+        )
+
+    return {
+        "transcript": normalized_transcript,
+        "scale_answers": normalized_answers,
+        "demographics": normalized_demographics,
+        "expression_summary": expression,
+        "scale_name": scale_name,
+        "mpdd_risk": mpdd_risk,
+        "language_cues": normalized_cues,
+    }
+
+
 def _account_is_admin() -> bool:
     return bool(getattr(g, "account", None) and g.account.get("role") == "admin")
 
@@ -176,6 +324,28 @@ def add_cors(resp):
 @app.get("/health")
 def health():
     return jsonify({"status": "ok", "service": "elderly-depression-backend"})
+
+
+@app.get("/ready")
+def readiness():
+    checks = {}
+    for name, path in {
+        "auth_store_dir": account_auth.AUTH_DB.parent,
+        "record_store_dir": user_records.USER_RECORDS_DB.parent,
+        "output_dir": services.OUTPUT_DIR,
+    }.items():
+        checks[name] = bool(path.exists() and os.access(path, os.R_OK | os.W_OK))
+    ready = all(checks.values())
+    return (
+        jsonify(
+            {
+                "status": "ready" if ready else "not_ready",
+                "service": "elderly-depression-backend",
+                "checks": checks,
+            }
+        ),
+        200 if ready else 503,
+    )
 
 
 @app.get("/api/status")
@@ -947,30 +1117,31 @@ def mpdd_report():
 @app.post("/api/assessment")
 def assessment():
     payload = request.get_json(silent=True) or {}
-    result = services.run_assessment(
-        transcript=payload.get("transcript", []),
-        scale_answers=payload.get("scale_answers", {}),
-        demographics=payload.get("demographics", {}),
-        expression_summary=payload.get("expression_summary", {}),
-        scale_name=payload.get("scale_name", "cesd10"),
-        mpdd_risk=payload.get("mpdd_risk"),
-        language_cues=payload.get("language_cues"),
-    )
+    try:
+        normalized = _validated_assessment_payload(payload)
+    except ValueError as exc:
+        return jsonify({"error": str(exc), "code": 400}), 400
+    result = services.run_assessment(**normalized)
     return jsonify(result)
 
 
 @app.post("/api/scales/score")
 def scale_score():
     payload = request.get_json(silent=True) or {}
-    scale = payload.get("scale", "cesd10")
-    items = payload.get("items", [])
+    try:
+        scale, items = _validated_scale_items(
+            payload.get("scale", "cesd10"),
+            payload.get("items", []),
+        )
+    except ValueError as exc:
+        return jsonify({"error": str(exc), "code": 400}), 400
     funcs = {
         "cesd10": score_cesd10,
         "phq9": score_phq9,
         "gds15": score_gds15,
         "hamd24": score_hamd24,
     }
-    score = funcs.get(scale, score_cesd10)(items)
+    score = funcs[scale](items)
     return jsonify({"score": score, "level": severity_level(score, scale)})
 
 
@@ -1086,6 +1257,17 @@ def _fusion_optimize(payload: dict) -> dict:
     }
 
 
+def _job_dedupe_key(task: str, payload: dict) -> str:
+    canonical = json.dumps(
+        payload,
+        ensure_ascii=False,
+        sort_keys=True,
+        separators=(",", ":"),
+        default=str,
+    )
+    return hashlib.sha256(f"{task}:{canonical}".encode("utf-8")).hexdigest()
+
+
 @app.post("/api/jobs")
 def jobs_create():
     payload = request.get_json(silent=True) or {}
@@ -1093,13 +1275,33 @@ def jobs_create():
     task = payload.get("task")
     if task not in tasks:
         return jsonify({"error": "未知任务", "code": 400}), 400
-    job_id = job_runner.submit(
+    task_payload = payload.get("payload", {})
+    if not isinstance(task_payload, dict):
+        return jsonify({"error": "payload 必须是对象", "code": 400}), 400
+    try:
+        timeout = float(payload.get("timeout", 3600))
+    except (TypeError, ValueError):
+        return jsonify({"error": "timeout 必须是数字", "code": 400}), 400
+    if not 30 <= timeout <= 86400:
+        return jsonify(
+            {"error": "timeout 必须在 30 到 86400 秒之间", "code": 400}
+        ), 400
+    job_id, created = job_runner.submit(
         tasks[task],
-        payload.get("payload", {}),
+        task_payload,
         name=task,
-        timeout=float(payload.get("timeout", 3600)),
+        timeout=timeout,
+        dedupe_key=_job_dedupe_key(task, task_payload),
     )
-    return jsonify({"job_id": job_id}), 202
+    return (
+        jsonify(
+            {
+                "job_id": job_id,
+                "deduplicated": not created,
+            }
+        ),
+        202 if created else 200,
+    )
 
 
 @app.get("/api/jobs")

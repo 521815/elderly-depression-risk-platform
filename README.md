@@ -140,14 +140,14 @@ cd ~/Desktop/大创/老年抑郁风险预测大模型
 - 原始时序模型：v2 深度时序实验（逐折预处理 + 双向 GRU/注意力 + 类别加权）仍弱于聚合特征，subject-aware AUC 0.479、F1 0.057，负结果保留；脚本 `scripts/31b_train_temporal_deep_v2.py` 可复现
 - 规模化模拟组：对话 500、表格 2000（追平真实组）、多模态增强 k=3（k=5 略降）
 - 增强管线与校准：增强版管线保留为实验；MPDD 校准/DCA 上线；用户记录可积累独立诊断标签并导出融合训练集
-- 后端工程：`/api/v1` 版本化、统一错误、请求 ID 日志、CORS 限制、用户存储加锁、模型注册表、API 测试
+- 后端工程：`/api/v1` 版本化、统一错误、请求 ID 日志、CORS 限制、用户存储加锁、模型注册表、`/ready` 就绪检查、API 测试
 - 用户数据安全：`GET /api/users/export` 全量导出、`POST /api/users/import` 合并/覆盖导入，支持 JSON 备份与恢复
 - 状态统计优化：用户库统计改为 SQL `COUNT` 直接计数，`/api/status` 与自动同步轮询更轻量
 - 数据质量检查：`GET /api/data_health` 返回各数据源缺失率、阳性率、模态覆盖、模拟组验证状态与用户记录完整性
 - 后台任务：`POST /api/jobs` 提交长任务，`GET /api/jobs/<id>` 查询状态；研究报告缓存、生产启动器、SQLite 备份
 - 存储：用户与评估记录正式使用 SQLite，自动从旧 JSON 迁移；前端新增“后台任务”页
 - 后台任务页每 5 秒自动刷新；waitress 已安装，生产启动器可直接使用
-- 任务系统：进度/阶段/取消/超时/历史持久化；API 限流与用户字段校验
+- 任务系统：进度/阶段/取消/超时/历史持久化，重复任务去重，取消或超时后不会被完成状态覆盖；API 限流与服务端输入校验
 - 部署：`scripts/setup.sh` 一键安装，`scripts/start_all_prod.sh` 生产启动，Dockerfile / docker-compose 双服务
 - 桌面 App：`~/Desktop/老年抑郁风险筛查桌面版.app`，原生 Mach-O 启动器 + 内嵌 WebView，不依赖浏览器
 - 对话模拟组：主题重组 + 风险标签一致性验证通过，可作为 Agent/文本训练参数
@@ -170,6 +170,7 @@ cd ~/Desktop/大创/老年抑郁风险预测大模型
 常用接口：
 
 - `GET http://localhost:8001/api/status`
+- `GET http://localhost:8001/ready`
 - `POST http://localhost:8001/api/assessment`
 - `POST http://localhost:8001/api/charls/train`
 - `POST http://localhost:8001/api/charls/train_temporal`

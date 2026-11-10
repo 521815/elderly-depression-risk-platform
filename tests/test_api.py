@@ -67,6 +67,10 @@ class ApiTests(unittest.TestCase):
         resp = self.client.get("/health")
         self.assertEqual(resp.status_code, 200)
         self.assertEqual(resp.json["status"], "ok")
+        ready = self.client.get("/ready")
+        self.assertEqual(ready.status_code, 200)
+        self.assertEqual(ready.json["status"], "ready")
+        self.assertTrue(all(ready.json["checks"].values()))
         versioned = self.client.get("/api/v1/status")
         self.assertEqual(versioned.status_code, 200)
 
@@ -415,6 +419,33 @@ class ApiTests(unittest.TestCase):
         self.assertIn("clinical_summary", agent.json)
         self.assertIn("support_preference", agent.json)
 
+    def test_assessment_and_scale_input_validation(self):
+        bad_transcript = self.client.post(
+            "/api/assessment",
+            json={"transcript": "not-a-list", "scale_name": "cesd10"},
+            headers=self.admin_headers,
+        )
+        bad_scale_name = self.client.post(
+            "/api/assessment",
+            json={"transcript": [], "scale_name": "unknown"},
+            headers=self.admin_headers,
+        )
+        bad_scale_item = self.client.post(
+            "/api/scales/score",
+            json={"scale": "cesd10", "items": [0, 1, 2, 3, 4]},
+            headers=self.admin_headers,
+        )
+        valid_scale = self.client.post(
+            "/api/scales/score",
+            json={"scale": "cesd10", "items": [0, 1, 2, 3, 0, 1, 2, 3, 0, 1]},
+            headers=self.admin_headers,
+        )
+        self.assertEqual(bad_transcript.status_code, 400)
+        self.assertEqual(bad_scale_name.status_code, 400)
+        self.assertEqual(bad_scale_item.status_code, 400)
+        self.assertEqual(valid_scale.status_code, 200)
+        self.assertIsNotNone(valid_scale.json["score"])
+
     def test_agent_memory_and_session_reset(self):
         chat = self.client.post(
             "/api/agent/chat",
@@ -547,6 +578,7 @@ class ApiTests(unittest.TestCase):
             headers=self.admin_headers,
         )
         self.assertEqual(resp.status_code, 202)
+        self.assertFalse(resp.json["deduplicated"])
         job_id = resp.json["job_id"]
         job = None
         for _ in range(50):
@@ -565,6 +597,20 @@ class ApiTests(unittest.TestCase):
             f"/api/jobs/{job_id}/cancel", headers=self.admin_headers
         )
         self.assertEqual(cancel.status_code, 400)
+
+    def test_background_job_rejects_invalid_payload_and_timeout(self):
+        invalid_payload = self.client.post(
+            "/api/jobs",
+            json={"task": "echo", "payload": ["not", "an", "object"]},
+            headers=self.admin_headers,
+        )
+        invalid_timeout = self.client.post(
+            "/api/jobs",
+            json={"task": "echo", "payload": {}, "timeout": 5},
+            headers=self.admin_headers,
+        )
+        self.assertEqual(invalid_payload.status_code, 400)
+        self.assertEqual(invalid_timeout.status_code, 400)
 
 
 if __name__ == "__main__":

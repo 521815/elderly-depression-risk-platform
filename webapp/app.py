@@ -3120,7 +3120,7 @@ def render_assessment(api_key: str) -> None:
         storage_col, storage_note_col = st.columns([0.58, 0.42], vertical_alignment="center")
         with storage_col:
             storage_consent = st.toggle(
-                "允许将本次评估保存到当前设备",
+                "我已知晓并同意将本次评估数据保存到当前设备",
                 value=st.session_state.get("assessment_storage_consent", False),
                 key="assessment_storage_consent_toggle",
                 help="不勾选仍可查看和导出本次结果，但不会写入用户评估记录。",
@@ -4297,8 +4297,12 @@ def render_jobs() -> None:
     if st.button("提交任务", type="primary"):
         resp = backend.submit_job(task)
         if "job_id" in resp:
-            st.toast("任务已提交", icon="✅")
-            st.success(f"已提交：{resp['job_id']}")
+            if resp.get("deduplicated"):
+                st.toast("相同任务正在运行，已定位到现有任务")
+                st.info(f"复用运行中的任务：{resp['job_id']}")
+            else:
+                st.toast("任务已提交", icon="✅")
+                st.success(f"已提交：{resp['job_id']}")
             st.rerun()
         else:
             st.toast("提交失败", icon="⚠️")
@@ -4311,12 +4315,26 @@ def render_jobs() -> None:
         jobs = backend.list_jobs()
         if jobs:
             st.markdown("#### 最近任务（每 5 秒自动刷新）")
+            status_labels = {
+                "running": "运行中",
+                "done": "已完成",
+                "error": "失败",
+                "cancelled": "已取消",
+                "timeout": "已超时",
+            }
             for job in jobs:
                 row_cols = st.columns([0.18, 0.14, 0.12, 0.30, 0.26])
-                row_cols[0].write(job.get("task", ""))
-                row_cols[1].write(job.get("status", ""))
+                row_cols[0].write(
+                    task_labels.get(job.get("task", ""), job.get("task", ""))
+                )
+                row_cols[1].write(
+                    status_labels.get(job.get("status", ""), job.get("status", ""))
+                )
                 row_cols[2].write(f"{float(job.get('progress', 0)) * 100:.0f}%")
-                row_cols[3].write(job.get("stage", ""))
+                elapsed = float(job.get("elapsed_seconds", 0) or 0)
+                row_cols[3].write(
+                    f"{job.get('stage', '')} · {elapsed:.0f} 秒"
+                )
                 if job.get("status") == "running":
                     if row_cols[4].button(
                         "取消",

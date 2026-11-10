@@ -14,6 +14,10 @@ _LOCK = threading.Lock()
 _HISTORY_FILE = Path(__file__).resolve().parents[1] / "output" / "jobs_history.jsonl"
 
 
+class JobCancelled(RuntimeError):
+    """Raised inside a cooperative task after cancellation is requested."""
+
+
 def _persist(job: dict) -> None:
     _HISTORY_FILE.parent.mkdir(parents=True, exist_ok=True)
     with _HISTORY_FILE.open("a", encoding="utf-8") as fh:
@@ -25,10 +29,19 @@ def submit(
     *args,
     name: str | None = None,
     timeout: float = 3600.0,
+    dedupe_key: str | None = None,
     **kwargs,
-) -> str:
-    job_id = uuid.uuid4().hex
+) -> tuple[str, bool]:
     with _LOCK:
+        if dedupe_key:
+            for existing in _JOBS.values():
+                if (
+                    existing.get("status") == "running"
+                    and existing.get("task") == name
+                    and existing.get("dedupe_key") == dedupe_key
+                ):
+                    return str(existing["id"]), False
+        job_id = uuid.uuid4().hex
         _JOBS[job_id] = {
             "id": job_id,
             "task": name,
@@ -37,6 +50,8 @@ def submit(
             "stage": "submitted",
             "created_at": time.time(),
             "timeout": float(timeout),
+            "dedupe_key": dedupe_key,
+            "cancel_requested": False,
             "result": None,
             "error": None,
             "finished_at": None,
@@ -52,6 +67,10 @@ def submit(
             status, error = "done", None
             progress = 1.0
             stage = "done"
+        except JobCancelled:
+            result, status, error = None, "cancelled", None
+            progress = 1.0
+            stage = "cancelled"
         except Exception as exc:  # pragma: no cover - task failures
             result, status, error = None, "error", str(exc)
             progress = 1.0
@@ -59,6 +78,10 @@ def submit(
         with _LOCK:
             job = _JOBS.get(job_id)
             if job is None:
+                return
+            if job.get("status") in {"cancelled", "timeout"}:
+                if job.get("status") == "cancelled":
+                    job["cancel_requested"] = True
                 return
             job.update(
                 status=status,
@@ -71,7 +94,7 @@ def submit(
             _persist(dict(job))
 
     threading.Thread(target=run, daemon=True).start()
-    return job_id
+    return job_id, True
 
 
 def update_progress(job_id: str, progress: float, stage: str | None = None) -> None:
@@ -79,9 +102,21 @@ def update_progress(job_id: str, progress: float, stage: str | None = None) -> N
         job = _JOBS.get(job_id)
         if job is None:
             return
+        if job.get("status") in {"cancelled", "timeout"}:
+            raise JobCancelled(f"job {job_id} is {job['status']}")
         job["progress"] = float(progress)
         if stage:
             job["stage"] = stage
+
+
+def check_cancelled(job_id: str) -> None:
+    """Cooperative cancellation check for long-running task code."""
+    with _LOCK:
+        job = _JOBS.get(job_id)
+        if job is None:
+            return
+        if job.get("status") in {"cancelled", "timeout"}:
+            raise JobCancelled(f"job {job_id} is {job['status']}")
 
 
 def cancel(job_id: str) -> bool:
@@ -91,6 +126,7 @@ def cancel(job_id: str) -> bool:
             return False
         job.update(
             status="cancelled",
+            cancel_requested=True,
             progress=1.0,
             stage="cancelled",
             finished_at=time.time(),
@@ -115,6 +151,18 @@ def _load_history(limit: int) -> list[dict]:
     return rows[:limit]
 
 
+def _public_job(job: dict) -> dict:
+    item = dict(job)
+    item.pop("dedupe_key", None)
+    end_time = item.get("finished_at") or time.time()
+    item["elapsed_seconds"] = max(
+        0.0,
+        float(end_time) - float(item.get("created_at", end_time)),
+    )
+    item["is_active"] = item.get("status") == "running"
+    return item
+
+
 def get(job_id: str) -> dict | None:
     with _LOCK:
         job = _JOBS.get(job_id)
@@ -123,12 +171,14 @@ def get(job_id: str) -> dict | None:
             if time.time() - job["created_at"] > timeout:
                 job.update(
                     status="timeout",
+                    cancel_requested=True,
                     progress=1.0,
                     stage="timeout",
                     finished_at=time.time(),
                 )
                 _persist(dict(job))
-        return _JOBS.get(job_id)
+        job = _JOBS.get(job_id)
+        return _public_job(job) if job is not None else None
 
 
 def list_jobs(limit: int = 20) -> list[dict]:
@@ -139,4 +189,4 @@ def list_jobs(limit: int = 20) -> list[dict]:
     for job in live:
         merged[job["id"]] = job
     items = sorted(merged.values(), key=lambda j: j.get("created_at", 0), reverse=True)
-    return items[:limit]
+    return [_public_job(job) for job in items[:limit]]
