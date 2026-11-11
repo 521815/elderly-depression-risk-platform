@@ -28,43 +28,63 @@ st.set_page_config(
     initial_sidebar_state="auto",
 )
 
+px.defaults.template = "plotly_white"
+px.defaults.color_discrete_sequence = [
+    "#173347",
+    "#0c6b62",
+    "#b45f48",
+    "#9b7028",
+    "#778b8e",
+]
+
 
 def inject_css() -> None:
     st.markdown(
         """
         <style>
         :root {
-            --ink: #18282b;
-            --muted: #66777b;
-            --line: #d8e1de;
+            --ink: #14272a;
+            --muted: #637478;
+            --line: #d2ddda;
             --panel: #ffffff;
-            --canvas: #f4f6f3;
-            --accent: #0f6f66;
-            --accent-strong: #0a5650;
-            --accent-soft: #e8f1ee;
-            --amber: #a96d24;
-            --amber-soft: #fbf3e4;
+            --canvas: #edf0ee;
+            --accent: #0c6b62;
+            --accent-strong: #084f49;
+            --accent-soft: #dcece8;
+            --navy: #173347;
+            --navy-soft: #e7edf1;
+            --amber: #9b7028;
+            --amber-soft: #f7eedf;
             --green: #16725a;
             --green-soft: #e9f4ef;
+            --clay: #b45f48;
             --red: #c53d3d;
             --red-soft: #fff0ef;
-            --shadow-sm: 0 1px 2px rgba(16, 24, 40, 0.04);
-            --shadow-md: 0 12px 30px rgba(22, 58, 63, 0.09);
+            --shadow-sm: 0 1px 0 rgba(20, 39, 42, 0.06);
+            --shadow-md: 0 18px 50px rgba(20, 47, 52, 0.10);
         }
         .stApp {
             background:
-                linear-gradient(180deg, #f8faf7 0, var(--canvas) 260px, var(--canvas) 100%);
+                linear-gradient(180deg, #f7f9f7 0, var(--canvas) 300px, var(--canvas) 100%);
             color: var(--ink);
-            font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Segoe UI", sans-serif;
+            font-family: "Avenir Next", -apple-system, BlinkMacSystemFont, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+            -webkit-font-smoothing: antialiased;
+            text-rendering: optimizeLegibility;
+        }
+        ::selection {
+            color: #102a2e;
+            background: #cfe3de;
         }
         [data-testid="stHeader"] {
             background: transparent;
         }
         [data-testid="stToolbar"] {
-            background: transparent;
+            display: none !important;
         }
-        [data-testid="stToolbar"] button[data-testid="stBaseButton-header"] {
-            display: none;
+        [data-testid="stDecoration"],
+        [data-testid="stStatusWidget"],
+        [data-testid="stAppDeployButton"] {
+            display: none !important;
         }
         .block-container {
             padding-top: 1.35rem;
@@ -78,16 +98,17 @@ def inject_css() -> None:
             font-weight: 700;
         }
         h3 {
-            font-size: 1.65rem;
-            line-height: 1.28;
-            margin-bottom: 0.7rem;
-            padding-bottom: 0.48rem;
-            border-bottom: 1px solid var(--line);
+            font-size: 1.82rem;
+            line-height: 1.22;
+            margin-bottom: 0.8rem;
+            padding-bottom: 0;
+            border-bottom: 0;
         }
         h4 {
             color: var(--ink);
             font-weight: 720;
             letter-spacing: 0;
+            font-family: "Avenir Next", "PingFang SC", sans-serif;
         }
         p, li, .stMarkdown {
             color: var(--ink);
@@ -1124,9 +1145,657 @@ def inject_css() -> None:
             border: 1px solid var(--line);
             box-shadow: var(--shadow-sm);
         }
+
+        /* Research console visual system */
+        .block-container {
+            padding-top: 1.1rem;
+            max-width: 1500px;
+        }
+        .st-key-app_header {
+            padding: 1rem 0 1.05rem;
+            margin-bottom: 0.65rem;
+            border: 0;
+            border-bottom: 1px solid #cbd7d3;
+            border-radius: 0;
+            background: rgba(255, 255, 255, 0.74);
+            box-shadow: none;
+            backdrop-filter: blur(12px) saturate(1.02);
+            -webkit-backdrop-filter: blur(12px) saturate(1.02);
+        }
+        .st-key-app_header [data-testid="stHorizontalBlock"] {
+            align-items: center;
+            gap: 1.2rem;
+        }
+        .app-header-title {
+            gap: 0.95rem;
+        }
+        .app-mark {
+            width: 46px;
+            height: 46px;
+            padding: 5px;
+            border: 0;
+            border-radius: 5px;
+            background: #112d31;
+            box-shadow: none;
+        }
+        .app-mark:hover {
+            background: #173b3f;
+            border-color: transparent;
+            transform: none;
+        }
+        .app-kicker {
+            margin-bottom: 0.1rem;
+            color: var(--navy);
+            font-family: "Avenir Next Condensed", "DIN Alternate", sans-serif;
+            font-size: 0.66rem;
+            font-weight: 800;
+            letter-spacing: 0.19em;
+            text-transform: uppercase;
+        }
+        .assessment-hero-main > p {
+            max-width: 48rem;
+            margin: 0.55rem 0 0;
+            color: #657679;
+            line-height: 1.7;
+        }
+        .app-kicker::after {
+            width: 2.4rem;
+            background: #b7c8cc;
+        }
+        .app-name {
+            font-family: "Songti SC", "STSong", "Noto Serif CJK SC", serif;
+            font-size: 1.48rem;
+            font-weight: 700;
+        }
+        .app-sub {
+            margin-top: 0.08rem;
+            color: #65777b;
+            font-size: 0.78rem;
+        }
+        .header-evidence {
+            display: grid;
+            grid-template-columns: auto auto;
+            align-items: end;
+            justify-content: end;
+            gap: 0.05rem 0.7rem;
+            min-width: 10rem;
+            padding-left: 1.2rem;
+            border-left: 1px solid #d3deda;
+        }
+        .header-evidence-label {
+            grid-column: 1 / -1;
+            color: #76878a;
+            font-family: "SFMono-Regular", "Menlo", monospace;
+            font-size: 0.61rem;
+            font-weight: 700;
+            letter-spacing: 0.13em;
+            text-align: right;
+            text-transform: uppercase;
+        }
+        .header-evidence strong {
+            color: var(--navy);
+            font-family: "Avenir Next Condensed", "DIN Alternate", sans-serif;
+            font-size: 1.6rem;
+            font-weight: 750;
+            line-height: 1;
+            font-variant-numeric: tabular-nums;
+        }
+        .header-evidence span:last-child {
+            color: #617377;
+            font-size: 0.76rem;
+            line-height: 1.35;
+        }
+        .st-key-app_header div[data-testid="stPopover"] button {
+            width: auto;
+            min-width: 4.55rem;
+            height: 2.35rem;
+            padding: 0 0.72rem;
+            border: 1px solid #bdcbc8;
+            border-radius: 4px;
+            background: transparent;
+            color: var(--navy);
+            font-family: "Avenir Next", "PingFang SC", sans-serif;
+            font-size: 0.78rem;
+            font-weight: 700;
+            letter-spacing: 0.03em;
+        }
+        .st-key-app_header div[data-testid="stPopover"] button:hover {
+            border-color: var(--navy);
+            background: var(--navy);
+            color: #ffffff;
+        }
+        div[data-testid="stPopoverBody"] {
+            min-width: 15rem;
+            padding: 0.8rem;
+            border: 1px solid #cbd8d4;
+            border-radius: 4px;
+            background: #ffffff;
+            box-shadow: 0 16px 40px rgba(20, 47, 52, 0.14);
+        }
+        .st-key-main_nav {
+            width: 100% !important;
+            max-width: 100%;
+            margin: 0.1rem 0 1.15rem;
+        }
+        .st-key-main_nav > div,
+        .st-key-main_nav [data-testid="stRadio"] {
+            width: 100% !important;
+            max-width: 100%;
+        }
+        .st-key-main_nav [role="radiogroup"] {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(8.3rem, 1fr));
+            gap: 1px;
+            width: 100%;
+            padding: 1px;
+            overflow: hidden;
+            border: 1px solid #cad7d3;
+            border-radius: 5px;
+            background: #cad7d3;
+            box-shadow: none;
+            backdrop-filter: none;
+            -webkit-backdrop-filter: none;
+        }
+        .st-key-main_nav [role="radiogroup"] label {
+            display: flex;
+            align-items: center;
+            min-height: 3.25rem;
+            padding: 0.52rem 0.66rem;
+            border: 0;
+            border-radius: 0;
+            background: rgba(255, 255, 255, 0.94);
+            color: #53666b;
+            font-family: "Avenir Next Condensed", "DIN Alternate", "PingFang SC", sans-serif;
+            font-size: 0.78rem;
+            font-weight: 700;
+            line-height: 1.24;
+            letter-spacing: 0.015em;
+            white-space: pre-line;
+            word-break: keep-all;
+            overflow-wrap: normal;
+        }
+        .st-key-main_nav [role="radiogroup"] label p {
+            margin: 0;
+            color: inherit;
+            font-family: inherit;
+            font-size: 0.76rem !important;
+            font-weight: 700;
+            line-height: 1.24 !important;
+            white-space: pre-line;
+            word-break: keep-all;
+            overflow-wrap: normal;
+        }
+        .st-key-main_nav [role="radiogroup"] label:hover {
+            background: #f0f5f3;
+            color: var(--navy);
+            border-bottom-color: transparent;
+        }
+        .st-key-main_nav [role="radiogroup"] label:has(input:checked),
+        .st-key-main_nav [aria-checked="true"] {
+            background: var(--navy);
+            border: 0;
+            border-bottom-color: transparent;
+            box-shadow: none;
+        }
+        .st-key-main_nav [role="radiogroup"] label:has(input:checked) *,
+        .st-key-main_nav [aria-checked="true"] * {
+            color: #ffffff !important;
+        }
+        .st-key-main_nav [role="radiogroup"] label > div:first-child {
+            display: none;
+        }
+        div[data-testid="stMetric"] {
+            min-height: 94px;
+            height: 94px;
+            padding: 0.75rem 0.9rem;
+            border: 1px solid var(--line);
+            border-left: 3px solid var(--accent);
+            border-top: 1px solid var(--line);
+            border-radius: 3px;
+            background: #ffffff;
+            box-shadow: none;
+        }
+        div[data-testid="stMetric"]:hover {
+            border-color: #bacbc6;
+            border-left-color: var(--navy);
+            box-shadow: 0 10px 28px rgba(20, 47, 52, 0.07);
+            transform: translateY(-1px);
+        }
+        div[data-testid="stMetricLabel"] {
+            color: #6a7a7d;
+            font-family: "Avenir Next Condensed", "DIN Alternate", "PingFang SC", sans-serif;
+            font-size: 0.72rem;
+            font-weight: 700;
+            letter-spacing: 0.06em;
+        }
+        div[data-testid="stMetricValue"] {
+            color: var(--navy);
+            font-family: "Avenir Next", "PingFang SC", sans-serif;
+            font-size: 1.42rem;
+        }
+        .stButton button,
+        .stDownloadButton button,
+        .stFormSubmitButton button {
+            min-height: 2.6rem;
+            border: 1px solid #c7d3d0;
+            border-radius: 4px;
+            background: #ffffff;
+            color: var(--navy);
+            box-shadow: none;
+            font-weight: 700;
+        }
+        .stButton button:hover,
+        .stDownloadButton button:hover {
+            border-color: var(--navy);
+            background: #f3f6f5;
+            color: var(--navy);
+            box-shadow: none;
+            transform: translateY(-1px);
+        }
+        .stButton button[kind="primary"],
+        .stFormSubmitButton button[kind="primary"],
+        div[data-testid="stFormSubmitButton"] button {
+            border-color: var(--navy);
+            border-radius: 4px;
+            background: var(--navy);
+            color: #ffffff;
+            box-shadow: none;
+        }
+        .stButton button[kind="primary"]:hover,
+        .stFormSubmitButton button[kind="primary"]:hover,
+        div[data-testid="stFormSubmitButton"] button:hover {
+            border-color: #0f2635;
+            background: #0f2635;
+            color: #ffffff;
+            filter: none;
+            transform: translateY(-1px);
+        }
+        .stButton button:focus-visible,
+        .stDownloadButton button:focus-visible,
+        .stFormSubmitButton button:focus-visible,
+        [data-testid="stTabs"] button[data-baseweb="tab"]:focus-visible,
+        .st-key-main_nav [role="radiogroup"] label:focus-within {
+            outline: 2px solid rgba(23, 51, 71, 0.42);
+            outline-offset: 2px;
+        }
+        [data-testid="stSelectbox"] div[data-baseweb="select"] > div,
+        [data-testid="stNumberInput"] input,
+        [data-testid="stTextInput"] input,
+        [data-testid="stTextArea"] textarea {
+            border-radius: 4px;
+            border-color: #cbd7d3;
+            background: #fbfcfb;
+            box-shadow: none;
+        }
+        [data-testid="stSelectbox"] div[data-baseweb="select"] > div:focus-within,
+        [data-testid="stNumberInput"] input:focus,
+        [data-testid="stTextInput"] input:focus,
+        [data-testid="stTextArea"] textarea:focus {
+            border-color: var(--navy);
+            box-shadow: 0 0 0 2px rgba(23, 51, 71, 0.10);
+        }
+        [data-testid="stTabs"] [data-baseweb="tab-list"] {
+            gap: 1.15rem;
+            padding: 0;
+            border: 0;
+            border-bottom: 1px solid #cfdad6;
+            border-radius: 0;
+            background: transparent;
+            box-shadow: none;
+        }
+        [data-testid="stTabs"] button[data-baseweb="tab"] {
+            height: 2.7rem;
+            padding: 0.3rem 0.1rem;
+            border: 0;
+            border-bottom: 2px solid transparent;
+            border-radius: 0;
+            background: transparent;
+            color: #657679;
+            font-weight: 700;
+        }
+        [data-testid="stTabs"] button[data-baseweb="tab"]:hover {
+            background: transparent;
+            color: var(--navy);
+        }
+        [data-testid="stTabs"] button[data-baseweb="tab"][aria-selected="true"] {
+            background: transparent;
+            color: var(--navy);
+            border-bottom-color: var(--navy);
+            box-shadow: none;
+        }
+        [data-testid="stExpander"] {
+            border-top: 1px solid #d4dfdb;
+            background: rgba(255, 255, 255, 0.42);
+        }
+        [data-testid="stExpander"] summary {
+            font-family: "Avenir Next", "PingFang SC", sans-serif;
+            font-size: 0.96rem;
+        }
+        [class*="st-key-scale_item_"] {
+            border-radius: 3px;
+            background: #ffffff;
+        }
+        [class*="st-key-scale_item_"] div[data-baseweb="button-group"],
+        [class*="st-key-scale_item_"] [role="radiogroup"],
+        .st-key-conversation_mode_selector [role="radiogroup"] {
+            border-radius: 3px;
+            background: #eef2f0;
+        }
+        [class*="st-key-scale_item_"] div[data-baseweb="button-group"] button,
+        [class*="st-key-scale_item_"] [role="radiogroup"] label,
+        .st-key-conversation_mode_selector [role="radiogroup"] label {
+            border-radius: 2px;
+        }
+        [class*="st-key-scale_item_"] div[data-baseweb="button-group"] button[aria-pressed="true"],
+        [class*="st-key-scale_item_"] div[data-baseweb="button-group"] button[aria-selected="true"],
+        [class*="st-key-scale_item_"] [role="radiogroup"] label:has(input:checked),
+        .st-key-conversation_mode_selector [role="radiogroup"] label:has(input:checked),
+        .st-key-conversation_mode_selector [aria-checked="true"] {
+            background: var(--navy) !important;
+            color: #ffffff !important;
+            box-shadow: none;
+        }
+        [data-testid="stChatMessage"] {
+            border: 0;
+            border-left: 3px solid #bdd0cb;
+            border-radius: 0;
+            background: #ffffff;
+            box-shadow: none;
+        }
+        [data-testid="stChatMessage"]:has([data-testid="chatAvatarIcon-user"]) {
+            border-left-color: var(--navy);
+            background: #e9eff1;
+        }
+        [data-testid="stChatMessage"]:hover {
+            border-color: #b7cac5;
+            border-left-color: var(--navy);
+            box-shadow: none;
+        }
+        [data-testid="stChatInput"] {
+            border-radius: 4px;
+            border-color: #c6d3cf;
+            background: #ffffff;
+        }
+        [data-testid="stDataFrame"],
+        [data-testid="stPlotlyChart"] {
+            border-radius: 3px;
+            border-color: #d1dcd8;
+            box-shadow: none;
+        }
+        [data-testid="stPlotlyChart"] svg text {
+            font-family: "Avenir Next", "PingFang SC", sans-serif !important;
+            fill: #53666a !important;
+        }
+        .user-card {
+            min-height: 92px;
+            border: 0;
+            border-left: 3px solid #b9cbc6;
+            border-radius: 0;
+            background: #ffffff;
+            box-shadow: none;
+        }
+        .user-card:hover {
+            border-left-color: var(--navy);
+            box-shadow: 0 9px 22px rgba(20, 47, 52, 0.07);
+            transform: translateX(2px);
+        }
+        .user-card.active {
+            border-left-color: var(--accent);
+            box-shadow: none;
+        }
+        .user-avatar {
+            border-radius: 4px;
+            background: var(--navy);
+            box-shadow: none;
+        }
+        .tag-pill,
+        .status-pill,
+        .risk-badge {
+            border-radius: 3px;
+        }
+        .assessment-hero {
+            padding: 1.35rem 0 1rem;
+            margin-bottom: 0.75rem;
+        }
+        .assessment-hero-grid {
+            display: grid;
+            grid-template-columns: minmax(0, 1.45fr) minmax(260px, 0.55fr);
+            gap: 2rem;
+            align-items: stretch;
+        }
+        .assessment-eyebrow,
+        .panel-kicker {
+            font-family: "SFMono-Regular", "Menlo", monospace;
+            font-size: 0.65rem;
+            font-weight: 700;
+            letter-spacing: 0.13em;
+            text-transform: uppercase;
+        }
+        .assessment-title-row {
+            margin-top: 0.42rem;
+        }
+        .assessment-title-row h2 {
+            font-size: clamp(2.35rem, 3.2vw, 3.35rem);
+        }
+        .assessment-local-badge {
+            border-radius: 3px;
+            background: #ffffff;
+            color: #53666a;
+            font-family: "SFMono-Regular", "Menlo", monospace;
+            font-size: 0.66rem;
+            letter-spacing: 0.05em;
+        }
+        .assessment-evidence-panel {
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            padding: 0.2rem 0 0.2rem 1.15rem;
+            border-left: 2px solid var(--navy);
+        }
+        .evidence-panel-label {
+            color: #718285;
+            font-family: "SFMono-Regular", "Menlo", monospace;
+            font-size: 0.62rem;
+            font-weight: 700;
+            letter-spacing: 0.13em;
+            text-transform: uppercase;
+        }
+        .evidence-panel-row {
+            display: grid;
+            grid-template-columns: 1.9rem minmax(0, 1fr) auto;
+            gap: 0.7rem;
+            align-items: center;
+            padding: 0.58rem 0;
+            border-bottom: 1px solid #d5dfdc;
+        }
+        .evidence-panel-row:last-child {
+            border-bottom: 0;
+        }
+        .evidence-panel-row b {
+            color: #8c9a9c;
+            font-family: "SFMono-Regular", "Menlo", monospace;
+            font-size: 0.66rem;
+        }
+        .evidence-panel-row span {
+            color: var(--ink);
+            font-size: 0.83rem;
+            font-weight: 700;
+        }
+        .evidence-panel-row small {
+            color: var(--accent);
+            font-family: "SFMono-Regular", "Menlo", monospace;
+            font-size: 0.6rem;
+            font-weight: 700;
+            letter-spacing: 0.06em;
+        }
+        .assessment-steps {
+            margin-top: 1.2rem;
+            border-color: #cfdad6;
+        }
+        .assessment-steps span {
+            color: #657579;
+            font-family: "Avenir Next Condensed", "DIN Alternate", "PingFang SC", sans-serif;
+            font-size: 0.74rem;
+            letter-spacing: 0.02em;
+        }
+        .assessment-steps b {
+            color: var(--clay);
+            font-family: "SFMono-Regular", "Menlo", monospace;
+        }
+        .panel-title {
+            font-size: 1.12rem;
+        }
+        .panel-copy {
+            color: #68797c;
+        }
+        .st-key-assessment_privacy_panel [data-testid="stVerticalBlockBorderWrapper"],
+        .st-key-assessment_mode_panel [data-testid="stVerticalBlockBorderWrapper"],
+        .st-key-assessment_storage_panel [data-testid="stVerticalBlockBorderWrapper"],
+        .st-key-assessment_user_panel [data-testid="stVerticalBlockBorderWrapper"],
+        .st-key-interview_chat_panel [data-testid="stVerticalBlockBorderWrapper"],
+        .st-key-companion_chat_panel [data-testid="stVerticalBlockBorderWrapper"] {
+            border-radius: 3px;
+            border-color: #d1dcd8;
+            background: #ffffff;
+            box-shadow: none;
+        }
+        [data-testid="stSidebar"] {
+            min-width: 285px;
+            background: #102a2e;
+            border-right: 0;
+        }
+        [data-testid="stSidebarContent"] {
+            padding: 0.9rem 0.8rem 1.2rem;
+        }
+        [data-testid="stSidebar"] [data-testid="stMarkdownContainer"] p,
+        [data-testid="stSidebar"] [data-testid="stWidgetLabel"] p,
+        [data-testid="stSidebar"] label,
+        [data-testid="stSidebar"] .stCaption {
+            color: #dce8e5;
+        }
+        [data-testid="stSidebar"] [data-testid="stCaptionContainer"] p {
+            color: #9db2b1;
+        }
+        [data-testid="stSidebar"] hr {
+            border-color: rgba(221, 235, 231, 0.16);
+        }
+        .sidebar-brand {
+            padding: 0.4rem 0.15rem 1rem;
+            border-bottom: 1px solid rgba(220, 233, 229, 0.15);
+        }
+        .sidebar-brand-mark {
+            border: 1px solid rgba(232, 241, 238, 0.20);
+            border-radius: 4px;
+            background: #f0f5f2;
+        }
+        .sidebar-brand-kicker {
+            color: #91b8b0;
+            font-family: "SFMono-Regular", "Menlo", monospace;
+            letter-spacing: 0.12em;
+        }
+        .sidebar-brand-name {
+            color: #ffffff;
+            font-size: 1.02rem;
+        }
+        .sidebar-brand-sub {
+            color: #9db2b1;
+        }
+        .sidebar-account {
+            border-bottom-color: rgba(220, 233, 229, 0.15);
+        }
+        .sidebar-account-label,
+        .sidebar-account-handle {
+            color: #9db2b1;
+        }
+        .sidebar-account-name {
+            color: #ffffff;
+        }
+        [data-testid="stSidebar"] .stButton button {
+            border-color: rgba(221, 235, 231, 0.25);
+            background: transparent;
+            color: #edf4f2;
+        }
+        [data-testid="stSidebar"] .stButton button:hover {
+            border-color: #8db4ab;
+            background: rgba(255, 255, 255, 0.07);
+            color: #ffffff;
+        }
+        [data-testid="stSidebar"] [data-baseweb="input"] {
+            border-color: rgba(221, 235, 231, 0.20);
+            border-radius: 4px;
+            background: rgba(255, 255, 255, 0.06);
+        }
+        [data-testid="stSidebar"] input {
+            color: #ffffff;
+        }
+        [data-testid="stSidebar"] div[data-baseweb="toggle"] {
+            filter: saturate(0.72);
+        }
+        .sidebar-protocol {
+            margin-top: 1rem;
+            padding-top: 0.95rem;
+            border-top: 1px solid rgba(221, 235, 231, 0.15);
+        }
+        .sidebar-protocol-title {
+            color: #89aaa4;
+            font-family: "SFMono-Regular", "Menlo", monospace;
+            font-size: 0.61rem;
+            font-weight: 700;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+        }
+        .sidebar-protocol-row {
+            display: grid;
+            grid-template-columns: 1.55rem minmax(0, 1fr);
+            gap: 0.55rem;
+            padding: 0.55rem 0;
+            border-bottom: 1px solid rgba(221, 235, 231, 0.10);
+        }
+        .sidebar-protocol-row:last-child {
+            border-bottom: 0;
+        }
+        .sidebar-protocol-row b {
+            color: #d1a060;
+            font-family: "SFMono-Regular", "Menlo", monospace;
+            font-size: 0.63rem;
+        }
+        .sidebar-protocol-row span {
+            color: #dce8e5;
+            font-size: 0.76rem;
+            line-height: 1.35;
+        }
+        .doc-block {
+            border-radius: 3px;
+            box-shadow: none;
+        }
+        .stAlert {
+            border-radius: 3px;
+            box-shadow: none;
+        }
+        @media (max-width: 1100px) {
+            .assessment-hero-grid {
+                grid-template-columns: 1fr;
+                gap: 1rem;
+            }
+            .assessment-evidence-panel {
+                display: grid;
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+                gap: 0 1rem;
+                border-left: 0;
+                border-top: 1px solid #cfdad6;
+                padding: 0.8rem 0 0;
+            }
+            .evidence-panel-label {
+                grid-column: 1 / -1;
+            }
+            .header-evidence {
+                display: none;
+            }
+        }
         @media (max-width: 720px) {
             .block-container {
-                padding-inline: 0.85rem;
+                padding-left: 2.45rem;
+                padding-right: 0.85rem;
                 padding-top: 0.9rem;
             }
             [data-testid="stExpandSidebarButton"] {
@@ -1149,6 +1818,42 @@ def inject_css() -> None:
             }
             [data-testid="stTabs"] button[data-baseweb="tab"] {
                 padding-inline: 0.7rem;
+            }
+            .st-key-main_nav [role="radiogroup"] {
+                display: flex;
+                flex-wrap: nowrap;
+                overflow-x: auto;
+                scroll-snap-type: x proximity;
+            }
+            .st-key-main_nav [role="radiogroup"] label {
+                flex: 0 0 7.6rem;
+                scroll-snap-align: start;
+            }
+            .assessment-steps {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
+            .assessment-steps span:nth-child(3) {
+                border-left: 0;
+                border-top: 1px solid var(--line);
+            }
+            .assessment-steps span:nth-child(4) {
+                border-top: 1px solid var(--line);
+            }
+            .assessment-evidence-panel {
+                grid-template-columns: 1fr;
+            }
+            .evidence-panel-label {
+                grid-column: auto;
+            }
+            .app-name {
+                font-size: 1.1rem;
+            }
+            .app-sub {
+                display: none;
+            }
+            .assessment-title-row h2 {
+                font-size: 2.2rem;
+                line-height: 1.18;
             }
         }
         @media (prefers-reduced-motion: reduce) {
@@ -1357,14 +2062,18 @@ def render_header(
         f"{ok_text if ok else wait_text}</span></div>"
         for label, ok, ok_text, wait_text in rows
     )
+    ready_count = sum(1 for _, ok, _, _ in rows if ok)
     with st.container(key="app_header"):
         if show_admin_menu:
-            title_col, controls_col = st.columns(
-                [9.2, 0.8],
+            title_col, evidence_col, controls_col = st.columns(
+                [7.2, 2.0, 0.72],
                 vertical_alignment="center",
             )
         else:
-            title_col = st.container()
+            title_col, evidence_col = st.columns(
+                [8.2, 1.8],
+                vertical_alignment="center",
+            )
             controls_col = None
         with title_col:
             st.markdown(
@@ -1380,13 +2089,24 @@ def render_header(
                 """,
                 unsafe_allow_html=True,
             )
+        with evidence_col:
+            st.markdown(
+                f"""
+                <div class="header-evidence">
+                    <div class="header-evidence-label">Evidence status</div>
+                    <strong>{ready_count:02d}/{len(rows):02d}</strong>
+                    <span>数据与模型<br>检查就绪</span>
+                </div>
+                """,
+                unsafe_allow_html=True,
+            )
         if controls_col is not None:
             with controls_col:
                 last_sync = st.session_state.get("_last_sync_at")
                 menu_help = "管理菜单与数据状态；每 10 秒自动同步"
                 if last_sync:
                     menu_help += f"，上次 {last_sync}"
-                with st.popover("☰", help=menu_help):
+                with st.popover("菜单", help=menu_help):
                     st.caption("管理菜单 · 状态每 10 秒自动同步")
                     menu_items = [
                         ("工作台", "工作台"),
@@ -1450,6 +2170,29 @@ SYNC_CACHE_KEYS = [
     "user_list",
     "_system_status",
 ]
+
+NAV_CODES = {
+    "风险评估": "RISK",
+    "用户记录": "CASES",
+    "养老调查数据": "CHARLS",
+    "不平衡对比": "BALANCE",
+    "融合校准": "FUSION",
+    "数据优化": "CACHE",
+    "模拟数据": "SYNTHETIC",
+    "多模态数据": "MODAL",
+    "数据平衡处理": "REBALANCE",
+    "后台任务": "JOBS",
+    "增量验证": "EVIDENCE",
+    "数据健康": "QUALITY",
+    "统计校正": "CALIBRATION",
+    "个人主页": "PROFILE",
+    "系统说明": "ABOUT",
+}
+
+
+def format_nav_label(label: str) -> str:
+    code = NAV_CODES.get(label)
+    return f"{label}\n{code}" if code else label
 
 
 def prime_backend_version() -> None:
@@ -2140,21 +2883,185 @@ def inject_auth_css() -> None:
             font-size: .78rem;
             font-weight: 600;
         }
+
+        /* Editorial split-screen account entry */
+        .stApp {
+            background: #e9eeeb;
+        }
+        .block-container {
+            padding-top: 1.2rem;
+            padding-bottom: 1.2rem;
+        }
+        .auth-brand-card {
+            min-height: clamp(650px, 84vh, 780px);
+            padding: 2.15rem 2.25rem;
+            color: #f5fbf9;
+            background: #143b3a;
+            border-radius: 2px;
+        }
+        .auth-brand-mark {
+            width: 46px;
+            height: 46px;
+            border: 1px solid rgba(255, 255, 255, 0.18);
+            border-radius: 3px;
+            background: rgba(255, 255, 255, 0.08);
+        }
+        .auth-brand-name {
+            color: #ffffff;
+        }
+        .auth-brand-sub {
+            color: #a9c0bc;
+        }
+        .auth-stage-label {
+            margin-top: 2.6rem;
+            color: #91b6af;
+            font-family: "SFMono-Regular", "Menlo", monospace;
+            font-size: 0.65rem;
+            font-weight: 700;
+            letter-spacing: 0.14em;
+            text-transform: uppercase;
+        }
+        .auth-brand-card h1 {
+            max-width: 36rem;
+            margin-top: 0.65rem;
+            color: #ffffff;
+            font-size: clamp(2.25rem, 3.15vw, 3.4rem);
+            line-height: 1.3;
+        }
+        .auth-brand-copy {
+            max-width: 33rem;
+            color: #b9cbc7;
+            font-size: 0.92rem;
+            line-height: 1.8;
+        }
+        .auth-evidence-board {
+            margin-top: 1.75rem;
+            border-top: 1px solid rgba(221, 236, 231, 0.18);
+            border-bottom: 1px solid rgba(221, 236, 231, 0.18);
+        }
+        .auth-evidence-head,
+        .auth-evidence-row {
+            display: grid;
+            grid-template-columns: 2.2rem minmax(0, 1fr) auto;
+            gap: 0.8rem;
+            align-items: center;
+        }
+        .auth-evidence-head {
+            grid-template-columns: 1fr auto;
+            padding: 0.72rem 0 0.55rem;
+            color: #789d96;
+            font-family: "SFMono-Regular", "Menlo", monospace;
+            font-size: 0.61rem;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+        }
+        .auth-evidence-row {
+            padding: 0.64rem 0;
+            border-top: 1px solid rgba(221, 236, 231, 0.11);
+        }
+        .auth-evidence-row b {
+            color: #d7a35d;
+            font-family: "SFMono-Regular", "Menlo", monospace;
+            font-size: 0.66rem;
+        }
+        .auth-evidence-row span {
+            color: #edf5f3;
+            font-size: 0.84rem;
+            font-weight: 650;
+        }
+        .auth-evidence-row small {
+            color: #88aaa3;
+            font-family: "SFMono-Regular", "Menlo", monospace;
+            font-size: 0.58rem;
+            letter-spacing: 0.05em;
+        }
+        .auth-trust-row {
+            gap: 1.15rem;
+            padding-top: 1rem;
+            border-top-color: rgba(221, 236, 231, 0.16);
+        }
+        .auth-trust-chip {
+            color: #aac0bc;
+        }
+        .auth-trust-chip::before {
+            background: #d7a35d;
+        }
+        .st-key-auth_panel {
+            min-height: clamp(650px, 84vh, 780px);
+            padding: 2.35rem 2.15rem 1.8rem;
+            border: 1px solid #d1dbd7;
+            border-radius: 2px;
+            background: #ffffff;
+            box-shadow: none;
+            backdrop-filter: none;
+            -webkit-backdrop-filter: none;
+        }
+        .auth-eyebrow {
+            color: #567d77;
+            font-family: "SFMono-Regular", "Menlo", monospace;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+        }
+        .auth-form-head h2 {
+            color: #14272a;
+            font-size: 2.45rem;
+        }
+        .auth-form-head p {
+            color: #657679;
+        }
+        .auth-rule {
+            border-left-color: #b98a43;
+            color: #617276;
+        }
+        [data-testid="stTabs"] button[data-baseweb="tab"][aria-selected="true"] {
+            color: #14272a;
+            border-bottom-color: #173347;
+        }
+        div[data-testid="stTextInput"] div[data-baseweb="input"] {
+            border-radius: 3px;
+            background: #fbfcfb;
+        }
+        div[data-testid="stFormSubmitButton"] button {
+            border-radius: 3px;
+            background: #173347;
+            border-color: #173347;
+            color: #ffffff;
+            box-shadow: none;
+        }
+        div[data-testid="stFormSubmitButton"] button:hover {
+            background: #102736;
+            border-color: #102736;
+            color: #ffffff;
+            box-shadow: none;
+        }
+        .auth-security-note {
+            border-top-color: #d7dfdc;
+            color: #68797c;
+        }
         @media (max-width: 900px) {
             .block-container {
                 padding-top: 1rem;
             }
             .auth-brand-card {
                 min-height: auto;
-                padding: 1.35rem;
-                margin-bottom: 1rem;
+                padding: 1.45rem;
+                margin-bottom: 0;
             }
             .auth-brand-card h1 {
                 font-size: 1.85rem;
             }
-            .auth-brand-illustration {
-                max-height: 260px;
-                overflow: hidden;
+            .auth-stage-label {
+                margin-top: 1.6rem;
+            }
+            .auth-evidence-row {
+                grid-template-columns: 1.8rem minmax(0, 1fr);
+            }
+            .auth-evidence-row small {
+                display: none;
+            }
+            .st-key-auth_panel {
+                min-height: auto;
+                padding: 1.3rem;
             }
         }
         @media (prefers-reduced-motion: reduce) {
@@ -2219,18 +3126,11 @@ def render_auth_gate() -> None:
     with shell:
         brand_col, auth_col = st.columns([1.03, 0.97], gap="large")
         logo_path = PROJECT_ROOT / "webapp" / "assets" / "logo-mark.svg"
-        illustration_path = PROJECT_ROOT / "webapp" / "assets" / "conversation-chairs.svg"
         logo_uri = ""
-        illustration_uri = ""
         if logo_path.exists():
             logo_uri = (
                 "data:image/svg+xml;base64,"
                 + base64.b64encode(logo_path.read_bytes()).decode("ascii")
-            )
-        if illustration_path.exists():
-            illustration_uri = (
-                "data:image/svg+xml;base64,"
-                + base64.b64encode(illustration_path.read_bytes()).decode("ascii")
             )
         brand_col.markdown(
             f"""
@@ -2242,12 +3142,20 @@ def render_auth_gate() -> None:
                         <div class="auth-brand-sub">多模态抑郁风险评估平台</div>
                     </div>
                 </div>
-                <h1>老年抑郁风险<br>筛查工作台</h1>
+                <div class="auth-stage-label">Conversation to care / risk screening</div>
+                <h1>从一次自然对话<br>看清老年抑郁风险</h1>
                 <p class="auth-brand-copy">
-                    对话、量表与多模态信号协同，为科研风险筛查提供可解释的风险参考。
+                    对话、量表、共病背景与可用行为信号被整理成清晰的风险提示，
+                    每个结果都保留依据、适用范围和安全边界。
                 </p>
-                <div class="auth-brand-illustration">
-                    <img src="{illustration_uri}" alt="两把相对摆放的椅子、茶几与绿植插画">
+                <div class="auth-evidence-board">
+                    <div class="auth-evidence-head">
+                        <span>How it works</span><span>04 stages</span>
+                    </div>
+                    <div class="auth-evidence-row"><b>01</b><span>自然对话，识别语言线索</span><small>CONVERSATION</small></div>
+                    <div class="auth-evidence-row"><b>02</b><span>完成量表，补充背景与共病</span><small>ASSESSMENT</small></div>
+                    <div class="auth-evidence-row"><b>03</b><span>整合可用的行为与情绪信号</span><small>MULTIMODAL</small></div>
+                    <div class="auth-evidence-row"><b>04</b><span>解释风险，保留安全边界</span><small>EXPLANATION</small></div>
                 </div>
                 <div class="auth-trust-row">
                     <span class="auth-trust-chip">本地处理优先</span>
@@ -2775,6 +3683,18 @@ def render_sidebar() -> str:
             st.success("关怀模式已开启：大字 / 高对比")
         else:
             st.caption("当前为标准模式")
+        st.markdown(
+            """
+            <div class="sidebar-protocol">
+                <div class="sidebar-protocol-title">Safe & transparent</div>
+                <div class="sidebar-protocol-row"><b>01</b><span>自然对话，不诱导回答</span></div>
+                <div class="sidebar-protocol-row"><b>02</b><span>量表进度清晰可见</span></div>
+                <div class="sidebar-protocol-row"><b>03</b><span>风险解释保留依据</span></div>
+                <div class="sidebar-protocol-row"><b>04</b><span>数据默认本地处理</span></div>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
         if is_admin:
             st.markdown("---")
             api_key = st.text_input("大模型 API Key（可选）", type="password")
@@ -2782,16 +3702,6 @@ def render_sidebar() -> str:
                 st.caption("已填写，用于对话 Agent 与风险摘要。")
             else:
                 st.caption("留空时使用本地 .env 配置。")
-            visual_path = PROJECT_ROOT / "webapp" / "assets" / "conversation-chairs.svg"
-            if visual_path.exists():
-                visual_data = base64.b64encode(visual_path.read_bytes()).decode("ascii")
-                st.markdown(
-                    f'<div class="sidebar-visual">'
-                    f'<img src="data:image/svg+xml;base64,{visual_data}" '
-                    f'alt="两把相对摆放的椅子、茶几与绿植插画">'
-                    f"</div>",
-                    unsafe_allow_html=True,
-                )
             return api_key
         st.markdown("---")
         st.caption("普通用户仅可使用风险评估与个人记录功能。")
@@ -3087,12 +3997,23 @@ def render_assessment(api_key: str) -> None:
     st.markdown(
         """
         <section class="assessment-hero">
-            <div class="assessment-eyebrow">科研评估 · 01</div>
-            <div class="assessment-title-row">
-                <h2>抑郁风险筛查</h2>
-                <span class="assessment-local-badge"><i></i>本地优先</span>
+            <div class="assessment-hero-grid">
+                <div class="assessment-hero-main">
+                    <div class="assessment-eyebrow">Risk screening · 01</div>
+                    <div class="assessment-title-row">
+                        <h2>抑郁风险筛查</h2>
+                        <span class="assessment-local-badge"><i></i>本地优先</span>
+                    </div>
+                    <p>填写背景与量表，再进行一轮简短访谈；系统会同步整理量表、语言和可用行为线索。</p>
+                </div>
+                <aside class="assessment-evidence-panel">
+                    <div class="evidence-panel-label">Evidence inputs</div>
+                    <div class="evidence-panel-row"><b>01</b><span>对话语言</span><small>NLP</small></div>
+                    <div class="evidence-panel-row"><b>02</b><span>量表结构</span><small>SCALE</small></div>
+                    <div class="evidence-panel-row"><b>03</b><span>背景与共病</span><small>CONTEXT</small></div>
+                    <div class="evidence-panel-row"><b>04</b><span>行为信号</span><small>MODAL</small></div>
+                </aside>
             </div>
-            <p>填写背景与量表，再进行一轮简短访谈；系统会同步整理量表、语言和可用行为线索。</p>
             <div class="assessment-steps">
                 <span><b>01</b>评估方式</span>
                 <span><b>02</b>背景与量表</span>
@@ -7044,6 +7965,7 @@ else:
         key="main_nav",
         horizontal=True,
         label_visibility="collapsed",
+        format_func=format_nav_label,
     )
     renderers = dict(page_defs)
     renderers[selected]()
