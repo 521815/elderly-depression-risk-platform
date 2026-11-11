@@ -1495,6 +1495,10 @@ def inject_css() -> None:
             color: #ffffff !important;
             box-shadow: none;
         }
+        .st-key-conversation_mode_selector [role="radiogroup"] label:has(input:checked) *,
+        .st-key-conversation_mode_selector [aria-checked="true"] * {
+            color: #ffffff !important;
+        }
         [data-testid="stChatMessage"] {
             border: 0;
             border-left: 3px solid #bdd0cb;
