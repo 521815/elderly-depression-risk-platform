@@ -1331,6 +1331,12 @@ def render_header(
             "未训练",
         ),
         (
+            "增量验证",
+            status.get("incremental_validation_ready", False),
+            "已完成",
+            "待运行",
+        ),
+        (
             "伦理安全审计",
             status.get("ethics_audit_passed", False),
             "已通过",
@@ -4371,6 +4377,7 @@ def render_jobs() -> None:
         "synthetic_generate": "生成模拟数据",
         "real_profile": "真实数据画像",
         "fusion_optimize": "融合优化",
+        "incremental_validation": "理论基线与模态消融",
     }
     task = st.selectbox(
         "任务",
@@ -6274,6 +6281,226 @@ def render_data_health() -> None:
     )
 
 
+def render_incremental_validation() -> None:
+    st.subheader("增量验证")
+    st.caption(
+        "比较理论基线、传统模型和同人级模态组合。跨队列数据只做证据可用性审计，"
+        "不把不同受试者的表格、语音和面部特征拼接成伪多模态。"
+    )
+    if st.button(
+        "运行理论基线与模态消融",
+        type="primary",
+        width="stretch",
+        key="run_incremental_validation",
+    ):
+        with st.spinner("正在运行 CHARLS 分组基线和 MPDD 模态消融..."):
+            result = backend.run_incremental_validation()
+        if result:
+            st.success("增量验证结果已更新")
+        else:
+            st.error("增量验证运行失败，请检查后端任务和数据表")
+        st.rerun()
+
+    reports = backend.incremental_validation_reports()
+    if not reports.get("ready"):
+        st.info("尚未生成增量验证结果。运行后会展示理论基线、模态贡献和跨源边界。")
+        return
+
+    charls = pd.DataFrame(reports.get("charls") or [])
+    mpdd = pd.DataFrame(reports.get("mpdd") or [])
+    charls_comparisons = pd.DataFrame(reports.get("charls_comparisons") or [])
+    mpdd_comparisons = pd.DataFrame(reports.get("mpdd_comparisons") or [])
+    audit = reports.get("cross_source_audit") or {}
+    meta = reports.get("meta") or {}
+
+    metrics = st.columns(3)
+    if not charls.empty and "auc" in charls.columns:
+        best_charls = charls.sort_values("auc", ascending=False).iloc[0]
+        metrics[0].metric(
+            "CHARLS 最优基线",
+            f"{best_charls.get('baseline_id', '-')} · AUC {float(best_charls['auc']):.3f}",
+        )
+    if not mpdd.empty and "auc_mean" in mpdd.columns:
+        candidates = mpdd[mpdd["modalities"] != "prevalence"]
+        best_mpdd = candidates.sort_values("auc_mean", ascending=False).iloc[0]
+        metrics[1].metric(
+            "MPDD 最优模态组合",
+            f"AUC {float(best_mpdd['auc_mean']):.3f}",
+        )
+        metrics[1].caption(str(best_mpdd.get("modalities", "-")).replace("+", " + "))
+    pairing = audit.get("pairing") or {}
+    metrics[2].metric(
+        "CHARLS–MPDD 同人配对",
+        "否" if pairing.get("CHARLS__MPDD") is False else "未确认",
+    )
+
+    st.markdown("#### CHARLS 理论基线")
+    if not charls.empty:
+        display = charls[
+            [
+                "baseline_id",
+                "model",
+                "feature_set",
+                "n_features",
+                "auc",
+                "pr_auc",
+                "brier",
+                "ece",
+                "f1",
+            ]
+        ].rename(
+            columns={
+                "baseline_id": "编号",
+                "model": "模型",
+                "feature_set": "变量集",
+                "n_features": "变量数",
+                "auc": "AUC",
+                "pr_auc": "PR-AUC",
+                "brier": "Brier",
+                "ece": "ECE",
+                "f1": "F1",
+            }
+        )
+        for column in ["AUC", "PR-AUC", "Brier", "ECE", "F1"]:
+            display[column] = display[column].map(
+                lambda value: f"{float(value):.3f}"
+            )
+        st.dataframe(display, width="stretch", hide_index=True)
+        fig_charls = px.bar(
+            charls,
+            x="baseline_id",
+            y=["auc", "pr_auc", "brier"],
+            barmode="group",
+            color_discrete_map={
+                "auc": "#2563eb",
+                "pr_auc": "#0f766e",
+                "brier": "#b45309",
+            },
+            labels={
+                "baseline_id": "基线",
+                "value": "指标值",
+                "variable": "指标",
+            },
+        )
+        fig_charls.update_layout(height=320, margin=dict(l=10, r=10, t=30, b=10))
+        st.plotly_chart(fig_charls, width="stretch")
+        if not charls_comparisons.empty:
+            comparison_display = charls_comparisons[
+                [
+                    "reference",
+                    "candidate",
+                    "auc_delta",
+                    "auc_delta_ci_low",
+                    "auc_delta_ci_high",
+                    "brier_delta",
+                ]
+            ].rename(
+                columns={
+                    "reference": "参考基线",
+                    "candidate": "新增对照",
+                    "auc_delta": "ΔAUC",
+                    "auc_delta_ci_low": "ΔAUC CI 下限",
+                    "auc_delta_ci_high": "ΔAUC CI 上限",
+                    "brier_delta": "ΔBrier",
+                }
+            )
+            for column in comparison_display.columns[2:]:
+                comparison_display[column] = comparison_display[column].map(
+                    lambda value: f"{float(value):+.3f}"
+                )
+            st.dataframe(comparison_display, width="stretch", hide_index=True)
+
+    st.markdown("#### MPDD 同人级模态消融")
+    if not mpdd.empty:
+        display_mpdd = mpdd[
+            [
+                "modalities",
+                "n_modalities",
+                "auc_mean",
+                "pr_auc_mean",
+                "brier_mean",
+                "ece_mean",
+                "f1_mean",
+            ]
+        ].copy()
+        display_mpdd = display_mpdd.sort_values(
+            ["auc_mean", "pr_auc_mean"],
+            ascending=False,
+        )
+        display_mpdd["modalities"] = display_mpdd["modalities"].str.replace(
+            "+", " + ", regex=False
+        )
+        display_mpdd = display_mpdd.rename(
+            columns={
+                "modalities": "模态组合",
+                "n_modalities": "模态数",
+                "auc_mean": "AUC 均值",
+                "pr_auc_mean": "PR-AUC 均值",
+                "brier_mean": "Brier 均值",
+                "ece_mean": "ECE 均值",
+                "f1_mean": "F1 均值",
+            }
+        )
+        for column in ["AUC 均值", "PR-AUC 均值", "Brier 均值", "ECE 均值", "F1 均值"]:
+            display_mpdd[column] = display_mpdd[column].map(
+                lambda value: f"{float(value):.3f}"
+            )
+        st.dataframe(display_mpdd, width="stretch", hide_index=True)
+        chart_mpdd = mpdd[mpdd["modalities"] != "prevalence"].copy()
+        fig_mpdd = px.bar(
+            chart_mpdd.sort_values("auc_mean", ascending=False).head(10),
+            x="modalities",
+            y="auc_mean",
+            color="n_modalities",
+            labels={
+                "modalities": "模态组合",
+                "auc_mean": "AUC 均值",
+                "n_modalities": "模态数",
+            },
+        )
+        fig_mpdd.update_layout(height=340, margin=dict(l=10, r=10, t=30, b=10))
+        st.plotly_chart(fig_mpdd, width="stretch")
+        if not mpdd_comparisons.empty:
+            comparison_display = mpdd_comparisons[
+                [
+                    "candidate",
+                    "auc_delta_candidate_minus_full",
+                    "auc_wilcoxon_p_holm",
+                    "brier_delta_candidate_minus_full",
+                    "brier_wilcoxon_p_holm",
+                ]
+            ].rename(
+                columns={
+                    "candidate": "与完整四模态相比",
+                    "auc_delta_candidate_minus_full": "ΔAUC",
+                    "auc_wilcoxon_p_holm": "ΔAUC Holm P",
+                    "brier_delta_candidate_minus_full": "ΔBrier",
+                    "brier_wilcoxon_p_holm": "ΔBrier Holm P",
+                }
+            )
+            for column in comparison_display.columns[1:]:
+                comparison_display[column] = comparison_display[column].map(
+                    lambda value: f"{float(value):.3f}"
+                )
+            st.dataframe(comparison_display, width="stretch", hide_index=True)
+
+    st.markdown("#### 证据边界")
+    fine_tune = meta.get("fine_tuning_boundary") or {}
+    if fine_tune:
+        st.warning(
+            "当前未进行临床端到端大模型全参数微调："
+            f"{fine_tune.get('reason', '样本与独立标签不足')}"
+        )
+        st.caption(f"当前可做的适配对照：{fine_tune.get('available_adaptation', '-')}")
+    if audit:
+        st.markdown(
+            "- **允许**：源内受试者级验证、同源模态消融、跨源概率校准与领域适配\n"
+            "- **禁止**：不同受试者特征拼接、随机配对证明同人融合、混用不同量表标签"
+        )
+        with st.expander("查看跨源审计明细", expanded=False):
+            st.json(audit)
+
+
 def render_smoothing_calibration() -> None:
     st.subheader("统计校正")
     st.caption(
@@ -6786,6 +7013,7 @@ if is_admin:
         ("多模态数据", render_mpdd),
         ("数据平衡处理", render_diy),
         ("后台任务", render_jobs),
+        ("增量验证", render_incremental_validation),
         ("数据健康", render_data_health),
         ("统计校正", render_smoothing_calibration),
     ]

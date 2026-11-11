@@ -141,7 +141,7 @@ def mpdd_label_audit(
         "unlabeled_subjects": int(official.isna().sum()),
         "label2_positive": int((official == 1).sum()),
         "label2_negative": int((official == 0).sum()),
-        "threshold_positive": int(threshold_label.fillna(False).sum()),
+        "threshold_positive": int(threshold_label.eq(True).sum()),
         "threshold_disagreement": int(
             (
                 comparable

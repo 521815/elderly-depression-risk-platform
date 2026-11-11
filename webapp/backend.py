@@ -708,6 +708,22 @@ def research_reports() -> dict:
     return _local.research_reports()
 
 
+def incremental_validation_reports() -> dict:
+    data = _api("GET", "/api/research/incremental_validation")
+    if data is not None:
+        return data
+    return _local.incremental_validation_reports()
+
+
+def run_incremental_validation() -> dict | None:
+    data = _api("POST", "/api/research/incremental_validation")
+    if data is not None:
+        return data
+    if _can_use_local_fallback():
+        return _local.run_incremental_validation()
+    return None
+
+
 def run_subgroup_shrinkage() -> dict | None:
     return _api("POST", "/api/smoothing/subgroup")
 

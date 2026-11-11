@@ -285,6 +285,35 @@ class ApiTests(unittest.TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json["method"], "aggregation")
 
+    def test_incremental_validation_endpoints_are_admin_only(self):
+        unauthorised = self.client.get("/api/research/incremental_validation")
+        self.assertEqual(unauthorised.status_code, 401)
+        with (
+            mock.patch.object(
+                services,
+                "incremental_validation_reports",
+                return_value={"ready": True, "charls": [], "mpdd": []},
+            ),
+            mock.patch.object(
+                services,
+                "run_incremental_validation",
+                return_value={"ready": True, "charls": [], "mpdd": []},
+            ),
+        ):
+            report = self.client.get(
+                "/api/research/incremental_validation",
+                headers=self.admin_headers,
+            )
+            run = self.client.post(
+                "/api/research/incremental_validation",
+                json={},
+                headers=self.admin_headers,
+            )
+        self.assertEqual(report.status_code, 200)
+        self.assertTrue(report.json["ready"])
+        self.assertEqual(run.status_code, 200)
+        self.assertTrue(run.json["ready"])
+
     def test_data_health_endpoint(self):
         resp = self.client.get("/api/data_health", headers=self.admin_headers)
         self.assertEqual(resp.status_code, 200)

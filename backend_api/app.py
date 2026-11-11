@@ -661,6 +661,16 @@ def research_reports():
     return jsonify(services.research_reports())
 
 
+@app.get("/api/research/incremental_validation")
+def incremental_validation_report():
+    return jsonify(services.incremental_validation_reports())
+
+
+@app.post("/api/research/incremental_validation")
+def incremental_validation_run():
+    return jsonify(services.run_incremental_validation())
+
+
 @app.post("/api/smoothing/subgroup")
 def smoothing_subgroup():
     return jsonify(services.run_subgroup_shrinkage())
@@ -1267,6 +1277,7 @@ def _job_tasks() -> dict:
         ),
         "real_profile": lambda p: services.generate_real_profile(),
         "fusion_optimize": lambda p: _fusion_optimize(p),
+        "incremental_validation": lambda p: services.run_incremental_validation(),
     }
 
 

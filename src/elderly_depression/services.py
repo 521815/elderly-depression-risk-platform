@@ -55,6 +55,25 @@ MULTIMODAL_SUBJECT_LABEL3_REPORT = OUTPUT_DIR / "multimodal_subject_label3_repor
 MULTIMODAL_SUBJECT_PHQ9_REPORT = OUTPUT_DIR / "multimodal_subject_phq9_score_report.csv"
 MPDD_TEST_PREDICTIONS = OUTPUT_DIR / "mpdd_test_predictions.csv"
 MPDD_LABEL_COMPARISON_REPORT = OUTPUT_DIR / "mpdd_label_protocol_comparison.csv"
+INCREMENTAL_VALIDATION_DIR = OUTPUT_DIR / "incremental_validation"
+INCREMENTAL_CHARLS_SUMMARY = (
+    INCREMENTAL_VALIDATION_DIR / "charls_theory_summary.csv"
+)
+INCREMENTAL_MPDD_SUMMARY = (
+    INCREMENTAL_VALIDATION_DIR / "mpdd_modality_summary.csv"
+)
+INCREMENTAL_CHARLS_COMPARISONS = (
+    INCREMENTAL_VALIDATION_DIR / "charls_theory_comparisons.csv"
+)
+INCREMENTAL_MPDD_COMPARISONS = (
+    INCREMENTAL_VALIDATION_DIR / "mpdd_modality_comparisons.csv"
+)
+INCREMENTAL_CROSS_SOURCE_AUDIT = (
+    INCREMENTAL_VALIDATION_DIR / "cross_source_audit.json"
+)
+INCREMENTAL_VALIDATION_META = (
+    INCREMENTAL_VALIDATION_DIR / "incremental_validation_meta.json"
+)
 TABULAR_MODEL_DIR = OUTPUT_DIR / "tabular_models"
 MULTIMODAL_MODEL_DIR = OUTPUT_DIR / "multimodal_models"
 FUSION_DIR = OUTPUT_DIR / "fusion_models"
@@ -371,6 +390,12 @@ def data_signature() -> str:
         OUTPUT_DIR / "mpdd_label_audit.json",
         MPDD_LABEL_COMPARISON_REPORT,
         MPDD_TEST_PREDICTIONS,
+        INCREMENTAL_CHARLS_SUMMARY,
+        INCREMENTAL_MPDD_SUMMARY,
+        INCREMENTAL_CHARLS_COMPARISONS,
+        INCREMENTAL_MPDD_COMPARISONS,
+        INCREMENTAL_CROSS_SOURCE_AUDIT,
+        INCREMENTAL_VALIDATION_META,
         DIALOGUE_INTENT_MODEL,
         DIALOGUE_INTENT_REPORT,
         DIALOGUE_RESPONSE_POLICY_MODEL,
@@ -888,6 +913,56 @@ def run_robust_aggregation_ablation(
     return _run(repeats=repeats, splits=splits, pca_dims=pca_dims)
 
 
+def incremental_validation_reports() -> dict:
+    return {
+        "ready": (
+            INCREMENTAL_CHARLS_SUMMARY.exists()
+            and INCREMENTAL_MPDD_SUMMARY.exists()
+        ),
+        "charls": (
+            load_csv(INCREMENTAL_CHARLS_SUMMARY).to_dict(orient="records")
+            if INCREMENTAL_CHARLS_SUMMARY.exists()
+            else None
+        ),
+        "mpdd": (
+            load_csv(INCREMENTAL_MPDD_SUMMARY).to_dict(orient="records")
+            if INCREMENTAL_MPDD_SUMMARY.exists()
+            else None
+        ),
+        "charls_comparisons": (
+            load_csv(INCREMENTAL_CHARLS_COMPARISONS).to_dict(orient="records")
+            if INCREMENTAL_CHARLS_COMPARISONS.exists()
+            else None
+        ),
+        "mpdd_comparisons": (
+            load_csv(INCREMENTAL_MPDD_COMPARISONS).to_dict(orient="records")
+            if INCREMENTAL_MPDD_COMPARISONS.exists()
+            else None
+        ),
+        "cross_source_audit": read_json_file(INCREMENTAL_CROSS_SOURCE_AUDIT),
+        "meta": read_json_file(INCREMENTAL_VALIDATION_META),
+    }
+
+
+def run_incremental_validation() -> dict:
+    from .models.incremental_validation import (
+        run_incremental_validation as _run_incremental_validation,
+    )
+    from .smoothing import aggregate_mpdd_subjects
+
+    if not MPDD_UTTERANCE_CSV.exists():
+        build_mpdd_utterance_dataset()
+    mpdd_subject = aggregate_mpdd_subjects(MPDD_UTTERANCE_CSV, method="mean")
+    cmdc = pd.read_csv(CMDC_CSV) if CMDC_CSV.exists() else None
+    _run_incremental_validation(
+        charls=load_charls(),
+        mpdd_subject=mpdd_subject,
+        cmdc=cmdc,
+        output_dir=INCREMENTAL_VALIDATION_DIR,
+    )
+    return incremental_validation_reports()
+
+
 def research_reports() -> dict:
     def read_json(path: Path):
         if not path.exists():
@@ -914,6 +989,12 @@ def research_reports() -> dict:
         OUTPUT_DIR / "robust_aggregation_report.csv",
         OUTPUT_DIR / "robust_aggregation_report.json",
         MPDD_LABEL_COMPARISON_REPORT,
+        INCREMENTAL_CHARLS_SUMMARY,
+        INCREMENTAL_MPDD_SUMMARY,
+        INCREMENTAL_CHARLS_COMPARISONS,
+        INCREMENTAL_MPDD_COMPARISONS,
+        INCREMENTAL_CROSS_SOURCE_AUDIT,
+        INCREMENTAL_VALIDATION_META,
         DIALOGUE_INTENT_REPORT,
         OUTPUT_DIR / "dialogue_intent_optimization_report.json",
         OUTPUT_DIR / "dialogue_self_evaluation.json",
@@ -951,6 +1032,24 @@ def research_reports() -> dict:
         ),
         "mpdd_label_protocol_comparison_meta": read_json(
             OUTPUT_DIR / "mpdd_label_protocol_comparison.json"
+        ),
+        "incremental_validation_charls": read_csv(
+            INCREMENTAL_CHARLS_SUMMARY
+        ),
+        "incremental_validation_mpdd": read_csv(
+            INCREMENTAL_MPDD_SUMMARY
+        ),
+        "incremental_validation_charls_comparisons": read_csv(
+            INCREMENTAL_CHARLS_COMPARISONS
+        ),
+        "incremental_validation_mpdd_comparisons": read_csv(
+            INCREMENTAL_MPDD_COMPARISONS
+        ),
+        "incremental_validation_audit": read_json(
+            INCREMENTAL_CROSS_SOURCE_AUDIT
+        ),
+        "incremental_validation_meta": read_json(
+            INCREMENTAL_VALIDATION_META
         ),
         "dialogue_intent": read_json(DIALOGUE_INTENT_REPORT),
         "dialogue_intent_optimization": read_json(
@@ -1215,6 +1314,11 @@ def status() -> dict:
         CMDC_ADVANCED_SUMMARY,
         CMDC_HOLDOUT_SUMMARY,
         CMDC_HOLDOUT_PREDICTIONS,
+        INCREMENTAL_CHARLS_SUMMARY,
+        INCREMENTAL_MPDD_SUMMARY,
+        INCREMENTAL_CHARLS_COMPARISONS,
+        INCREMENTAL_MPDD_COMPARISONS,
+        INCREMENTAL_CROSS_SOURCE_AUDIT,
         DIALOGUE_INTENT_MODEL,
         DIALOGUE_RESPONSE_POLICY_MODEL,
         ETHICS_AUDIT_REPORT,
@@ -1275,6 +1379,10 @@ def status() -> dict:
         "fusion_ready": FUSION_WEIGHTS_JSON.exists(),
         "multimodal_report": MULTIMODAL_REPORT.exists(),
         "multimodal_subject_report": MULTIMODAL_SUBJECT_REPORT.exists(),
+        "incremental_validation_ready": (
+            INCREMENTAL_CHARLS_SUMMARY.exists()
+            and INCREMENTAL_MPDD_SUMMARY.exists()
+        ),
         "dialogue_intent_model": DIALOGUE_INTENT_MODEL.exists(),
         "dialogue_intent_report": DIALOGUE_INTENT_REPORT.exists(),
         "dialogue_response_policy_model": DIALOGUE_RESPONSE_POLICY_MODEL.exists(),
