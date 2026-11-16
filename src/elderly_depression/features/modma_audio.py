@@ -228,7 +228,11 @@ def build_modma_audio_features(
     return pd.DataFrame(rows), errors
 
 
-def aggregate_modma_subject_features(utterance: pd.DataFrame) -> pd.DataFrame:
+def aggregate_modma_subject_features(
+    utterance: pd.DataFrame,
+    *,
+    source_name: str = "MODMA",
+) -> pd.DataFrame:
     """Aggregate segment features by subject with mean and standard deviation."""
     metadata_columns = [
         "source",
@@ -248,7 +252,7 @@ def aggregate_modma_subject_features(utterance: pd.DataFrame) -> pd.DataFrame:
     for subject_id, group in grouped:
         first = group.iloc[0]
         row = {
-            "source": "MODMA",
+            "source": source_name,
             "subject_id": subject_id,
             "group": first["group"],
             "label": int(first["label"]),

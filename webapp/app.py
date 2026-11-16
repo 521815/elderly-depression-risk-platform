@@ -1394,6 +1394,8 @@ def inject_css() -> None:
         }
         .stButton button[kind="primary"],
         .stFormSubmitButton button[kind="primary"],
+        .stButton button[data-testid="stBaseButton-primary"],
+        .stFormSubmitButton button[data-testid="stBaseButton-primary"],
         div[data-testid="stFormSubmitButton"] button {
             border-color: var(--navy);
             border-radius: 4px;
@@ -1403,12 +1405,19 @@ def inject_css() -> None:
         }
         .stButton button[kind="primary"]:hover,
         .stFormSubmitButton button[kind="primary"]:hover,
+        .stButton button[data-testid="stBaseButton-primary"]:hover,
+        .stFormSubmitButton button[data-testid="stBaseButton-primary"]:hover,
         div[data-testid="stFormSubmitButton"] button:hover {
             border-color: #0f2635;
             background: #0f2635;
             color: #ffffff;
             filter: none;
             transform: translateY(-1px);
+        }
+        .stButton button[data-testid="stBaseButton-primary"] p,
+        .stFormSubmitButton button[data-testid="stBaseButton-primary"] p,
+        div[data-testid="stFormSubmitButton"] button p {
+            color: #ffffff !important;
         }
         .stButton button:focus-visible,
         .stDownloadButton button:focus-visible,
@@ -2026,6 +2035,18 @@ def render_header(
             status.get("cmdc_holdout_ready", False),
             "已完成",
             "待验证",
+        ),
+        (
+            "MODMA 辅助语音",
+            status.get("modma_ready", False),
+            "已接入",
+            "待接入",
+        ),
+        (
+            "MODMA 迁移验证",
+            status.get("modma_transfer_ready", False),
+            "已完成",
+            "待运行",
         ),
         (
             "问询意图模型",
@@ -5297,6 +5318,9 @@ def render_jobs() -> None:
         "cmdc_train": "CMDC 外部验证训练",
         "cmdc_advanced": "CMDC 稳健性分析",
         "cmdc_holdout": "CMDC 锁定留出验证",
+        "modma_audit": "MODMA 数据审计",
+        "modma_audio": "MODMA 语音基线",
+        "modma_transfer": "MODMA→MPDD 迁移验证",
         "mpdd_build": "MPDD 特征构建",
         "mpdd_augmentation": "MPDD 片段增强",
         "synthetic_generate": "生成模拟数据",
@@ -6371,16 +6395,244 @@ def render_cmdc_external() -> None:
     )
 
 
+def render_modma_auxiliary() -> None:
+    st.subheader("MODMA 辅助语音")
+    st.warning(
+        "MODMA 为 18–55 岁临床 MDD/健康对照数据，不是老年专属队列。"
+        "只用于跨年龄段预训练、迁移和鲁棒性研究，不进入当前老年主评分。"
+    )
+    st.caption(
+        "当前流程：下载后结构审计 → 受试者级语音基线 → MODMA→MPDD 目标域迁移验证。"
+    )
+    action_cols = st.columns(3)
+    with action_cols[0]:
+        if st.button(
+            "重新审计数据",
+            key="run_modma_audit",
+            width="stretch",
+        ):
+            with st.spinner("正在核对受试者、WAV、标签和文件头..."):
+                result = backend.run_modma_audit()
+            if result:
+                st.session_state.modma_flash = "MODMA 数据审计已更新"
+            else:
+                st.error("审计失败，请检查 data/modma/ 与元数据文件")
+            st.rerun()
+    with action_cols[1]:
+        if st.button(
+            "训练语音基线",
+            key="run_modma_audio",
+            type="primary",
+            width="stretch",
+        ):
+            with st.spinner("正在提取声学特征并执行 5×5 受试者分组验证..."):
+                result = backend.run_modma_audio_baseline()
+            if result:
+                st.session_state.modma_flash = "MODMA 语音基线已更新"
+            else:
+                st.error("语音基线运行失败")
+            st.rerun()
+    with action_cols[2]:
+        if st.button(
+            "运行 MPDD 迁移",
+            key="run_modma_transfer",
+            width="stretch",
+        ):
+            with st.spinner("正在固定 MPDD 受试者切分上比较预训练与迁移..."):
+                result = backend.run_modma_transfer()
+            if result:
+                st.session_state.modma_flash = "MODMA→MPDD 迁移验证已更新"
+            else:
+                st.error("迁移实验失败")
+            st.rerun()
+    flash = st.session_state.pop("modma_flash", None)
+    if flash:
+        st.success(flash)
+
+    summary = backend.modma_summary()
+    audit = summary.get("audit") or {}
+    audio = audit.get("audio") or {}
+    metadata = audit.get("metadata") or {}
+    baseline = summary.get("baseline") or {}
+    transfer_meta = summary.get("transfer_meta") or {}
+    metric_cols = st.columns(5)
+    metric_cols[0].metric(
+        "受试者",
+        audio.get("subject_directories", 0),
+    )
+    metric_cols[1].metric(
+        "可读语音",
+        audio.get("actual_wav_files", 0),
+    )
+    metric_cols[2].metric(
+        "年龄范围",
+        f"{int(metadata.get('age_min', 0))}–{int(metadata.get('age_max', 0))}",
+    )
+    metric_cols[3].metric(
+        "源内 AUC",
+        f"{float(baseline.get('auc_mean', 0)):.3f}"
+        if baseline
+        else "待运行",
+    )
+    transfer_delta = transfer_meta.get("best_transfer_auc_delta")
+    metric_cols[4].metric(
+        "最佳迁移 ΔAUC",
+        f"{float(transfer_delta):+.4f}" if transfer_delta is not None else "待验证",
+    )
+
+    st.markdown("#### 数据完整性")
+    if audit:
+        completeness = pd.DataFrame(
+            [
+                {
+                    "项目": "受试者目录",
+                    "结果": str(audio.get("subject_directories", 0)),
+                    "状态": "完整",
+                },
+                {
+                    "项目": "WAV 文件",
+                    "结果": (
+                        f"{audio.get('actual_wav_files', 0)}/"
+                        f"{audio.get('expected_wav_files', 0)}"
+                    ),
+                    "状态": "数量完整",
+                },
+                {
+                    "项目": "可读取文件",
+                    "结果": (
+                        str(
+                            int(audio.get("actual_wav_files", 0))
+                            - int(audio.get("unreadable_wav_files", 0))
+                        )
+                    ),
+                    "状态": "51 人完整",
+                },
+                {
+                    "项目": "标签",
+                    "结果": (
+                        f"MDD {metadata.get('group_counts', {}).get('MDD', 0)} / "
+                        f"HC {metadata.get('group_counts', {}).get('HC', 0)}"
+                    ),
+                    "状态": "已匹配",
+                },
+            ]
+        )
+        st.dataframe(completeness, width="stretch", hide_index=True)
+        unreadable = audio.get("unreadable_files") or []
+        if unreadable:
+            st.warning(
+                "检测到 5 个源文件头不是 RIFF/WAVE。云端文件大小与本地一致，"
+                "已标记异常，未静默删除或替换。"
+            )
+            st.dataframe(
+                pd.DataFrame(unreadable),
+                width="stretch",
+                hide_index=True,
+            )
+    else:
+        st.info("尚未生成 MODMA 数据审计。")
+
+    st.markdown("#### 源内语音基线")
+    if baseline:
+        baseline_table = pd.DataFrame(
+            [
+                {
+                    "AUC": baseline.get("auc_mean"),
+                    "PR-AUC": baseline.get("pr_auc_mean"),
+                    "平衡准确率": baseline.get("balanced_accuracy_mean"),
+                    "F1": baseline.get("f1_mean"),
+                    "Brier": baseline.get("brier_mean"),
+                    "ECE": baseline.get("ece_mean"),
+                }
+            ]
+        )
+        for column in baseline_table.columns:
+            baseline_table[column] = baseline_table[column].map(
+                lambda value: f"{float(value):.3f}"
+            )
+        st.dataframe(baseline_table, width="stretch", hide_index=True)
+        st.caption(
+            "52 名受试者、1,503 段可读语音；MFCC、能量和频谱特征；"
+            "按 subject_id 执行 5 折重复 5 次。"
+        )
+    else:
+        st.info("尚未训练 MODMA 源内语音基线。")
+
+    st.markdown("#### MODMA→MPDD 目标域迁移")
+    transfer_summary = pd.DataFrame(summary.get("transfer_summary") or [])
+    if not transfer_summary.empty:
+        st.dataframe(
+            transfer_summary.rename(
+                columns={
+                    "condition": "条件",
+                    "auc_mean": "AUC 均值",
+                    "auc_std": "AUC 标准差",
+                    "pr_auc_mean": "PR-AUC",
+                    "brier_mean": "Brier",
+                    "ece_mean": "ECE",
+                    "f1_mean": "F1",
+                }
+            ),
+            width="stretch",
+            hide_index=True,
+        )
+        comparison = pd.DataFrame(
+            (backend.research_reports().get("modma_transfer_comparisons") or [])
+        )
+        if not comparison.empty:
+            display = comparison.rename(
+                columns={
+                    "condition": "迁移条件",
+                    "auc_delta_mean": "ΔAUC",
+                    "auc_delta_ci_low": "ΔAUC CI 下限",
+                    "auc_delta_ci_high": "ΔAUC CI 上限",
+                    "brier_delta_mean": "ΔBrier",
+                }
+            )
+            numeric_columns = [
+                "ΔAUC",
+                "ΔAUC CI 下限",
+                "ΔAUC CI 上限",
+                "ΔBrier",
+            ]
+            for column in numeric_columns:
+                display[column] = display[column].map(
+                    lambda value: f"{float(value):+.4f}"
+                )
+            st.dataframe(display, width="stretch", hide_index=True)
+        if transfer_meta.get("recommended_for_main_model"):
+            st.success("迁移结果达到预设增量门槛，可进入下一轮独立复核。")
+        else:
+            st.error(
+                "当前 MODMA→MPDD 迁移未显示稳定 AUC 增量。"
+                "MODMA 保留为辅助研究数据，不进入老年主模型。"
+            )
+        st.caption(
+            "目标域验证固定为 MPDD 官方 label2，所有条件共享同一受试者切分。"
+        )
+    else:
+        st.info("尚未运行 MODMA→MPDD 迁移验证。")
+
+    st.markdown("#### 使用边界")
+    st.markdown(
+        "- 允许：跨年龄段语音预训练、目标域迁移、鲁棒性和校准研究。\n"
+        "- 禁止：作为老年外部验证、替代临床诊断、与 MPDD/CHARLS 按行拼接。\n"
+        "- 原始音频、量表与派生特征不得上传公开仓库或第三方模型。"
+    )
+
+
 def render_mpdd() -> None:
     st.subheader("多模态数据")
-    st.caption("两个数据域独立展示、独立评估，不把不同年龄范围和采集协议的数据混成一个训练集。")
-    mpdd_tab, cmdc_tab = st.tabs(
-        ["MPDD｜老年多模态", "CMDC｜中文外部验证"]
+    st.caption("三个数据域独立展示、独立评估，不把不同年龄范围和采集协议的数据混成一个训练集。")
+    mpdd_tab, cmdc_tab, modma_tab = st.tabs(
+        ["MPDD｜老年多模态", "CMDC｜中文外部验证", "MODMA｜跨年龄语音"]
     )
     with mpdd_tab:
         render_mpdd_dataset()
     with cmdc_tab:
         render_cmdc_external()
+    with modma_tab:
+        render_modma_auxiliary()
 
 
 def render_diy() -> None:
@@ -7117,6 +7369,46 @@ def render_data_health() -> None:
         if st.button("前往多模态数据构建 CMDC", key="goto_cmdc_page"):
             navigate_to("多模态数据")
 
+    modma = sources.get("modma", {})
+    if modma.get("ready"):
+        with st.expander("MODMA 跨年龄辅助语音", expanded=False):
+            modma_audit = modma.get("audit") or {}
+            modma_audio = modma_audit.get("audio") or {}
+            modma_meta = modma_audit.get("metadata") or {}
+            modma_baseline = modma.get("baseline") or {}
+            transfer_meta = modma.get("transfer_meta") or {}
+            modma_cols = st.columns(4)
+            modma_cols[0].metric(
+                "受试者",
+                modma_audio.get("subject_directories", 0),
+            )
+            modma_cols[1].metric(
+                "可读语音",
+                (
+                    int(modma_audio.get("actual_wav_files", 0))
+                    - int(modma_audio.get("unreadable_wav_files", 0))
+                ),
+            )
+            modma_cols[2].metric(
+                "源内 AUC",
+                f"{float(modma_baseline.get('auc_mean', 0)):.3f}"
+                if modma_baseline
+                else "未训练",
+            )
+            modma_cols[3].metric(
+                "迁移结论",
+                "可复核"
+                if transfer_meta.get("recommended_for_main_model")
+                else "不进入主模型",
+            )
+            st.caption(
+                f"年龄 {int(modma_meta.get('age_min', 0))}–"
+                f"{int(modma_meta.get('age_max', 0))} 岁；"
+                "临床 MDD/HC，不是老年专属队列。"
+            )
+    else:
+        st.info("MODMA 辅助语音尚未接入。")
+
     syn = sources.get("synthetic", {})
     if syn.get("ready"):
         with st.expander("模拟数据", expanded=False):
@@ -7553,6 +7845,7 @@ def render_about() -> None:
     charls_ready = status.get("charls_ready", False)
     mpdd_ready = status.get("mpdd_ready", False)
     cmdc_ready = status.get("cmdc_ready", False)
+    modma_ready = status.get("modma_ready", False)
 
     charls_text = "CHARLS 标准表已就绪" if charls_ready else "CHARLS 标准表尚未生成"
     if mpdd_ready:
@@ -7571,6 +7864,11 @@ def render_about() -> None:
         if cmdc_ready
         else "CMDC 外部验证表尚未构建"
     )
+    modma_text = (
+        "MODMA 辅助语音已接入（18–55 岁临床 MDD/HC，不作为老年主队列）"
+        if modma_ready
+        else "MODMA 辅助语音尚未接入"
+    )
 
     st.markdown(
         f"""
@@ -7581,7 +7879,8 @@ def render_about() -> None:
         <b>当前数据</b><br>
         · {charls_text}<br>
         · {mpdd_text}<br>
-        · {cmdc_text}<br><br>
+        · {cmdc_text}<br>
+        · {modma_text}<br><br>
         <b>已集成模块</b><br>
         · 账号体系：登录注册、随机加减法人机验证、管理员/普通用户角色、后端数据权限隔离<br>
         · 风险评估页：对话、量表、人口学/共病、面部表情摘要<br>
@@ -7590,7 +7889,7 @@ def render_about() -> None:
         · 自适应访谈 Agent：温情问询与日常陪伴式聊天两种模式，各自保留对话记忆，可选大模型增强<br>
         · 养老调查页：标准表构建、数据分布、三类基线模型<br>
         · 数据平衡处理页：SMOTE、SMOTE-ENN、SMOTE-Tomek、ADASYN、过采样、欠采样和阈值优化<br>
-        · 多模态页：MPDD 老年多模态基线，以及 CMDC 中文访谈外部验证；两个数据域独立建表和评估<br>
+        · 多模态页：MPDD 老年多模态基线、CMDC 中文访谈外部验证和 MODMA 跨年龄辅助语音；三个数据域独立建表和评估<br>
         · 系统说明页：当前模块、数据状态、论文依据与项目位置<br><br>
         <b>边界说明</b><br>
         本工作台仅用于科研筛查与风险提示，不替代临床诊断。<br>
@@ -7599,6 +7898,7 @@ def render_about() -> None:
         真实可识别数据的采集、科研使用和保存期限必须另行通过伦理审批与知情同意程序。<br>
         MPDD 数据按官方许可协议申请获得，仅供本项目学术研究使用，禁止商用或任何形式对外再分发。
         CMDC 仅用于非商业学术研究，禁止再分发原始音频、转写或归档密码；其适用人群为混合成人，不是老年专属数据。
+        MODMA 已由导师完成申请，仅用于跨年龄段语音预训练和迁移研究；其人群为 18 至 55 岁临床 MDD/HC，不是老年主队列。
         </div>
         """,
         unsafe_allow_html=True,

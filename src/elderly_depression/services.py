@@ -45,6 +45,27 @@ CMDC_NESTED_MODEL = OUTPUT_DIR / "cmdc_nested_best_model.pkl"
 CMDC_HOLDOUT_SUMMARY = OUTPUT_DIR / "cmdc_locked_holdout_summary.json"
 CMDC_HOLDOUT_PREDICTIONS = OUTPUT_DIR / "cmdc_locked_holdout_predictions.csv"
 CMDC_HOLDOUT_MODEL = OUTPUT_DIR / "cmdc_locked_holdout_model.pkl"
+MODMA_ROOT = DATA_DIR / "modma"
+MODMA_METADATA = (
+    MODMA_ROOT / "metadata" / "subjects_information_audio_lanzhou_2015.xlsx"
+)
+MODMA_RUN_DIR = OUTPUT_DIR / "modma"
+MODMA_AUDIT_JSON = MODMA_RUN_DIR / "modma_audio_audit.json"
+MODMA_SUBJECT_INDEX = MODMA_RUN_DIR / "modma_subject_index.csv"
+MODMA_AUDIO_SUMMARY = MODMA_RUN_DIR / "modma_audio_summary.csv"
+MODMA_AUDIO_FOLD_REPORT = MODMA_RUN_DIR / "modma_audio_fold_report.csv"
+MODMA_AUDIO_SUBJECT_FEATURES = (
+    MODMA_RUN_DIR / "modma_audio_subject_features.csv"
+)
+MODMA_AUDIO_TRAINING_META = MODMA_RUN_DIR / "modma_audio_training_meta.json"
+MODMA_TRANSFER_DIR = OUTPUT_DIR / "modma_transfer"
+MODMA_TRANSFER_SUMMARY = (
+    MODMA_TRANSFER_DIR / "modma_to_mpdd_summary.csv"
+)
+MODMA_TRANSFER_COMPARISONS = (
+    MODMA_TRANSFER_DIR / "modma_to_mpdd_comparisons.csv"
+)
+MODMA_TRANSFER_META = MODMA_TRANSFER_DIR / "modma_to_mpdd_meta.json"
 MODEL_REPORT = OUTPUT_DIR / "tabular_model_report.csv"
 IMBALANCE_REPORT = OUTPUT_DIR / "imbalance_comparison.csv"
 IMBALANCE_PAPER_REPORT = OUTPUT_DIR / "imbalance_paper_report.csv"
@@ -105,6 +126,17 @@ def mpdd_exists() -> bool:
 
 def cmdc_exists() -> bool:
     return CMDC_CSV.exists()
+
+
+def modma_exists() -> bool:
+    return (
+        MODMA_METADATA.exists()
+        and MODMA_ROOT.exists()
+        and any(
+            path.is_dir() and path.name.isdigit()
+            for path in MODMA_ROOT.iterdir()
+        )
+    )
 
 
 def load_charls() -> pd.DataFrame:
@@ -305,6 +337,43 @@ def model_cards() -> list[dict]:
             }
         )
 
+    modma_summary_report = load_csv(MODMA_AUDIO_SUMMARY)
+    if modma_summary_report is not None and not modma_summary_report.empty:
+        row = modma_summary_report.iloc[0]
+        transfer_meta = read_json_file(MODMA_TRANSFER_META) or {}
+        cards.append(
+            {
+                "id": "modma_audio_auxiliary",
+                "name": "MODMA 中文跨年龄语音辅助模型",
+                "dataset": "MODMA",
+                "population": "18 至 55 岁中文临床 MDD 与健康对照",
+                "role": "跨年龄段语音预训练与目标域迁移研究，不进入老年主评分",
+                "label": "精神科 MINI/DSM-IV 临床二分类",
+                "status": "available",
+                "metrics": rounded_metrics(
+                    row,
+                    {
+                        "auc": "auc_mean",
+                        "pr_auc": "pr_auc_mean",
+                        "f1": "f1_mean",
+                        "brier": "brier_mean",
+                        "ece": "ece_mean",
+                    },
+                ),
+                "transfer_to_mpdd": {
+                    "recommended_for_main_model": bool(
+                        transfer_meta.get("recommended_for_main_model", False)
+                    ),
+                    "best_transfer_auc_delta": transfer_meta.get(
+                        "best_transfer_auc_delta"
+                    ),
+                },
+                "artifact": artifact_metadata(MODMA_AUDIO_SUMMARY),
+                "intended_use": "跨年龄段语音可行性、预训练与域迁移审计",
+                "not_intended_for": "老年外部验证、临床诊断或进入当前主风险评分",
+            }
+        )
+
     fusion_meta = read_json_file(FUSION_WEIGHTS_JSON) or {}
     if fusion_meta:
         cards.append(
@@ -383,6 +452,16 @@ def data_signature() -> str:
         CMDC_HOLDOUT_SUMMARY,
         CMDC_HOLDOUT_PREDICTIONS,
         CMDC_HOLDOUT_MODEL,
+        MODMA_METADATA,
+        MODMA_AUDIT_JSON,
+        MODMA_SUBJECT_INDEX,
+        MODMA_AUDIO_SUMMARY,
+        MODMA_AUDIO_FOLD_REPORT,
+        MODMA_AUDIO_SUBJECT_FEATURES,
+        MODMA_AUDIO_TRAINING_META,
+        MODMA_TRANSFER_SUMMARY,
+        MODMA_TRANSFER_COMPARISONS,
+        MODMA_TRANSFER_META,
         MODEL_REPORT,
         IMBALANCE_REPORT,
         MULTIMODAL_REPORT,
@@ -396,6 +475,11 @@ def data_signature() -> str:
         INCREMENTAL_MPDD_COMPARISONS,
         INCREMENTAL_CROSS_SOURCE_AUDIT,
         INCREMENTAL_VALIDATION_META,
+        MODMA_AUDIT_JSON,
+        MODMA_AUDIO_SUMMARY,
+        MODMA_TRANSFER_SUMMARY,
+        MODMA_TRANSFER_COMPARISONS,
+        MODMA_TRANSFER_META,
         DIALOGUE_INTENT_MODEL,
         DIALOGUE_INTENT_REPORT,
         DIALOGUE_RESPONSE_POLICY_MODEL,
@@ -1051,6 +1135,13 @@ def research_reports() -> dict:
         "incremental_validation_meta": read_json(
             INCREMENTAL_VALIDATION_META
         ),
+        "modma_audit": read_json(MODMA_AUDIT_JSON),
+        "modma_audio_summary": read_csv(MODMA_AUDIO_SUMMARY),
+        "modma_transfer_summary": read_csv(MODMA_TRANSFER_SUMMARY),
+        "modma_transfer_comparisons": read_csv(
+            MODMA_TRANSFER_COMPARISONS
+        ),
+        "modma_transfer_meta": read_json(MODMA_TRANSFER_META),
         "dialogue_intent": read_json(DIALOGUE_INTENT_REPORT),
         "dialogue_intent_optimization": read_json(
             OUTPUT_DIR / "dialogue_intent_optimization_report.json"
@@ -1314,6 +1405,15 @@ def status() -> dict:
         CMDC_ADVANCED_SUMMARY,
         CMDC_HOLDOUT_SUMMARY,
         CMDC_HOLDOUT_PREDICTIONS,
+        MODMA_METADATA,
+        MODMA_AUDIT_JSON,
+        MODMA_SUBJECT_INDEX,
+        MODMA_AUDIO_SUMMARY,
+        MODMA_AUDIO_FOLD_REPORT,
+        MODMA_AUDIO_TRAINING_META,
+        MODMA_TRANSFER_SUMMARY,
+        MODMA_TRANSFER_COMPARISONS,
+        MODMA_TRANSFER_META,
         INCREMENTAL_CHARLS_SUMMARY,
         INCREMENTAL_MPDD_SUMMARY,
         INCREMENTAL_CHARLS_COMPARISONS,
@@ -1371,6 +1471,10 @@ def status() -> dict:
         "cmdc_benchmark_ready": CMDC_REPORT.exists(),
         "cmdc_advanced_ready": CMDC_ADVANCED_SUMMARY.exists(),
         "cmdc_holdout_ready": CMDC_HOLDOUT_SUMMARY.exists(),
+        "modma_ready": modma_exists(),
+        "modma_audit_ready": MODMA_AUDIT_JSON.exists(),
+        "modma_audio_baseline_ready": MODMA_AUDIO_SUMMARY.exists(),
+        "modma_transfer_ready": MODMA_TRANSFER_META.exists(),
         "mpdd_subject_ready": MULTIMODAL_SUBJECT_REPORT.exists(),
         "tabular_report": MODEL_REPORT.exists(),
         "imbalance_report": IMBALANCE_REPORT.exists(),
@@ -1535,6 +1639,181 @@ def cmdc_summary() -> dict:
         "advanced": advanced,
         "holdout": holdout,
     }
+
+
+def modma_summary() -> dict:
+    audit = read_json_file(MODMA_AUDIT_JSON) or {}
+    baseline_report = load_csv(MODMA_AUDIO_SUMMARY)
+    baseline = (
+        baseline_report.iloc[0].to_dict()
+        if baseline_report is not None and not baseline_report.empty
+        else {}
+    )
+    training_meta = read_json_file(MODMA_AUDIO_TRAINING_META) or {}
+    transfer_meta = read_json_file(MODMA_TRANSFER_META) or {}
+    transfer_summary = load_csv(MODMA_TRANSFER_SUMMARY)
+    return {
+        "ready": modma_exists(),
+        "source": "MODMA",
+        "root": str(MODMA_ROOT),
+        "metadata_path": str(MODMA_METADATA),
+        "role": "auxiliary_cross_age_pretraining_and_robustness",
+        "age_scope": "adults_18_55_not_older_specific",
+        "primary_use": "跨年龄段中文临床语音预训练和 MPDD 目标域迁移",
+        "not_intended_for": "老年外部验证、临床诊断或直接进入当前老年主评分",
+        "audit_ready": bool(audit),
+        "baseline_ready": bool(baseline),
+        "transfer_ready": bool(transfer_meta),
+        "audit": audit,
+        "baseline": baseline,
+        "training_meta": training_meta,
+        "transfer_meta": transfer_meta,
+        "transfer_summary": (
+            transfer_summary.to_dict(orient="records")
+            if transfer_summary is not None
+            else []
+        ),
+    }
+
+
+def run_modma_audit() -> dict:
+    from .data.modma import build_modma_subject_index, write_modma_audit
+
+    MODMA_RUN_DIR.mkdir(parents=True, exist_ok=True)
+    index, audit = build_modma_subject_index(MODMA_ROOT, MODMA_METADATA)
+    index.to_csv(MODMA_SUBJECT_INDEX, index=False)
+    write_modma_audit(audit, MODMA_AUDIT_JSON)
+    return modma_summary()
+
+
+def run_modma_audio_baseline() -> dict:
+    from .features.modma_audio import (
+        aggregate_modma_subject_features,
+        build_modma_audio_features,
+        train_modma_subject_baseline,
+    )
+
+    if not MODMA_SUBJECT_INDEX.exists():
+        run_modma_audit()
+    subject_index = pd.read_csv(
+        MODMA_SUBJECT_INDEX,
+        dtype={"subject_id": str, "source_subject_id": str},
+    )
+    utterance, errors = build_modma_audio_features(MODMA_ROOT, subject_index)
+    subject_features = aggregate_modma_subject_features(utterance)
+    fold_report, summary = train_modma_subject_baseline(
+        subject_features,
+        n_splits=5,
+        n_repeats=5,
+    )
+    utterance.drop(columns=["wav_path"], errors="ignore").to_csv(
+        MODMA_RUN_DIR / "modma_audio_utterance_features.csv",
+        index=False,
+    )
+    subject_features.to_csv(MODMA_AUDIO_SUBJECT_FEATURES, index=False)
+    fold_report.to_csv(MODMA_AUDIO_FOLD_REPORT, index=False)
+    summary.to_csv(MODMA_AUDIO_SUMMARY, index=False)
+    (MODMA_RUN_DIR / "modma_audio_extraction_errors.json").write_text(
+        json.dumps(errors, ensure_ascii=False, indent=2),
+        encoding="utf-8",
+    )
+    audit = read_json_file(MODMA_AUDIT_JSON) or {}
+    MODMA_AUDIO_TRAINING_META.write_text(
+        json.dumps(
+            {
+                "source": "MODMA",
+                "role": "auxiliary_cross_age_pretraining_and_robustness",
+                "is_older_adult_primary_dataset": False,
+                "subjects": int(len(subject_features)),
+                "readable_segments": int(len(utterance)),
+                "feature_extractor": "numpy_scipy_mfcc_spectral_v1",
+                "model": "standard_scaler_l2_logistic_C0.1",
+                "threshold": 0.5,
+                "splits": 5,
+                "repeats": 5,
+                "grouping": "subject_id",
+                "audio_audit_complete": bool(
+                    (audit.get("audio") or {}).get("complete_dataset", False)
+                ),
+                "warnings": audit.get("warnings") or [],
+            },
+            ensure_ascii=False,
+            indent=2,
+        ),
+        encoding="utf-8",
+    )
+    return modma_summary()
+
+
+def run_modma_transfer() -> dict:
+    from .models.modma_transfer import (
+        build_mpdd_raw_audio_features,
+        run_modma_to_mpdd_transfer,
+    )
+
+    if not MODMA_AUDIO_SUBJECT_FEATURES.exists():
+        run_modma_audio_baseline()
+    source = pd.read_csv(
+        MODMA_AUDIO_SUBJECT_FEATURES,
+        dtype={"subject_id": str},
+    )
+    mpdd_audio_root = (
+        MPDD_ROOT
+        / "privacy-constrained-raw-Elder-train"
+        / "audio"
+    )
+    mpdd_labels = (
+        MPDD_ROOT
+        / "Train-MPDD-Elder"
+        / "Elder"
+        / "split_labels_train.csv"
+    )
+    utterance, target, errors = build_mpdd_raw_audio_features(
+        mpdd_audio_root,
+        mpdd_labels,
+    )
+    fold_report, comparisons, meta = run_modma_to_mpdd_transfer(
+        source,
+        target,
+        n_splits=5,
+        n_repeats=5,
+    )
+    MODMA_TRANSFER_DIR.mkdir(parents=True, exist_ok=True)
+    utterance.drop(columns=["wav_path"], errors="ignore").to_csv(
+        MODMA_TRANSFER_DIR / "mpdd_audio_utterance_features.csv",
+        index=False,
+    )
+    target.to_csv(
+        MODMA_TRANSFER_DIR / "mpdd_audio_subject_features.csv",
+        index=False,
+    )
+    fold_report.to_csv(
+        MODMA_TRANSFER_DIR / "modma_to_mpdd_fold_report.csv",
+        index=False,
+    )
+    comparisons.to_csv(MODMA_TRANSFER_COMPARISONS, index=False)
+    summary = (
+        fold_report.groupby("condition")
+        .agg(
+            auc_mean=("auc", "mean"),
+            auc_std=("auc", "std"),
+            pr_auc_mean=("pr_auc", "mean"),
+            brier_mean=("brier", "mean"),
+            ece_mean=("ece", "mean"),
+            f1_mean=("f1", "mean"),
+        )
+        .reset_index()
+    )
+    summary.to_csv(MODMA_TRANSFER_SUMMARY, index=False)
+    (MODMA_TRANSFER_DIR / "mpdd_audio_extraction_errors.json").write_text(
+        json.dumps(errors, ensure_ascii=False, indent=2),
+        encoding="utf-8",
+    )
+    MODMA_TRANSFER_META.write_text(
+        json.dumps(meta, ensure_ascii=False, indent=2),
+        encoding="utf-8",
+    )
+    return modma_summary()
 
 
 def data_health_report() -> dict:
@@ -1713,6 +1992,65 @@ def data_health_report() -> dict:
             {
                 "source": "CMDC",
                 "message": "CMDC 特征表尚未构建，当前不参与任何评估",
+            }
+        )
+
+    modma = modma_summary()
+    sources["modma"] = {
+        "ready": bool(modma.get("ready")),
+        "audit_ready": bool(modma.get("audit_ready")),
+        "baseline_ready": bool(modma.get("baseline_ready")),
+        "transfer_ready": bool(modma.get("transfer_ready")),
+        "scope": modma.get("age_scope"),
+        "audit": modma.get("audit") or {},
+        "baseline": modma.get("baseline") or {},
+        "transfer_meta": modma.get("transfer_meta") or {},
+    }
+    if modma.get("ready"):
+        audit = modma.get("audit") or {}
+        audio = audit.get("audio") or {}
+        if int(audio.get("subject_directories", 0)) < 100:
+            warnings.append(
+                {
+                    "source": "MODMA",
+                    "message": (
+                        f"仅 {audio.get('subject_directories', 0)} 名受试者，"
+                        "只能作为辅助预训练或迁移数据"
+                    ),
+                }
+            )
+        warnings.append(
+            {
+                "source": "MODMA",
+                "message": "18 至 55 岁临床 MDD/HC，不是老年专属队列",
+            }
+        )
+        if not bool(audio.get("complete_dataset", False)):
+            warnings.append(
+                {
+                    "source": "MODMA",
+                    "message": (
+                        f"1,508 个 WAV 中 "
+                        f"{audio.get('unreadable_wav_files', 0)} 个无法解码；"
+                        "异常片段已记录，不静默替换"
+                    ),
+                }
+            )
+        transfer_meta = modma.get("transfer_meta") or {}
+        if transfer_meta and not bool(
+            transfer_meta.get("recommended_for_main_model", False)
+        ):
+            warnings.append(
+                {
+                    "source": "MODMA",
+                    "message": "MODMA→MPDD 迁移未显示稳定 AUC 增量，不进入主模型",
+                }
+            )
+    else:
+        issues.append(
+            {
+                "source": "MODMA",
+                "message": "语音目录或受试者元数据缺失，无法执行辅助审计",
             }
         )
 

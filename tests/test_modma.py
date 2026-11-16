@@ -14,6 +14,7 @@ from elderly_depression.features.modma_audio import (
     extract_modma_wav_features,
     modma_task_type,
 )
+from elderly_depression.models.modma_transfer import run_modma_to_mpdd_transfer
 
 
 def _write_metadata(path: Path, subjects: int = 52) -> Path:
@@ -114,6 +115,52 @@ class MODMAAuditTests(unittest.TestCase):
         self.assertEqual(modma_task_type(19), "passage_reading")
         self.assertEqual(modma_task_type(20), "word_reading")
         self.assertEqual(modma_task_type(26), "picture_description")
+
+    def test_transfer_uses_shared_target_splits_and_all_conditions(self):
+        rng = np.random.default_rng(7)
+        source_rows = []
+        for subject in range(24):
+            label = subject % 2
+            source_rows.append(
+                {
+                    "source": "MODMA",
+                    "subject_id": f"s{subject}",
+                    "label": label,
+                    "acoustic_a_task_mean": label + rng.normal(0, 0.4),
+                    "acoustic_b_task_mean": rng.normal(0, 1),
+                }
+            )
+        target_rows = []
+        for subject in range(36):
+            label = subject % 2
+            target_rows.append(
+                {
+                    "source": "MPDD",
+                    "subject_id": f"t{subject}",
+                    "mpdd_binary": label,
+                    "acoustic_a_task_mean": label + 0.3 + rng.normal(0, 0.5),
+                    "acoustic_b_task_mean": rng.normal(0.2, 1),
+                }
+            )
+        fold_report, comparisons, meta = run_modma_to_mpdd_transfer(
+            pd.DataFrame(source_rows),
+            pd.DataFrame(target_rows),
+            n_splits=3,
+            n_repeats=2,
+        )
+        self.assertEqual(
+            set(fold_report["condition"]),
+            {
+                "target_only",
+                "modma_zero_shot",
+                "modma_probability_stacking",
+                "joint_source_target",
+            },
+        )
+        self.assertEqual(len(comparisons), 3)
+        self.assertEqual(meta["source_subjects"], 24)
+        self.assertEqual(meta["target_subjects"], 36)
+        self.assertTrue(meta["same_target_splits"])
 
 
 if __name__ == "__main__":

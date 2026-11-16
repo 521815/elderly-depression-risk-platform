@@ -286,6 +286,13 @@ def cmdc_exists() -> bool:
     return _local.cmdc_exists()
 
 
+def modma_exists() -> bool:
+    status = _api("GET", "/api/status")
+    if status is not None:
+        return bool(status.get("modma_ready", False))
+    return _local.modma_exists()
+
+
 def status() -> dict:
     remote = _api("GET", "/api/status")
     if remote is not None:
@@ -427,6 +434,43 @@ def run_cmdc_holdout(
         repeats=repeats,
         bootstrap_iterations=bootstrap_iterations,
     )
+
+
+def modma_summary() -> dict:
+    data = _api("GET", "/api/modma/summary")
+    if data is not None:
+        return data
+    return _local.modma_summary()
+
+
+def run_modma_audit() -> dict | None:
+    data = _api("POST", "/api/modma/audit", timeout=300)
+    if data is not None:
+        return data
+    try:
+        return _local.run_modma_audit()
+    except (FileNotFoundError, ValueError):
+        return None
+
+
+def run_modma_audio_baseline() -> dict | None:
+    data = _api("POST", "/api/modma/train_audio", timeout=600)
+    if data is not None:
+        return data
+    try:
+        return _local.run_modma_audio_baseline()
+    except (FileNotFoundError, ValueError):
+        return None
+
+
+def run_modma_transfer() -> dict | None:
+    data = _api("POST", "/api/modma/transfer", timeout=600)
+    if data is not None:
+        return data
+    try:
+        return _local.run_modma_transfer()
+    except (FileNotFoundError, ValueError):
+        return None
 
 
 def model_cards() -> list[dict]:

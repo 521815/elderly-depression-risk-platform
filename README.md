@@ -111,7 +111,7 @@ cd ~/Desktop/大创/老年抑郁风险预测大模型
 - 前后端自动同步：前端每 10 秒检查后端代码与数据/模型产物签名，检测到更新后自动清空旧缓存、整页重载并提示，无需手动刷新
 - 用户风险总览：用户记录页顶部展示用户总数、高/中/低风险人数、评估次数与风险分布图
 - 用户记录查询优化：搜索改为前端本地过滤，评估筛选复用已加载历史，减少重复请求
-- 数据健康体检：独立页面自动检查 CHARLS / MPDD / CMDC / 模拟组 / 用户记录的质量，输出问题与风险提示，并支持导出 Markdown 体检报告
+- 数据健康体检：独立页面自动检查 CHARLS / MPDD / CMDC / MODMA / 模拟组 / 用户记录的质量，输出问题与风险提示，并支持导出 Markdown 体检报告
 - 统计校正：小样本亚组 Beta-Binomial 概率收缩、MPDD 均值/中位数/截尾均值聚合对比与推荐结论
 - 对话意图模型：专业问询/日常陪伴分开训练，覆盖 30 类意图；常见表达走预案，复杂表达继续由 DeepSeek 生成
 - Prompt v2：访谈与陪伴系统提示独立版本化，结构化注入对话状态，强制单一关键追问或行动选择，并在接口中返回当前 Prompt 版本
@@ -159,6 +159,7 @@ cd ~/Desktop/大创/老年抑郁风险预测大模型
 - CMDC 外部验证：加密归档本地读取、受试者级特征聚合、文本/语音/视觉分模态评估、全模态完整病例分析，独立模型不进入老年主评分
 - CMDC 稳健性分析：同受试者配对 Bootstrap、95% 置信区间、缺失模态动态融合、嵌套调参多模型比较、校准和决策曲线
 - CMDC 锁定留出：固定种子按受试者划分 80/20，阈值只在训练集选择，锁定测试集仅用于最终评估；16 人测试集 AUC 1.000，但精确区间仍宽，不能据此宣称稳定临床性能
+- MODMA 辅助语音：52 人、1,508 个 WAV 的结构审计，MFCC/频谱/能量源内基线，以及 MODMA→MPDD 零样本、概率堆叠和联合训练对比；独立页面展示，不进入老年主评分
 - 系统说明：模块结构与项目边界
 
 ## 后端 API
@@ -186,6 +187,10 @@ cd ~/Desktop/大创/老年抑郁风险预测大模型
 - `GET http://localhost:8001/api/cmdc/report`
 - `POST http://localhost:8001/api/cmdc/advanced`
 - `POST http://localhost:8001/api/cmdc/holdout`
+- `GET http://localhost:8001/api/modma/summary`
+- `POST http://localhost:8001/api/modma/audit`
+- `POST http://localhost:8001/api/modma/train_audio`
+- `POST http://localhost:8001/api/modma/transfer`
 - `POST http://localhost:8001/api/agent/chat`
 - `GET http://localhost:8001/api/models/list`
 
@@ -198,6 +203,8 @@ Agent 组同学替换 `backend_api/agent_adapter.py` 中的占位实现即可接
 MODMA 已由导师完成申请并确认可用，现作为跨年龄段临床语音辅助数据：先审计 52 名受试者的 1,508 段语音，用于预训练和跨域迁移研究；它不是老年专属队列，不进入老年主评分。数据边界见 `docs/24_MODMA辅助数据接入与使用边界.md`。
 
 MODMA 首轮语音审计已覆盖 52 人和 1,508 个文件；1,503 段可读，源内 5×5 受试者分组基线 AUC 0.667、PR-AUC 0.706、Brier 0.232、ECE 0.269。当前结论是“可作辅助研究，尚不直接接入主评分”。
+
+MODMA→MPDD 迁移使用相同受试者切分。MPDD 目标域 AUC 0.529，MODMA 概率堆叠 ΔAUC -0.0004，零样本与联合训练更差；因此 MODMA 保留为辅助预训练和鲁棒性数据，不进入当前老年主模型。
 
 数据平滑与统计校正方法、实验结果和边界见 `docs/10_数据平滑与统计校正.md`。
 

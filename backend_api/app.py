@@ -919,6 +919,44 @@ def cmdc_holdout():
     return jsonify(summary)
 
 
+@app.get("/api/modma/summary")
+def modma_summary():
+    return jsonify(services.modma_summary())
+
+
+@app.post("/api/modma/audit")
+def modma_audit():
+    try:
+        summary = services.run_modma_audit()
+    except FileNotFoundError as exc:
+        return jsonify({"error": str(exc)}), 404
+    except ValueError as exc:
+        return jsonify({"error": str(exc)}), 400
+    return jsonify(summary)
+
+
+@app.post("/api/modma/train_audio")
+def modma_train_audio():
+    try:
+        summary = services.run_modma_audio_baseline()
+    except FileNotFoundError as exc:
+        return jsonify({"error": str(exc)}), 404
+    except ValueError as exc:
+        return jsonify({"error": str(exc)}), 400
+    return jsonify(summary)
+
+
+@app.post("/api/modma/transfer")
+def modma_transfer():
+    try:
+        summary = services.run_modma_transfer()
+    except FileNotFoundError as exc:
+        return jsonify({"error": str(exc)}), 404
+    except ValueError as exc:
+        return jsonify({"error": str(exc)}), 400
+    return jsonify(summary)
+
+
 @app.get("/api/mpdd/cache_status")
 def mpdd_cache_status():
     return jsonify(services.mpdd_cache_status())
@@ -1262,6 +1300,9 @@ def _job_tasks() -> dict:
                 min(5000, int(p.get("bootstrap_iterations", 1000))),
             ),
         ),
+        "modma_audit": lambda p: services.run_modma_audit(),
+        "modma_audio": lambda p: services.run_modma_audio_baseline(),
+        "modma_transfer": lambda p: services.run_modma_transfer(),
         "mpdd_build": lambda p: services.mpdd_summary(),
         "mpdd_augmentation": lambda p: {
             "validation": services.run_segment_augmentation(

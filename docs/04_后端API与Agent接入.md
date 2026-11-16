@@ -45,7 +45,7 @@ streamlit run webapp/app.py
 - `POST /api/jobs`：提交后台任务；相同任务和参数的运行中实例会复用，返回 `deduplicated=true`
 - `GET /api/jobs/<job_id>`：查询后台任务状态
 - `POST /api/jobs/<job_id>/cancel`：请求取消任务；取消或超时后，后台线程不能覆盖最终状态
-- 后台任务支持 `cmdc_train`、`cmdc_advanced` 和 `cmdc_holdout`，CMDC 长分析不再阻塞同步 API
+- 后台任务支持 `cmdc_train`、`cmdc_advanced`、`cmdc_holdout`、`modma_audit`、`modma_audio` 和 `modma_transfer`，长分析不再阻塞同步 API
 - `GET /api/charls/summary`：CHARLS 标准表概览
 - `POST /api/charls/build`：构建 CHARLS 标准表
 - `POST /api/charls/train`：训练表格基线，body 为 `{"resample_method": "smote"}`
@@ -75,6 +75,14 @@ streamlit run webapp/app.py
 - `GET /api/cmdc/report`：读取 CMDC 分模态评估报告和摘要
 - `POST /api/cmdc/advanced`：运行配对 Bootstrap、缺失模态、嵌套模型、校准和决策曲线分析
 - `POST /api/cmdc/holdout`：按固定种子划分受试者级 80/20 留出集，仅用训练集选择阈值并锁定测试集评估；body 可传 `{"repeats": 10, "bootstrap_iterations": 1000}`
+
+## MODMA 辅助语音接口
+
+- `GET /api/modma/summary`：读取 MODMA 授权范围、52 人结构审计、语音基线和 MPDD 迁移结论
+- `POST /api/modma/audit`：重新核对受试者目录、1,508 个 WAV、标签和文件头
+- `POST /api/modma/train_audio`：提取声学特征并执行 5×5 受试者分组源内基线
+- `POST /api/modma/transfer`：在同一组 MPDD 受试者切分上比较目标域基线、零样本、概率堆叠和联合训练
+- MODMA 为 18 至 55 岁临床 MDD/HC 辅助数据，接口结果不得用于宣称老年外部验证性能或进入当前主风险评分
 
 ### 评估与量表
 
@@ -164,6 +172,7 @@ Agent 支持两种模式：
 - `data/mpdd_features.csv`：MPDD 合并特征表
 - `data/mpdd_features_uploaded.csv`：前端上传的 MPDD 临时文件
 - `data/cmdc_features.csv`：CMDC 去标识化受试者级特征表，权限 `0600`
+- `data/modma/`：MODMA 授权语音与元数据，仅限本机受限目录，不进入 Git
 
 新 Agent 只需要通过 `/api/agent/chat` 交互，不需要直接读取数据库或模型文件。
 
@@ -189,6 +198,8 @@ text_risk,scale_risk,context_risk,expression_risk,mpdd_risk,depression
 - `output/multimodal_models/`：多模态融合模型
 - `output/cmdc_models/`：CMDC 独立外部验证模型，不参与老年主风险评分
 - `output/cmdc_locked_holdout_model.pkl`：固定受试者留出分析的锁定模型，不参与老年主风险评分
+- `output/modma/`：MODMA 结构审计、声学特征和源内基线
+- `output/modma_transfer/`：MODMA→MPDD 目标域迁移报告，不进入主风险评分
 - `output/fusion_models/`：学习型风险融合权重与报告
 
 通过 `joblib.load()` 即可直接复用，无需重新训练。

@@ -314,6 +314,51 @@ class ApiTests(unittest.TestCase):
         self.assertEqual(run.status_code, 200)
         self.assertTrue(run.json["ready"])
 
+    def test_modma_endpoints_are_admin_only(self):
+        self.assertEqual(self.client.get("/api/modma/summary").status_code, 401)
+        with (
+            mock.patch.object(
+                services,
+                "modma_summary",
+                return_value={"ready": True, "source": "MODMA"},
+            ),
+            mock.patch.object(
+                services,
+                "run_modma_audit",
+                return_value={"ready": True, "audit_ready": True},
+            ),
+            mock.patch.object(
+                services,
+                "run_modma_audio_baseline",
+                return_value={"ready": True, "baseline_ready": True},
+            ),
+            mock.patch.object(
+                services,
+                "run_modma_transfer",
+                return_value={"ready": True, "transfer_ready": True},
+            ),
+        ):
+            summary = self.client.get(
+                "/api/modma/summary",
+                headers=self.admin_headers,
+            )
+            audit = self.client.post(
+                "/api/modma/audit",
+                headers=self.admin_headers,
+            )
+            baseline = self.client.post(
+                "/api/modma/train_audio",
+                headers=self.admin_headers,
+            )
+            transfer = self.client.post(
+                "/api/modma/transfer",
+                headers=self.admin_headers,
+            )
+        self.assertEqual(summary.status_code, 200)
+        self.assertTrue(audit.json["audit_ready"])
+        self.assertTrue(baseline.json["baseline_ready"])
+        self.assertTrue(transfer.json["transfer_ready"])
+
     def test_data_health_endpoint(self):
         resp = self.client.get("/api/data_health", headers=self.admin_headers)
         self.assertEqual(resp.status_code, 200)
