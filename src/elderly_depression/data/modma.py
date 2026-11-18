@@ -3,8 +3,12 @@
 from __future__ import annotations
 
 import json
+import shutil
+import tempfile
 import wave
+import zipfile
 from collections import Counter
+from contextlib import contextmanager
 from pathlib import Path
 
 import numpy as np
@@ -15,6 +19,7 @@ MODMA_SOURCE = "MODMA"
 MODMA_AGE_SCOPE = "adults_18_55_not_older_specific"
 MODMA_AUDIO_FILES_PER_SUBJECT = 29
 MODMA_AUDIO_SUBJECTS = 52
+MODMA_VERIFIED_ARCHIVE = "audio_lanzhou_2015_verified.zip"
 MODMA_METADATA_COLUMNS = {
     "subject id": "subject_id",
     "type": "group",
@@ -85,6 +90,32 @@ def _subject_directories(root: Path) -> list[Path]:
         for path in root.iterdir()
         if path.is_dir() and path.name.isdigit()
     )
+
+
+@contextmanager
+def materialize_modma_audio_root(root: Path | str):
+    """Yield an extracted audio root, cleaning temporary extraction on exit."""
+    root = Path(root)
+    directories = _subject_directories(root) if root.exists() else []
+    if directories:
+        yield root, False
+        return
+    archive = root / MODMA_VERIFIED_ARCHIVE
+    if not archive.exists():
+        raise FileNotFoundError(
+            "MODMA subject directories and verified archive are both missing"
+        )
+    temporary = Path(tempfile.mkdtemp(prefix="modma_audio_"))
+    try:
+        with zipfile.ZipFile(archive) as bundle:
+            for member in bundle.infolist():
+                target = (temporary / member.filename).resolve()
+                if temporary.resolve() not in target.parents and target != temporary.resolve():
+                    raise ValueError(f"Unsafe archive member: {member.filename}")
+            bundle.extractall(temporary)
+        yield temporary, True
+    finally:
+        shutil.rmtree(temporary, ignore_errors=True)
 
 
 def canonical_subject_id(raw_subject_id: str) -> str:

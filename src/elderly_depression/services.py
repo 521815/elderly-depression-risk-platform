@@ -49,6 +49,7 @@ MODMA_ROOT = DATA_DIR / "modma"
 MODMA_METADATA = (
     MODMA_ROOT / "metadata" / "subjects_information_audio_lanzhou_2015.xlsx"
 )
+MODMA_VERIFIED_ARCHIVE = MODMA_ROOT / "audio_lanzhou_2015_verified.zip"
 MODMA_RUN_DIR = OUTPUT_DIR / "modma"
 MODMA_AUDIT_JSON = MODMA_RUN_DIR / "modma_audio_audit.json"
 MODMA_SUBJECT_INDEX = MODMA_RUN_DIR / "modma_subject_index.csv"
@@ -132,9 +133,12 @@ def modma_exists() -> bool:
     return (
         MODMA_METADATA.exists()
         and MODMA_ROOT.exists()
-        and any(
-            path.is_dir() and path.name.isdigit()
-            for path in MODMA_ROOT.iterdir()
+        and (
+            MODMA_VERIFIED_ARCHIVE.exists()
+            or any(
+                path.is_dir() and path.name.isdigit()
+                for path in MODMA_ROOT.iterdir()
+            )
         )
     )
 
@@ -1677,29 +1681,57 @@ def modma_summary() -> dict:
 
 
 def run_modma_audit() -> dict:
-    from .data.modma import build_modma_subject_index, write_modma_audit
+    from .data.modma import (
+        build_modma_subject_index,
+        materialize_modma_audio_root,
+        write_modma_audit,
+    )
 
     MODMA_RUN_DIR.mkdir(parents=True, exist_ok=True)
-    index, audit = build_modma_subject_index(MODMA_ROOT, MODMA_METADATA)
+    with materialize_modma_audio_root(MODMA_ROOT) as (audio_root, extracted):
+        index, audit = build_modma_subject_index(audio_root, MODMA_METADATA)
+        if extracted:
+            index["subject_path"] = index["subject_id"].map(
+                lambda subject_id: (
+                    f"archive://{MODMA_VERIFIED_ARCHIVE.name}/{subject_id}"
+                )
+            )
+            audit["root"] = f"archive://{MODMA_VERIFIED_ARCHIVE}"
+            audit["storage_mode"] = "verified_archive"
     index.to_csv(MODMA_SUBJECT_INDEX, index=False)
     write_modma_audit(audit, MODMA_AUDIT_JSON)
     return modma_summary()
 
 
 def run_modma_audio_baseline() -> dict:
+    from .data.modma import (
+        build_modma_subject_index,
+        materialize_modma_audio_root,
+        write_modma_audit,
+    )
     from .features.modma_audio import (
         aggregate_modma_subject_features,
         build_modma_audio_features,
         train_modma_subject_baseline,
     )
 
-    if not MODMA_SUBJECT_INDEX.exists():
-        run_modma_audit()
-    subject_index = pd.read_csv(
-        MODMA_SUBJECT_INDEX,
-        dtype={"subject_id": str, "source_subject_id": str},
-    )
-    utterance, errors = build_modma_audio_features(MODMA_ROOT, subject_index)
+    with materialize_modma_audio_root(MODMA_ROOT) as (audio_root, extracted):
+        subject_index, audit = build_modma_subject_index(
+            audio_root,
+            MODMA_METADATA,
+        )
+        if extracted:
+            subject_index["subject_path"] = subject_index["subject_id"].map(
+                lambda subject_id: (
+                    f"archive://{MODMA_VERIFIED_ARCHIVE.name}/{subject_id}"
+                )
+            )
+            audit["root"] = f"archive://{MODMA_VERIFIED_ARCHIVE}"
+            audit["storage_mode"] = "verified_archive"
+        utterance, errors = build_modma_audio_features(
+            audio_root,
+            subject_index,
+        )
     subject_features = aggregate_modma_subject_features(utterance)
     fold_report, summary = train_modma_subject_baseline(
         subject_features,
@@ -1710,6 +1742,8 @@ def run_modma_audio_baseline() -> dict:
         MODMA_RUN_DIR / "modma_audio_utterance_features.csv",
         index=False,
     )
+    subject_index.to_csv(MODMA_SUBJECT_INDEX, index=False)
+    write_modma_audit(audit, MODMA_AUDIT_JSON)
     subject_features.to_csv(MODMA_AUDIO_SUBJECT_FEATURES, index=False)
     fold_report.to_csv(MODMA_AUDIO_FOLD_REPORT, index=False)
     summary.to_csv(MODMA_AUDIO_SUMMARY, index=False)
@@ -1717,7 +1751,7 @@ def run_modma_audio_baseline() -> dict:
         json.dumps(errors, ensure_ascii=False, indent=2),
         encoding="utf-8",
     )
-    audit = read_json_file(MODMA_AUDIT_JSON) or {}
+    audit = read_json_file(MODMA_AUDIT_JSON) or audit
     MODMA_AUDIO_TRAINING_META.write_text(
         json.dumps(
             {

@@ -7,7 +7,9 @@ import argparse
 from pathlib import Path
 
 from elderly_depression.data.modma import (
+    MODMA_VERIFIED_ARCHIVE,
     build_modma_subject_index,
+    materialize_modma_audio_root,
     write_modma_audit,
 )
 
@@ -35,11 +37,18 @@ def parse_args() -> argparse.Namespace:
 
 def main() -> int:
     args = parse_args()
-    index, audit = build_modma_subject_index(
-        args.root,
-        args.metadata,
-        inspect_wav_headers=not args.skip_wav_headers,
-    )
+    with materialize_modma_audio_root(args.root) as (audio_root, extracted):
+        index, audit = build_modma_subject_index(
+            audio_root,
+            args.metadata,
+            inspect_wav_headers=not args.skip_wav_headers,
+        )
+        if extracted:
+            index["subject_path"] = index["subject_id"].map(
+                lambda subject_id: (
+                    f"archive://{MODMA_VERIFIED_ARCHIVE}/{subject_id}"
+                )
+            )
     args.output_dir.mkdir(parents=True, exist_ok=True)
     index_path = args.output_dir / "modma_subject_index.csv"
     audit_path = args.output_dir / "modma_audio_audit.json"

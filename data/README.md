@@ -81,15 +81,15 @@ python scripts/51_train_cmdc_models.py --repeats 10
 
 MODMA 已由导师完成官方申请并确认可用于本项目，定位为跨年龄段中文临床抑郁辅助数据。原始语音、EEG 和受试者量表统一放在 `data/modma/`，不进入 Git 仓库或公开共享渠道。
 
-当前阶段只接入语音：
+当前阶段只接入语音，原始数据以校验归档保存：
 
 ```text
 data/modma/
+  audio_lanzhou_2015_verified.zip
   metadata/
     MODMA_dataset_description.pdf
     subjects_information_audio_lanzhou_2015.xlsx
-  <subject_id>/
-    1.wav ... 29.wav
+    audio_lanzhou_2015_verified.zip.sha256
 ```
 
 运行受试者级数据审计：
@@ -105,7 +105,7 @@ PYTHONPATH=src /opt/anaconda3/bin/python scripts/64_audit_modma.py
 
 MODMA 受试者为 18 至 55 岁临床 MDD/健康对照，不是老年专属数据集，不能与 CHARLS、MPDD 或 CMDC 拼接为同一个人，也不能用于宣称老年外部验证性能。完整边界见 `docs/24_MODMA辅助数据接入与使用边界.md`。
 
-当前语音审计状态：52 人、1,508 个 WAV、约 3.2 GB；52 人全部匹配元数据，1,503 个 WAV 可读取。受试者 `2010004` 的第 24 至 28 段源文件不是有效 RIFF/WAVE，暂时只将该受试者标记为部分可用，不静默替换或删除异常文件。
+当前语音归档约 2.5 GB，包含 52 人和 1,508 个 WAV；CRC 校验通过。52 人全部匹配元数据，1,503 个 WAV 可读取。受试者 `2010004` 的第 24 至 28 段源文件不是有效 RIFF/WAVE，暂时只将该受试者标记为部分可用，不静默替换或删除异常文件。审计和训练需要读取原始语音时会临时解压归档，完成后自动清理。
 
 首轮源内基线使用 52 名受试者、1,503 段可读语音，按受试者分组执行 5 折重复 5 次：AUC `0.667 ± 0.156`、PR-AUC `0.706 ± 0.155`、平衡准确率 `0.648 ± 0.125`、Brier `0.232 ± 0.060`、ECE `0.269 ± 0.082`。该结果说明数据中有语音信号，但尚不足以直接接入老年风险评分。
 

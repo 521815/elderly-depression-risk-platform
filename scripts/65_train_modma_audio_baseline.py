@@ -7,7 +7,10 @@ import argparse
 import json
 from pathlib import Path
 
-from elderly_depression.data.modma import build_modma_subject_index
+from elderly_depression.data.modma import (
+    build_modma_subject_index,
+    materialize_modma_audio_root,
+)
 from elderly_depression.features.modma_audio import (
     aggregate_modma_subject_features,
     build_modma_audio_features,
@@ -36,11 +39,15 @@ def parse_args() -> argparse.Namespace:
 def main() -> int:
     args = parse_args()
     args.output_dir.mkdir(parents=True, exist_ok=True)
-    subject_index, audit = build_modma_subject_index(
-        args.root,
-        args.metadata,
-    )
-    utterance, errors = build_modma_audio_features(args.root, subject_index)
+    with materialize_modma_audio_root(args.root) as (audio_root, _):
+        subject_index, audit = build_modma_subject_index(
+            audio_root,
+            args.metadata,
+        )
+        utterance, errors = build_modma_audio_features(
+            audio_root,
+            subject_index,
+        )
     subject_features = aggregate_modma_subject_features(utterance)
     fold_report, summary = train_modma_subject_baseline(
         subject_features,

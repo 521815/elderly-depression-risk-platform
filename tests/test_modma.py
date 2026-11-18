@@ -1,6 +1,7 @@
 import tempfile
 import unittest
 import wave
+import zipfile
 from pathlib import Path
 
 import pandas as pd
@@ -9,6 +10,7 @@ import numpy as np
 from elderly_depression.data.modma import (
     build_modma_subject_index,
     load_modma_metadata,
+    materialize_modma_audio_root,
 )
 from elderly_depression.features.modma_audio import (
     extract_modma_wav_features,
@@ -161,6 +163,23 @@ class MODMAAuditTests(unittest.TestCase):
         self.assertEqual(meta["source_subjects"], 24)
         self.assertEqual(meta["target_subjects"], 36)
         self.assertTrue(meta["same_target_splits"])
+
+    def test_materializes_verified_archive_and_cleans_temporary_files(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp) / "modma"
+            subject = root / "02010001"
+            subject.mkdir(parents=True)
+            _write_wav(subject / "01.wav")
+            archive = root / "audio_lanzhou_2015_verified.zip"
+            with zipfile.ZipFile(archive, "w") as bundle:
+                bundle.write(subject / "01.wav", "02010001/01.wav")
+            subject.joinpath("01.wav").unlink()
+            subject.rmdir()
+            with materialize_modma_audio_root(root) as (audio_root, extracted):
+                self.assertTrue(extracted)
+                self.assertTrue((audio_root / "02010001" / "01.wav").exists())
+                extracted_root = audio_root
+            self.assertFalse(extracted_root.exists())
 
 
 if __name__ == "__main__":
