@@ -1785,6 +1785,332 @@ def inject_css() -> None:
             border-radius: 3px;
             box-shadow: none;
         }
+
+        /* Layout refinement: quieter chrome, clearer scanning hierarchy */
+        :root {
+            --canvas: #f2f5f3;
+            --panel: #ffffff;
+            --line: #cfdcd7;
+            --line-strong: #b9cac4;
+            --muted: #5f7174;
+            --ink: #152a2d;
+        }
+        .stApp {
+            background: var(--canvas);
+        }
+        .block-container {
+            max-width: 1480px;
+            padding-top: 0.9rem;
+            padding-bottom: 3.2rem;
+        }
+        h3 {
+            margin: 0.1rem 0 0.42rem;
+            font-size: 1.58rem;
+            line-height: 1.25;
+        }
+        h4 {
+            margin: 1.25rem 0 0.55rem;
+            font-size: 1.04rem;
+            line-height: 1.35;
+        }
+        [data-testid="stCaptionContainer"] p {
+            color: #5b6d70;
+            font-size: 0.82rem;
+        }
+        .page-intro {
+            display: grid;
+            grid-template-columns: minmax(0, 1fr);
+            gap: 0.35rem;
+            margin: 0.05rem 0 1rem;
+            padding: 0.15rem 0 0.9rem;
+            border-bottom: 1px solid var(--line);
+        }
+        .page-intro-eyebrow {
+            color: #355e5a;
+            font-family: "SFMono-Regular", "Menlo", monospace;
+            font-size: 0.61rem;
+            font-weight: 750;
+            letter-spacing: 0.13em;
+            text-transform: uppercase;
+        }
+        .page-intro h2 {
+            margin: 0.14rem 0 0;
+            color: var(--ink);
+            font-family: "Songti SC", "STSong", "Noto Serif CJK SC", serif;
+            font-size: clamp(1.72rem, 2vw, 2.05rem);
+            font-weight: 700;
+            line-height: 1.2;
+        }
+        .page-intro p {
+            max-width: 66rem;
+            margin: 0.28rem 0 0;
+            color: #5c6f72;
+            font-size: 0.84rem;
+            line-height: 1.62;
+        }
+        .st-key-app_header {
+            padding: 0.75rem 0.85rem 0.78rem;
+            margin-bottom: 0.55rem;
+            border: 1px solid #d6e0dc;
+            border-radius: 4px;
+            background: rgba(255, 255, 255, 0.92);
+            box-shadow: 0 8px 24px rgba(20, 47, 52, 0.04);
+        }
+        .st-key-app_header [data-testid="stHorizontalBlock"] {
+            gap: 0.9rem;
+        }
+        .app-mark {
+            width: 42px;
+            height: 42px;
+        }
+        .app-name {
+            font-size: 1.34rem;
+            line-height: 1.2;
+        }
+        .header-evidence {
+            min-width: 8.8rem;
+            padding-left: 0.95rem;
+        }
+        .header-evidence strong {
+            font-size: 1.42rem;
+        }
+        .st-key-app_header div[data-testid="stPopover"] button {
+            min-width: 5.2rem;
+            height: 2.25rem;
+        }
+
+        /* The 13 admin destinations form a centered 7 + 6 matrix. */
+        .st-key-main_nav {
+            margin: 0.05rem 0 0.95rem;
+        }
+        .st-key-main_nav [role="radiogroup"]:has(label:nth-child(13)) {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 1px;
+            padding: 1px;
+            overflow: hidden;
+            border: 1px solid var(--line-strong);
+            border-radius: 4px;
+            background: var(--line-strong);
+        }
+        .st-key-main_nav
+            [role="radiogroup"]:has(label:nth-child(13))
+            label {
+            flex: 0 0 calc(14.2857% - 2px);
+            max-width: calc(14.2857% - 2px);
+            margin: 0 !important;
+        }
+        .st-key-main_nav [role="radiogroup"] label {
+            min-height: 2.9rem;
+            padding: 0.38rem 0.52rem;
+            background: #ffffff;
+            font-size: 0.73rem;
+        }
+        .st-key-main_nav [role="radiogroup"] label p {
+            font-size: 0.7rem !important;
+            line-height: 1.28 !important;
+        }
+        .st-key-main_nav [role="radiogroup"] label:hover {
+            background: #f3f7f5;
+        }
+        .st-key-main_nav [role="radiogroup"] label:has(input:checked),
+        .st-key-main_nav [aria-checked="true"] {
+            background: #173347;
+            box-shadow: inset 0 -3px 0 #c79a58;
+        }
+
+        .assessment-hero {
+            padding: 0.85rem 0 0.72rem;
+            margin-bottom: 0.65rem;
+        }
+        .assessment-title-row h2 {
+            font-size: clamp(2.1rem, 2.75vw, 2.85rem);
+        }
+        .assessment-hero-main > p {
+            max-width: 50rem;
+            margin-top: 0.4rem;
+            font-size: 0.86rem;
+            line-height: 1.62;
+        }
+        .assessment-steps {
+            margin-top: 0.8rem;
+        }
+        .assessment-steps span {
+            padding-top: 0.48rem;
+            padding-bottom: 0.48rem;
+        }
+        .assessment-eyebrow,
+        .panel-kicker {
+            color: #365f5b;
+        }
+        .panel-title {
+            margin-top: 0.08rem;
+            font-size: 1.1rem;
+        }
+        .panel-copy {
+            max-width: 42rem;
+            color: #5d7073;
+            font-size: 0.8rem;
+        }
+        .st-key-assessment_privacy_panel [data-testid="stVerticalBlockBorderWrapper"],
+        .st-key-assessment_mode_panel [data-testid="stVerticalBlockBorderWrapper"],
+        .st-key-assessment_storage_panel [data-testid="stVerticalBlockBorderWrapper"],
+        .st-key-assessment_user_panel [data-testid="stVerticalBlockBorderWrapper"],
+        .st-key-interview_chat_panel [data-testid="stVerticalBlockBorderWrapper"],
+        .st-key-companion_chat_panel [data-testid="stVerticalBlockBorderWrapper"] {
+            border-color: #cbd9d4;
+            background: #fbfcfb;
+        }
+        div[data-testid="stMetric"] {
+            min-height: 86px;
+            height: auto;
+            padding: 0.68rem 0.82rem;
+            border-left-width: 2px;
+            border-radius: 4px;
+            background: #ffffff;
+        }
+        div[data-testid="stMetricLabel"] {
+            color: #5b6d70;
+            letter-spacing: 0.035em;
+        }
+        div[data-testid="stMetricValue"] {
+            margin-top: 0.18rem;
+            font-size: 1.42rem;
+            font-weight: 720;
+            line-height: 1.15;
+        }
+        .user-card {
+            min-height: 74px;
+            margin-bottom: 0.4rem;
+            padding: 0.68rem 0.76rem;
+            border: 1px solid #d5e0dc;
+            border-left: 2px solid #9fb7b0;
+            border-radius: 3px;
+        }
+        .user-card.active {
+            border-left-color: var(--accent);
+            box-shadow: inset 3px 0 0 rgba(12, 107, 98, 0.08);
+        }
+        .user-avatar {
+            width: 38px;
+            height: 38px;
+            border-radius: 3px;
+        }
+        .record-detail-kicker {
+            display: flex;
+            align-items: center;
+            gap: 0.55rem;
+            margin: 0 0 0.48rem;
+            color: #6b7d80;
+            font-family: "SFMono-Regular", "Menlo", monospace;
+            font-size: 0.62rem;
+            font-weight: 700;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+        }
+        .record-detail-kicker::after {
+            content: "";
+            flex: 1;
+            height: 1px;
+            background: #d5dfdc;
+        }
+        .record-detail-head {
+            display: flex;
+            align-items: center;
+            gap: 0.85rem;
+            min-height: 70px;
+            margin: 0 0 0.58rem;
+            padding: 0.65rem 0.8rem;
+            border: 1px solid #d3dfda;
+            border-left: 2px solid var(--navy);
+            border-radius: 3px;
+            background: #ffffff;
+        }
+        .record-detail-head .user-avatar {
+            width: 42px;
+            height: 42px;
+        }
+        .record-detail-name {
+            margin-bottom: 0.22rem;
+            color: var(--ink);
+            font-family: "Songti SC", "STSong", serif;
+            font-size: 1.24rem;
+            font-weight: 700;
+            line-height: 1.2;
+        }
+        .record-meta {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.3rem;
+        }
+        .tag-pill,
+        .risk-badge {
+            border-radius: 2px;
+        }
+        .inline-action-note {
+            color: #5f7174;
+            font-size: 0.8rem;
+            line-height: 1.55;
+        }
+        [data-testid="stTabs"] [data-baseweb="tab-list"] {
+            gap: 1.4rem;
+            margin-bottom: 0.2rem;
+        }
+        [data-testid="stTabs"] button[data-baseweb="tab"] {
+            font-size: 0.88rem;
+        }
+        [data-testid="stDataFrame"] {
+            border: 1px solid #d2ded9;
+            border-radius: 3px;
+            overflow: hidden;
+        }
+        [data-testid="stFileUploaderDropzoneInstructions"] > div > span:first-child,
+        [data-testid="stFileUploaderDropzoneInstructions"] > div > span:last-child {
+            font-size: 0;
+        }
+        [data-testid="stFileUploaderDropzoneInstructions"] > div > span:first-child::before {
+            content: "拖拽数据文件到此处";
+            color: #273d40;
+            font-size: 0.88rem;
+            font-weight: 650;
+        }
+        [data-testid="stFileUploaderDropzoneInstructions"] > div > span:last-child::before {
+            content: "单个文件不超过 200 MB · CSV";
+            color: #647679;
+            font-size: 0.75rem;
+            font-weight: 500;
+        }
+        [data-testid="stFileUploaderDropzone"] button {
+            font-size: 0;
+        }
+        [data-testid="stFileUploaderDropzone"] button::after {
+            content: "选择文件";
+            font-size: 0.82rem;
+        }
+        [data-testid="stExpander"] {
+            margin-bottom: 0.45rem;
+            border: 1px solid #d5dfdc;
+            border-radius: 3px;
+            background: rgba(255, 255, 255, 0.62);
+        }
+        [data-testid="stExpander"] summary {
+            padding-top: 0.18rem;
+            padding-bottom: 0.18rem;
+        }
+        .stButton button,
+        .stDownloadButton button,
+        .stFormSubmitButton button {
+            min-height: 2.45rem;
+            padding-inline: 0.9rem;
+        }
+        .stButton button[kind="primary"],
+        .stFormSubmitButton button[kind="primary"],
+        .stButton button[data-testid="stBaseButton-primary"],
+        .stFormSubmitButton button[data-testid="stBaseButton-primary"] {
+            box-shadow: inset 0 -2px 0 rgba(255, 255, 255, 0.08);
+        }
+
         @media (max-width: 1100px) {
             .assessment-hero-grid {
                 grid-template-columns: 1fr;
@@ -1807,30 +2133,87 @@ def inject_css() -> None:
         }
         @media (max-width: 720px) {
             .block-container {
-                padding-left: 2.45rem;
-                padding-right: 0.85rem;
-                padding-top: 0.9rem;
+                padding-left: 1.95rem;
+                padding-right: 0.72rem;
+                padding-top: 0.78rem;
+            }
+            [data-testid="stSidebar"][aria-expanded="false"] {
+                background: transparent !important;
+                box-shadow: none !important;
+            }
+            [data-testid="stSidebar"][aria-expanded="false"]
+                [data-testid="stSidebarContent"] {
+                background: transparent !important;
             }
             [data-testid="stExpandSidebarButton"] {
                 position: fixed !important;
-                top: 0.45rem !important;
-                left: 0.6rem !important;
+                top: 0.52rem !important;
+                left: 0.52rem !important;
                 z-index: 999999 !important;
-                width: 2.45rem !important;
-                height: 2.45rem !important;
+                width: 2.25rem !important;
+                height: 2.25rem !important;
                 border: 1px solid var(--line) !important;
-                border-radius: 8px !important;
+                border-radius: 4px !important;
                 background: rgba(255, 255, 255, 0.96) !important;
                 box-shadow: var(--shadow-sm) !important;
             }
             .st-key-app_header {
-                padding: 0.85rem;
+                padding: 0.68rem;
+            }
+            .st-key-app_header [data-testid="stHorizontalBlock"] {
+                display: grid !important;
+                grid-template-columns: minmax(0, 1fr) auto;
+                gap: 0.55rem !important;
+                align-items: start;
+            }
+            .st-key-app_header [data-testid="stColumn"] {
+                width: auto !important;
+                min-width: 0 !important;
+            }
+            .st-key-app_header
+                [data-testid="stHorizontalBlock"]
+                > [data-testid="stColumn"]:nth-child(2) {
+                display: none !important;
+            }
+            .st-key-app_header
+                [data-testid="stHorizontalBlock"]
+                > [data-testid="stColumn"]:nth-child(3) {
+                grid-column: 2 !important;
+                grid-row: 1 !important;
+                align-self: center;
+            }
+            .st-key-app_header div[data-testid="stPopover"] button {
+                width: auto;
+                min-width: 4.35rem;
+                height: 2.35rem;
+                padding: 0 0.45rem;
+            }
+            .st-key-app_header {
+                margin-bottom: 0.45rem;
             }
             .app-name {
-                font-size: 1.08rem;
+                font-size: 1rem;
+            }
+            .app-mark {
+                width: 36px;
+                height: 36px;
+            }
+            .app-kicker {
+                font-size: 0.57rem;
+            }
+            .page-intro {
+                margin-bottom: 0.8rem;
+                padding-bottom: 0.72rem;
+            }
+            .page-intro h2 {
+                font-size: 1.58rem;
+            }
+            .page-intro p {
+                font-size: 0.8rem;
             }
             [data-testid="stTabs"] button[data-baseweb="tab"] {
-                padding-inline: 0.7rem;
+                padding-inline: 0.45rem;
+                font-size: 0.8rem;
             }
             .st-key-main_nav [role="radiogroup"] {
                 display: flex;
@@ -1840,6 +2223,29 @@ def inject_css() -> None:
             }
             .st-key-main_nav [role="radiogroup"] label {
                 flex: 0 0 7.6rem;
+                scroll-snap-align: start;
+            }
+            .st-key-main_nav
+                [role="radiogroup"]:has(label:nth-child(13)) {
+                flex-wrap: nowrap !important;
+                justify-content: flex-start !important;
+            }
+            .st-key-main_nav
+                [role="radiogroup"]:has(label:nth-child(13))
+                label {
+                flex: 0 0 7.6rem !important;
+                max-width: none !important;
+            }
+            .st-key-main_nav [role="radiogroup"] label {
+                min-height: 2.7rem;
+            }
+            [data-testid="stTabs"] [data-baseweb="tab-list"] {
+                flex-wrap: nowrap;
+                overflow-x: auto;
+                scroll-snap-type: x proximity;
+            }
+            [data-testid="stTabs"] button[data-baseweb="tab"] {
+                flex: 0 0 auto;
                 scroll-snap-align: start;
             }
             .assessment-steps {
@@ -1865,8 +2271,37 @@ def inject_css() -> None:
                 display: none;
             }
             .assessment-title-row h2 {
-                font-size: 2.2rem;
+                font-size: 2rem;
                 line-height: 1.18;
+            }
+            .assessment-local-badge {
+                font-size: 0.6rem;
+            }
+            div[data-testid="stHorizontalBlock"]:has([data-testid="stMetric"]) {
+                display: grid !important;
+                grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+                gap: 0.5rem !important;
+            }
+            div[data-testid="stHorizontalBlock"]:has([data-testid="stMetric"])
+                > [data-testid="stColumn"] {
+                width: auto !important;
+                min-width: 0 !important;
+            }
+            div[data-testid="stMetric"] {
+                min-height: 78px;
+                padding: 0.58rem 0.68rem;
+            }
+            div[data-testid="stMetricValue"] {
+                font-size: 1.2rem;
+            }
+            div[data-testid="stMetricLabel"] {
+                font-size: 0.68rem;
+            }
+            .record-detail-head {
+                align-items: flex-start;
+            }
+            .record-detail-name {
+                font-size: 1.1rem;
             }
         }
         @media (prefers-reduced-motion: reduce) {
@@ -2131,7 +2566,7 @@ def render_header(
                 menu_help = "管理菜单与数据状态；每 10 秒自动同步"
                 if last_sync:
                     menu_help += f"，上次 {last_sync}"
-                with st.popover("菜单", help=menu_help):
+                with st.popover("☰ 菜单", help=menu_help):
                     st.caption("管理菜单 · 状态每 10 秒自动同步")
                     menu_items = [
                         ("工作台", "工作台"),
@@ -2200,16 +2635,16 @@ NAV_CODES = {
     "风险评估": "RISK",
     "用户记录": "CASES",
     "养老调查数据": "CHARLS",
+    "多模态数据": "MODAL",
+    "模拟数据": "SYNTHETIC",
     "不平衡对比": "BALANCE",
     "融合校准": "FUSION",
-    "数据优化": "CACHE",
-    "模拟数据": "SYNTHETIC",
-    "多模态数据": "MODAL",
     "数据平衡处理": "REBALANCE",
-    "后台任务": "JOBS",
     "增量验证": "EVIDENCE",
-    "数据健康": "QUALITY",
     "统计校正": "CALIBRATION",
+    "数据健康": "QUALITY",
+    "数据优化": "CACHE",
+    "后台任务": "JOBS",
     "个人主页": "PROFILE",
     "系统说明": "ABOUT",
 }
@@ -2218,6 +2653,19 @@ NAV_CODES = {
 def format_nav_label(label: str) -> str:
     code = NAV_CODES.get(label)
     return f"{label}\n{code}" if code else label
+
+
+def render_page_intro(title: str, kicker: str, description: str) -> None:
+    st.markdown(
+        f"""
+        <section class="page-intro">
+            <div class="page-intro-eyebrow">{kicker}</div>
+            <h2>{title}</h2>
+            <p>{description}</p>
+        </section>
+        """,
+        unsafe_allow_html=True,
+    )
 
 
 def prime_backend_version() -> None:
@@ -4055,7 +4503,7 @@ def render_assessment(api_key: str) -> None:
         with st.container(key="assessment_privacy_panel", border=True):
             st.markdown(
                 """
-                <div class="panel-kicker">隐私与数据</div>
+                <div class="panel-kicker">本地计算</div>
                 <div class="panel-title">隐私与数据</div>
                 <div class="panel-copy">默认在本地完成筛查；只有明确开启后才调用第三方模型。</div>
                 """,
@@ -4078,7 +4526,7 @@ def render_assessment(api_key: str) -> None:
         with st.container(key="assessment_mode_panel", border=True):
             st.markdown(
                 """
-                <div class="panel-kicker">交流方式</div>
+                <div class="panel-kicker">筛查路径</div>
                 <div class="panel-title">选择交流方式</div>
                 <div class="panel-copy">温情问询进入筛查；日常陪伴不生成风险结论。</div>
                 """,
@@ -4143,7 +4591,7 @@ def render_assessment(api_key: str) -> None:
     with st.container(key="assessment_user_panel", border=True):
         st.markdown(
             """
-            <div class="panel-kicker">用户档案</div>
+            <div class="panel-kicker">档案联动</div>
             <div class="panel-title">当前用户</div>
             <div class="panel-copy">选择已有档案，或直接创建新的筛查对象。</div>
             """,
@@ -4905,7 +5353,11 @@ def chinese_advanced_report(report: pd.DataFrame) -> pd.DataFrame:
 
 
 def render_charls() -> None:
-    st.subheader("养老调查数据与表格模型")
+    render_page_intro(
+        "养老调查数据与表格模型",
+        "CHARLS · TABULAR EVIDENCE",
+        "围绕人口学、共病、睡眠与健康背景构建表格基线，并保留时间外验证和个体纵向轨迹。",
+    )
     if not backend.charls_exists():
         st.info("尚未生成养老调查标准表。点击下面按钮读取本机中国健康与养老追踪调查数据。")
         if st.button("生成养老调查标准表", type="primary"):
@@ -5126,8 +5578,11 @@ def load_charls_cached() -> pd.DataFrame:
 
 
 def render_imbalance() -> None:
-    st.subheader("类别不平衡方法对比")
-    st.caption("同一组梯度提升树参数下，比较不处理、合成少数类过采样、清理后采样、自适应合成采样、过采样和欠采样。")
+    render_page_intro(
+        "类别不平衡方法对比",
+        "BALANCE · METHOD COMPARISON",
+        "同一组梯度提升树参数下，比较不处理、合成少数类过采样、清理后采样、自适应合成采样、过采样和欠采样。",
+    )
     if st.session_state.get("imbalance_report") is None:
         st.session_state.imbalance_report = backend.load_csv(backend.IMBALANCE_REPORT)
     report = st.session_state.imbalance_report
@@ -5154,11 +5609,10 @@ def render_imbalance() -> None:
 
 
 def render_fusion() -> None:
-    st.subheader("融合权重校准")
-    st.caption(
-        "上传一份信号概率数据表（text_risk / scale_risk / context_risk / expression_risk，"
-        "可选 mpdd_risk）和标签列 depression，训练逻辑回归融合模型；"
-        "训练后风险评估页会自动优先使用学习到的权重，未训练时仍用文献先验权重。"
+    render_page_intro(
+        "融合权重校准",
+        "FUSION · PROBABILITY CALIBRATION",
+        "使用对话、量表、背景与可用行为信号训练逻辑回归融合模型；未校准时保留文献先验权重。",
     )
 
     status = backend.fusion_status()
@@ -5274,10 +5728,10 @@ def render_fusion() -> None:
 
 
 def render_data_cache() -> None:
-    st.subheader("数据存储优化")
-    st.caption(
-        "把宽表特征转成 Parquet（float32 + zstd）并按模态分文件缓存，"
-        "读取更快、占用更小；训练逻辑、交叉验证和 PCA 切分完全不变。"
+    render_page_intro(
+        "数据存储优化",
+        "CACHE · LOCAL PIPELINE",
+        "宽表特征按模态缓存为 Parquet，减少读取时间与磁盘占用；训练逻辑和评估切分保持不变。",
     )
     status = backend.mpdd_cache_status()
 
@@ -5307,8 +5761,11 @@ def render_data_cache() -> None:
 
 
 def render_jobs() -> None:
-    st.subheader("后台任务")
-    st.caption("长任务异步执行，提交后可刷新查看状态，不再阻塞页面。")
+    render_page_intro(
+        "后台任务",
+        "JOBS · ASYNC OPERATIONS",
+        "长任务异步执行，可查看进度、取消或等待完成，不再阻塞当前页面。",
+    )
     task_labels = {
         "tabular_train": "表格基线训练",
         "tabular_temporal": "表格时间外验证",
@@ -5392,10 +5849,10 @@ def render_jobs() -> None:
 
 
 def render_synthetic() -> None:
-    st.subheader("模拟数据")
-    st.caption(
-        "模拟组由真实数据中的主题/特征元素重组生成，只作为独立的训练参数；"
-        "不与真实数据混合，评估只用真实数据。"
+    render_page_intro(
+        "模拟数据",
+        "SYNTHETIC · TRAIN-ONLY CONTROLS",
+        "模拟组由真实数据的主题与特征元素重组生成，只用于训练参数；真实数据保留为验证与测试来源。",
     )
     st.markdown("#### 真实数据特征分析")
     profile = backend.real_profile_status()
@@ -5616,7 +6073,7 @@ def render_synthetic() -> None:
 
 
 def render_mpdd_dataset() -> None:
-    st.subheader("MPDD 多模态抑郁检测")
+    st.markdown("#### MPDD 多模态抑郁检测")
     action_cols = st.columns(2)
     with action_cols[0]:
         if st.button("从本地 MPDD 原始特征构建数据表", type="primary", width="stretch"):
@@ -5683,7 +6140,12 @@ def render_mpdd_dataset() -> None:
             color_discrete_sequence=["#7c3aed"],
             labels={score_col: "PHQ-9 量表总分", "count": "样本数"},
         )
-        fig_hamd.update_layout(height=300, margin=dict(l=10, r=10, t=30, b=10))
+        fig_hamd.update_layout(
+            height=300,
+            margin=dict(l=10, r=10, t=30, b=10),
+            xaxis_title="PHQ-9 量表总分",
+            yaxis_title="样本数",
+        )
         st.plotly_chart(fig_hamd, width="stretch")
     if official is not None and score_col in subject_df.columns:
         threshold_positive = pd.to_numeric(
@@ -6622,8 +7084,11 @@ def render_modma_auxiliary() -> None:
 
 
 def render_mpdd() -> None:
-    st.subheader("多模态数据")
-    st.caption("三个数据域独立展示、独立评估，不把不同年龄范围和采集协议的数据混成一个训练集。")
+    render_page_intro(
+        "多模态数据",
+        "MODAL · INDEPENDENT DATA DOMAINS",
+        "MPDD、CMDC 与 MODMA 独立展示、独立评估，不混用年龄范围和采集协议不同的受试者。",
+    )
     mpdd_tab, cmdc_tab, modma_tab = st.tabs(
         ["MPDD｜老年多模态", "CMDC｜中文外部验证", "MODMA｜跨年龄语音"]
     )
@@ -6636,7 +7101,11 @@ def render_mpdd() -> None:
 
 
 def render_diy() -> None:
-    st.subheader("数据平衡处理结果")
+    render_page_intro(
+        "数据平衡处理结果",
+        "REBALANCE · REPRODUCIBLE OUTPUTS",
+        "集中查看 SMOTE-Tomek 平衡表、方法对比、完整指标和特征重要性，所有结果保留在本机。",
+    )
     diy_dir = PROJECT_ROOT.parent / "DIY"
     if not diy_dir.exists():
         st.info("还没有 DIY 结果文件夹，请先运行数据处理。")
@@ -6694,8 +7163,11 @@ def render_diy() -> None:
 
 
 def render_records() -> None:
-    st.subheader("用户记录")
-    st.caption("查询用户 → 点击查看详情 → 查看评估趋势；新建、编辑、删除分开操作。")
+    render_page_intro(
+        "用户记录",
+        "CASES · LONGITUDINAL RECORDS",
+        "查询用户、查看档案与评估趋势；新建、编辑和删除分开操作，评估结果与当前用户保持联动。",
+    )
     all_users = backend.list_users()
     st.session_state.user_list = all_users
     all_by_id = {u["id"]: u for u in all_users}
@@ -6746,7 +7218,10 @@ def render_records() -> None:
     left, right = st.columns([0.34, 0.66], gap="large")
 
     with left:
-        st.markdown("#### 查询用户")
+        st.markdown(
+            '<div class="record-detail-kicker">Find record</div>',
+            unsafe_allow_html=True,
+        )
         search = st.text_input("按姓名 / 编号 / 备注查询", key="user_query")
         search = (search or "").strip()
         if search:
@@ -6964,6 +7439,10 @@ def render_records() -> None:
                     st.error(f"备份文件解析失败：{exc}")
 
     with right:
+        st.markdown(
+            '<div class="record-detail-kicker">Selected record</div>',
+            unsafe_allow_html=True,
+        )
         selected_id = st.session_state.selected_user_id
         if not selected_id or selected_id not in all_by_id:
             st.info("点击左侧用户卡片查看档案、评估历史和风险趋势。")
@@ -6979,15 +7458,15 @@ def render_records() -> None:
 
         name = user.get("name", "未命名")
         st.markdown(
-            f'<div style="display:flex;gap:1rem;align-items:center;margin-bottom:0.5rem;">'
-            f'<div class="user-avatar" style="width:56px;height:56px;font-size:1.35rem;">{name[:1]}</div>'
-            f'<div>'
-            f'<span style="font-size:1.35rem;font-weight:700;">{name}</span><br>'
+            f'<div class="record-detail-head">'
+            f'<div class="user-avatar">{name[:1]}</div>'
+            f'<div><div class="record-detail-name">{name}</div>'
+            f'<div class="record-meta">'
             f'<span class="tag-pill">{user.get("age", "-")} 岁</span>'
             f'<span class="tag-pill">{gender}</span>'
             f'<span class="tag-pill">共病 {user.get("comorbidity_count", "-")} 项</span>'
             f'<span class="tag-pill">评估 {len(all_history)} 次</span>'
-            f"</div></div>",
+            f"</div></div></div>",
             unsafe_allow_html=True,
         )
         if all_history:
@@ -7255,9 +7734,10 @@ def data_health_markdown(report: dict) -> str:
 
 
 def render_data_health() -> None:
-    st.subheader("数据健康体检")
-    st.caption(
-        "自动检查 CHARLS、MPDD、CMDC、模拟组与用户记录的数据质量；接入新数据前建议先体检。"
+    render_page_intro(
+        "数据健康体检",
+        "QUALITY · DATA READINESS",
+        "自动检查 CHARLS、MPDD、CMDC、模拟组与用户记录的数据质量；接入新数据前建议先运行体检。",
     )
     report = backend.data_health()
     cols = st.columns(4)
@@ -7499,10 +7979,10 @@ def render_data_health() -> None:
 
 
 def render_incremental_validation() -> None:
-    st.subheader("增量验证")
-    st.caption(
-        "比较理论基线、传统模型和同人级模态组合。跨队列数据只做证据可用性审计，"
-        "不把不同受试者的表格、语音和面部特征拼接成伪多模态。"
+    render_page_intro(
+        "增量验证",
+        "EVIDENCE · ABLATION & BOUNDARIES",
+        "比较理论基线、传统模型和同人级模态组合；跨队列数据只做证据审计，不拼接不同受试者。",
     )
     if st.button(
         "运行理论基线与模态消融",
@@ -7719,10 +8199,10 @@ def render_incremental_validation() -> None:
 
 
 def render_smoothing_calibration() -> None:
-    st.subheader("统计校正")
-    st.caption(
-        "针对小样本、缺失和时序噪声做统计校正：Beta-Binomial 概率收缩用于小亚组，"
-        "稳健聚合用于比较多段特征的均值、中位数和截尾均值。"
+    render_page_intro(
+        "统计校正",
+        "CALIBRATION · SMALL-SAMPLE CONTROL",
+        "针对小样本、缺失与时序噪声做统计校正：小亚组使用概率收缩，片段特征比较稳健聚合。",
     )
     flash = st.session_state.pop("smoothing_flash", None)
     if flash:
@@ -7838,7 +8318,11 @@ def render_smoothing_calibration() -> None:
 
 
 def render_about() -> None:
-    st.subheader("系统说明")
+    render_page_intro(
+        "系统说明",
+        "ABOUT · PRODUCT & SAFETY BOUNDARIES",
+        "了解当前数据、模型流程、账号权限与使用边界。",
+    )
     account = st.session_state.get("auth_account") or {}
     is_admin = account.get("role") == "admin"
     status = backend.status()
@@ -7946,10 +8430,10 @@ def render_about() -> None:
 
 
 def render_account_admin() -> None:
-    st.subheader("账号管理")
-    st.caption(
-        "管理员可创建其他管理员或普通用户账号、停用账号和重置密码。"
-        "当前登录管理员不能停用自己的账号或取消自己的管理员角色。"
+    render_page_intro(
+        "账号管理",
+        "ACCOUNTS · ADMIN CONTROL",
+        "创建管理员或普通用户账号、停用账号和重置密码；当前登录管理员不能停用自己。",
     )
     flash = st.session_state.pop("admin_flash", None)
     if flash:
@@ -8070,7 +8554,11 @@ def render_account_admin() -> None:
 
 
 def render_account_profile() -> None:
-    st.subheader("个人主页")
+    render_page_intro(
+        "个人主页",
+        "PROFILE · ACCOUNT & SECURITY",
+        "管理当前账号、显示名称、密码与密保问题。",
+    )
     account = st.session_state.get("auth_account") or {}
     role_label = "管理员" if account.get("role") == "admin" else "普通用户"
     flash = st.session_state.pop("profile_flash", None)
@@ -8231,16 +8719,16 @@ if is_admin:
         ("风险评估", lambda: render_assessment(api_key)),
         ("用户记录", render_records),
         ("养老调查数据", render_charls),
+        ("多模态数据", render_mpdd),
+        ("模拟数据", render_synthetic),
         ("不平衡对比", render_imbalance),
         ("融合校准", render_fusion),
-        ("数据优化", render_data_cache),
-        ("模拟数据", render_synthetic),
-        ("多模态数据", render_mpdd),
         ("数据平衡处理", render_diy),
-        ("后台任务", render_jobs),
         ("增量验证", render_incremental_validation),
-        ("数据健康", render_data_health),
         ("统计校正", render_smoothing_calibration),
+        ("数据健康", render_data_health),
+        ("数据优化", render_data_cache),
+        ("后台任务", render_jobs),
     ]
 else:
     page_defs = [
@@ -8256,7 +8744,6 @@ console_pages = {
     "系统说明": render_about,
 }
 if is_admin and admin_console_page in console_pages:
-    st.caption(f"管理菜单 · {admin_console_page}")
     console_pages[admin_console_page]()
 else:
     apply_tab_navigation()
