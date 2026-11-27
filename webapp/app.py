@@ -2111,6 +2111,524 @@ def inject_css() -> None:
             box-shadow: inset 0 -2px 0 rgba(255, 255, 255, 0.08);
         }
 
+        /* Editorial clinical workspace: navigation in the rail, task-first canvas */
+        :root {
+            --canvas: #eef1ed;
+            --panel: #ffffff;
+            --ink: #142725;
+            --muted: #60716f;
+            --line: #d3ddd8;
+            --line-strong: #becdc7;
+            --navy: #10313b;
+            --accent: #1f7468;
+            --accent-strong: #155d54;
+            --bronze: #b47b3f;
+            --paper: #fbfcfa;
+        }
+        .stApp {
+            background: var(--canvas);
+            color: var(--ink);
+        }
+        .block-container {
+            max-width: 1460px;
+            padding: 0.9rem 1.25rem 3rem;
+        }
+        .st-key-app_header {
+            position: sticky;
+            top: 0.35rem;
+            z-index: 80;
+            padding: 0.62rem 0 0.72rem;
+            margin-bottom: 0.55rem;
+            border: 0;
+            border-bottom: 1px solid #c7d3ce;
+            border-radius: 0;
+            background: rgba(238, 241, 237, 0.91);
+            box-shadow: none;
+            backdrop-filter: blur(14px) saturate(1.08);
+            -webkit-backdrop-filter: blur(14px) saturate(1.08);
+        }
+        .app-header-title {
+            gap: 0.75rem;
+        }
+        .app-mark {
+            width: 38px;
+            height: 38px;
+            padding: 4px;
+            border-radius: 4px;
+            background: #102f33;
+        }
+        .app-kicker {
+            color: #65817b;
+            font-size: 0.58rem;
+            letter-spacing: 0.15em;
+        }
+        .app-kicker::after {
+            width: 1.6rem;
+        }
+        .app-name {
+            font-size: 1.18rem;
+        }
+        .app-sub {
+            margin-top: 0;
+            color: #6a7a77;
+            font-size: 0.71rem;
+        }
+        .header-context {
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            gap: 1.6rem;
+            text-align: right;
+        }
+        .header-context-label {
+            color: #7b8c87;
+            font-family: "SFMono-Regular", "Menlo", monospace;
+            font-size: 0.55rem;
+            font-weight: 700;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+        }
+        .header-context-page {
+            margin-top: 0.08rem;
+            color: var(--ink);
+            font-family: "Songti SC", "STSong", serif;
+            font-size: 0.96rem;
+            font-weight: 700;
+        }
+        .header-ready {
+            display: grid;
+            gap: 0.16rem;
+            min-width: 7.8rem;
+        }
+        .header-ready span {
+            color: #356c60;
+            font-size: 0.72rem;
+            font-weight: 720;
+        }
+        .header-ready i,
+        .sidebar-ready i {
+            display: inline-block;
+            width: 6px;
+            height: 6px;
+            margin-right: 0.38rem;
+            border-radius: 50%;
+            background: #4ec098;
+            box-shadow: 0 0 0 3px rgba(78, 192, 152, 0.12);
+            vertical-align: 0.08em;
+        }
+        .header-ready small {
+            color: #7b8b87;
+            font-family: "SFMono-Regular", "Menlo", monospace;
+            font-size: 0.57rem;
+            letter-spacing: 0.05em;
+        }
+        .st-key-app_header div[data-testid="stPopover"] button {
+            min-width: 5.15rem;
+            height: 2.12rem;
+            border-color: #bac8c3;
+            background: rgba(255, 255, 255, 0.42);
+        }
+        .stButton button,
+        .stDownloadButton button,
+        .stFormSubmitButton button,
+        .st-key-app_header div[data-testid="stPopover"] button,
+        [data-testid="stTabs"] button[data-baseweb="tab"],
+        [data-testid="stSidebar"] [class*="st-key-sidebar_nav_"] button {
+            transition:
+                background-color 160ms cubic-bezier(0.2, 0.8, 0.2, 1),
+                border-color 160ms cubic-bezier(0.2, 0.8, 0.2, 1),
+                color 160ms cubic-bezier(0.2, 0.8, 0.2, 1),
+                box-shadow 160ms cubic-bezier(0.2, 0.8, 0.2, 1),
+                transform 160ms cubic-bezier(0.2, 0.8, 0.2, 1);
+        }
+        .stButton button:active,
+        .stDownloadButton button:active,
+        .stFormSubmitButton button:active {
+            transform: translateY(0) scale(0.985);
+        }
+        .stButton button:focus-visible,
+        .stDownloadButton button:focus-visible,
+        .stFormSubmitButton button:focus-visible,
+        [data-testid="stPopoverButton"]:focus-visible,
+        [data-testid="stTabs"] button[data-baseweb="tab"]:focus-visible {
+            outline: 2px solid rgba(180, 123, 63, 0.55);
+            outline-offset: 2px;
+        }
+
+        [data-testid="stSidebar"] {
+            min-width: 264px;
+            background: #0b2725;
+        }
+        [data-testid="stSidebarContent"] {
+            padding: 0.85rem 0.8rem 1rem;
+        }
+        .sidebar-brand {
+            display: flex;
+            align-items: center;
+            gap: 0.7rem;
+            padding: 0.25rem 0.1rem 0.9rem;
+            border-bottom-color: rgba(225, 239, 234, 0.12);
+        }
+        .sidebar-brand-mark {
+            width: 42px;
+            height: 42px;
+            padding: 5px;
+            flex: 0 0 auto;
+            border: 0;
+            border-radius: 5px;
+            background: #f2f7f4;
+        }
+        .sidebar-brand-mark img {
+            display: block;
+            width: 100%;
+            height: 100%;
+        }
+        .sidebar-brand-kicker {
+            color: #88aaa2;
+            font-size: 0.55rem;
+            letter-spacing: 0.13em;
+        }
+        .sidebar-brand-name {
+            margin-top: 0.08rem;
+            font-family: "Songti SC", "STSong", serif;
+            font-size: 0.98rem;
+            letter-spacing: 0.01em;
+        }
+        .sidebar-brand-sub {
+            margin-top: 0.04rem;
+            color: #819d97;
+            font-size: 0.66rem;
+        }
+        .sidebar-account {
+            margin: 0.7rem 0 0.45rem;
+            padding: 0.58rem 0.6rem;
+            border: 1px solid rgba(222, 237, 232, 0.10);
+            border-radius: 4px;
+            background: rgba(255, 255, 255, 0.025);
+        }
+        .sidebar-account-top {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 0.4rem;
+        }
+        .sidebar-account-label {
+            margin: 0;
+            font-size: 0.62rem;
+        }
+        .sidebar-account-name {
+            margin-top: 0.2rem;
+            font-size: 0.83rem;
+            font-weight: 720;
+        }
+        .sidebar-account-handle {
+            margin-left: 0.35rem;
+            font-size: 0.68rem;
+            font-weight: 500;
+        }
+        .sidebar-ready {
+            color: #b6cbc5;
+            font-family: "SFMono-Regular", "Menlo", monospace;
+            font-size: 0.54rem;
+            white-space: nowrap;
+        }
+        .sidebar-nav-heading {
+            margin: 0.7rem 0.2rem 0.42rem;
+            color: #71958d;
+            font-family: "SFMono-Regular", "Menlo", monospace;
+            font-size: 0.54rem;
+            font-weight: 700;
+            letter-spacing: 0.13em;
+            text-transform: uppercase;
+        }
+        .sidebar-nav-group {
+            margin: 0.58rem 0.2rem 0.24rem;
+            color: #9bb5af;
+            font-size: 0.59rem;
+            font-weight: 650;
+            letter-spacing: 0.04em;
+        }
+        [data-testid="stSidebar"] [class*="st-key-sidebar_nav_"] button {
+            min-height: 2.05rem;
+            padding: 0.24rem 0.34rem;
+            border-color: rgba(219, 235, 229, 0.10);
+            border-radius: 3px;
+            background: rgba(255, 255, 255, 0.025);
+            color: #c9d9d5;
+            font-size: 0.67rem;
+            font-weight: 620;
+        }
+        [data-testid="stSidebar"] [class*="st-key-sidebar_nav_"] button:hover {
+            border-color: rgba(192, 218, 210, 0.26);
+            background: rgba(255, 255, 255, 0.07);
+            transform: translateX(2px);
+        }
+        [data-testid="stSidebar"] [class*="st-key-sidebar_nav_"] button[kind="primary"],
+        [data-testid="stSidebar"] [class*="st-key-sidebar_nav_"]
+            button[data-testid="stBaseButton-primary"] {
+            border-color: #c29357;
+            background: #d2a05e;
+            color: #102a28;
+            box-shadow:
+                inset 0 -2px 0 rgba(67, 42, 12, 0.12),
+                0 7px 16px rgba(0, 0, 0, 0.12);
+        }
+        [data-testid="stSidebar"] [class*="st-key-sidebar_nav_"]
+            button[data-testid="stBaseButton-primary"] p {
+            color: #102a28 !important;
+        }
+        [data-testid="stSidebar"] [data-testid="stExpander"] {
+            margin-top: 0.75rem;
+            border-color: rgba(219, 235, 229, 0.10);
+            background: rgba(255, 255, 255, 0.02);
+        }
+        [data-testid="stSidebar"] [data-testid="stExpander"] summary p {
+            color: #b9ccc7;
+            font-size: 0.7rem;
+        }
+        [data-testid="stSidebar"] [data-testid="stToggle"] {
+            margin: 0.3rem 0 0.4rem;
+        }
+
+        .page-intro {
+            margin: 0 0 0.95rem;
+            padding: 0.05rem 0 0.82rem 0.9rem;
+            border-left: 2px solid #b47b3f;
+            border-bottom: 1px solid var(--line);
+            animation: workspace-rise 300ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+        }
+        .page-intro-eyebrow {
+            color: #6b7f79;
+        }
+        .page-intro h2 {
+            margin-top: 0.1rem;
+            font-size: clamp(1.82rem, 2.15vw, 2.22rem);
+        }
+        .page-intro p {
+            margin-top: 0.22rem;
+            color: #5c6e6b;
+        }
+
+        .assessment-hero {
+            position: relative;
+            overflow: hidden;
+            margin: 0 0 0.95rem;
+            padding: 1.3rem 1.4rem 0;
+            border: 1px solid #cbd8d2;
+            border-radius: 7px;
+            background: #ffffff;
+            box-shadow: 0 12px 32px rgba(18, 49, 47, 0.055);
+            animation: workspace-rise 360ms cubic-bezier(0.2, 0.8, 0.2, 1) 35ms both;
+        }
+        .assessment-hero::before {
+            content: "";
+            position: absolute;
+            inset: 0 auto auto 0;
+            width: 100%;
+            height: 3px;
+            background: #b47b3f;
+        }
+        .assessment-hero-grid {
+            grid-template-columns: minmax(0, 1.38fr) minmax(285px, 0.62fr);
+            gap: 2.2rem;
+        }
+        .assessment-title-row h2 {
+            margin-top: 0.02rem;
+            font-size: clamp(2.55rem, 3.4vw, 3.55rem);
+            letter-spacing: -0.01em;
+        }
+        .assessment-hero-main > p {
+            max-width: 43rem;
+            margin-top: 0.55rem;
+            color: #5d706c;
+            font-size: 0.88rem;
+        }
+        .assessment-local-badge {
+            border-color: #d5dfda;
+            background: #f6f8f5;
+            color: #42635d;
+        }
+        .assessment-evidence-panel {
+            padding: 0.9rem 0.95rem 0.85rem;
+            border: 0;
+            border-radius: 5px;
+            background: #153a37;
+            animation: evidence-panel-in 420ms cubic-bezier(0.2, 0.8, 0.2, 1)
+                90ms both;
+        }
+        .evidence-panel-label {
+            color: #8fb4aa;
+        }
+        .evidence-panel-row {
+            grid-template-columns: 1.6rem minmax(0, 1fr) auto;
+            gap: 0.55rem;
+            padding: 0.62rem 0;
+            border-bottom-color: rgba(220, 235, 229, 0.12);
+            animation: evidence-row-in 280ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+        }
+        .evidence-panel-row:nth-of-type(2) {
+            animation-delay: 145ms;
+        }
+        .evidence-panel-row:nth-of-type(3) {
+            animation-delay: 190ms;
+        }
+        .evidence-panel-row:nth-of-type(4) {
+            animation-delay: 235ms;
+        }
+        .evidence-panel-row:nth-of-type(5) {
+            animation-delay: 280ms;
+        }
+        .evidence-panel-row b {
+            color: #d8a564;
+        }
+        .evidence-panel-row span {
+            color: #f2f7f5;
+        }
+        .evidence-panel-row small {
+            color: #a8c7be;
+        }
+        .assessment-steps {
+            margin: 1.05rem -1.4rem 0;
+            padding: 0 1.4rem;
+            border-top: 1px solid #d7e0dc;
+            border-bottom: 0;
+            background: #f7f8f5;
+        }
+        .assessment-steps span {
+            color: #536965;
+        }
+
+        .st-key-assessment_setup_panel [data-testid="stVerticalBlockBorderWrapper"] {
+            padding: 1rem 1.05rem 0.72rem;
+            border: 1px solid #ccd9d3;
+            border-radius: 6px;
+            background: #ffffff;
+            box-shadow: 0 8px 26px rgba(18, 49, 47, 0.04);
+            animation: workspace-rise 360ms cubic-bezier(0.2, 0.8, 0.2, 1) 70ms both;
+        }
+        .setup-panel-head {
+            display: flex;
+            align-items: baseline;
+            justify-content: space-between;
+            gap: 1rem;
+            margin-bottom: 0.65rem;
+        }
+        .setup-panel-head strong {
+            color: var(--ink);
+            font-family: "Songti SC", "STSong", serif;
+            font-size: 1.13rem;
+        }
+        .setup-panel-head span {
+            color: #72817e;
+            font-size: 0.72rem;
+        }
+        .assessment-setup-divider {
+            height: 1px;
+            margin: 0.8rem 0 0.5rem;
+            background: #e0e6e3;
+        }
+        .st-key-assessment_user_panel [data-testid="stVerticalBlockBorderWrapper"] {
+            border-radius: 6px;
+            background: #ffffff;
+        }
+        [data-testid="stMetric"] {
+            min-height: 90px;
+            border: 1px solid #d3ddd8;
+            border-left: 1px solid #d3ddd8;
+            border-top: 2px solid #2d7469;
+            border-radius: 4px;
+            background: #fbfcfa;
+        }
+        div[data-testid="stMetricValue"] {
+            color: #153835;
+            font-size: 1.5rem;
+        }
+        [data-testid="stDataFrame"] {
+            border-color: #cbd8d2;
+            background: #ffffff;
+        }
+        div[data-testid="stMetric"] {
+            transition:
+                border-color 170ms cubic-bezier(0.2, 0.8, 0.2, 1),
+                box-shadow 170ms cubic-bezier(0.2, 0.8, 0.2, 1),
+                transform 170ms cubic-bezier(0.2, 0.8, 0.2, 1);
+        }
+        div[data-testid="stMetric"]:hover {
+            border-color: #b9cbc4;
+            box-shadow: 0 10px 24px rgba(18, 49, 47, 0.07);
+            transform: translateY(-2px);
+        }
+        [data-testid="stChatMessage"] {
+            animation: message-in 220ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+        }
+        div[data-testid="stPopoverBody"] {
+            transform-origin: top right;
+            animation: popover-in 160ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+        }
+        [data-testid="stTabs"] button[data-baseweb="tab"]::after {
+            transition: transform 180ms cubic-bezier(0.2, 0.8, 0.2, 1);
+        }
+        [data-testid="stTextInput"] div[data-baseweb="input"],
+        [data-testid="stTextArea"] textarea,
+        [data-testid="stSelectbox"] div[data-baseweb="select"] > div,
+        [data-testid="stNumberInput"] input,
+        [data-testid="stChatInput"] {
+            transition:
+                border-color 160ms ease,
+                box-shadow 160ms ease,
+                background-color 160ms ease;
+        }
+        @keyframes workspace-rise {
+            from {
+                opacity: 0;
+                transform: translateY(7px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        @keyframes evidence-panel-in {
+            from {
+                opacity: 0;
+                transform: translateX(8px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+        @keyframes evidence-row-in {
+            from {
+                opacity: 0;
+                transform: translateY(5px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        @keyframes message-in {
+            from {
+                opacity: 0;
+                transform: translateY(4px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        @keyframes popover-in {
+            from {
+                opacity: 0;
+                transform: translateY(-4px) scale(0.985);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+
         @media (max-width: 1100px) {
             .assessment-hero-grid {
                 grid-template-columns: 1fr;
@@ -2211,6 +2729,55 @@ def inject_css() -> None:
             .page-intro p {
                 font-size: 0.8rem;
             }
+            .assessment-hero {
+                padding: 1rem 0.85rem 0;
+            }
+            .assessment-hero-grid {
+                gap: 0.8rem;
+            }
+            .assessment-title-row h2 {
+                font-size: 2.2rem;
+            }
+            .assessment-evidence-panel {
+                padding: 0.8rem;
+            }
+            .assessment-steps {
+                margin-inline: -0.85rem;
+                padding-inline: 0.85rem;
+            }
+            .setup-panel-head {
+                display: block;
+            }
+            .setup-panel-head strong {
+                display: block;
+                white-space: nowrap;
+            }
+            .setup-panel-head span {
+                display: block;
+                margin-top: 0.28rem;
+            }
+            .st-key-assessment_setup_panel [data-testid="stHorizontalBlock"],
+            [data-testid="stHorizontalBlock"]:has(.record-detail-kicker),
+            [data-testid="stHorizontalBlock"]:has(.st-key-interview_chat_panel),
+            [data-testid="stHorizontalBlock"]:has(.st-key-companion_chat_panel),
+            [data-testid="stHorizontalBlock"]:has([data-testid="stPlotlyChart"]) {
+                display: block !important;
+            }
+            .st-key-assessment_setup_panel
+                [data-testid="stHorizontalBlock"]
+                > [data-testid="stColumn"],
+            [data-testid="stHorizontalBlock"]:has(.record-detail-kicker)
+                > [data-testid="stColumn"],
+            [data-testid="stHorizontalBlock"]:has(.st-key-interview_chat_panel)
+                > [data-testid="stColumn"],
+            [data-testid="stHorizontalBlock"]:has(.st-key-companion_chat_panel)
+                > [data-testid="stColumn"],
+            [data-testid="stHorizontalBlock"]:has([data-testid="stPlotlyChart"])
+                > [data-testid="stColumn"] {
+                width: 100% !important;
+                min-width: 100% !important;
+                margin-bottom: 0.7rem;
+            }
             [data-testid="stTabs"] button[data-baseweb="tab"] {
                 padding-inline: 0.45rem;
                 font-size: 0.8rem;
@@ -2297,6 +2864,17 @@ def inject_css() -> None:
             div[data-testid="stMetricLabel"] {
                 font-size: 0.68rem;
             }
+            .stApp
+                [data-testid="stHorizontalBlock"]:has(.record-detail-kicker) {
+                display: block !important;
+            }
+            .stApp
+                [data-testid="stHorizontalBlock"]:has(.record-detail-kicker)
+                > [data-testid="stColumn"] {
+                width: 100% !important;
+                min-width: 100% !important;
+                margin-bottom: 0.8rem;
+            }
             .record-detail-head {
                 align-items: flex-start;
             }
@@ -2305,11 +2883,24 @@ def inject_css() -> None:
             }
         }
         @media (prefers-reduced-motion: reduce) {
+            .page-intro,
+            .assessment-hero,
+            .assessment-evidence-panel,
+            .evidence-panel-row,
+            .st-key-assessment_setup_panel [data-testid="stVerticalBlockBorderWrapper"],
+            div[data-testid="stPopoverBody"],
+            [data-testid="stChatMessage"] {
+                animation: none !important;
+            }
             .app-mark,
             .sidebar-visual,
             .sidebar-visual img,
             div[data-testid="stMetric"],
             .stButton button,
+            .stDownloadButton button,
+            .stFormSubmitButton button,
+            [data-testid="stTabs"] button[data-baseweb="tab"],
+            [data-testid="stSidebar"] [class*="st-key-sidebar_nav_"] button,
             .st-key-main_nav [role="radiogroup"] label,
             [data-testid="stChatMessage"] {
                 transition: none !important;
@@ -2446,6 +3037,9 @@ def lock_chinese_language() -> None:
 def render_header(
     show_admin_menu: bool = False,
     admin_console_page: str = "工作台",
+    current_page: str = "风险评估",
+    is_admin: bool = False,
+    menu_nav_groups: list[tuple[str, list[str]]] | None = None,
 ) -> None:
     status = st.session_state.get("_system_status") or backend.status()
     st.session_state._system_status = status
@@ -2525,13 +3119,13 @@ def render_header(
     ready_count = sum(1 for _, ok, _, _ in rows if ok)
     with st.container(key="app_header"):
         if show_admin_menu:
-            title_col, evidence_col, controls_col = st.columns(
-                [7.2, 2.0, 0.72],
+            title_col, context_col, controls_col = st.columns(
+                [4.5, 4.5, 0.9],
                 vertical_alignment="center",
             )
         else:
-            title_col, evidence_col = st.columns(
-                [8.2, 1.8],
+            title_col, context_col = st.columns(
+                [7.0, 3.0],
                 vertical_alignment="center",
             )
             controls_col = None
@@ -2541,21 +3135,26 @@ def render_header(
                 <div class="app-header-title">
                     <div class="app-mark">{logo_mark}</div>
                     <div>
-                        <div class="app-kicker">科研风险筛查</div>
-                        <div class="app-name">老年抑郁风险筛查工作台</div>
-                        <div class="app-sub">对话 · 量表 · 多模态 · 个体追踪</div>
+                        <div class="app-kicker">Clinical research workspace</div>
+                        <div class="app-name">老年抑郁风险筛查</div>
+                        <div class="app-sub">对话 · 量表 · 多模态证据</div>
                     </div>
                 </div>
                 """,
                 unsafe_allow_html=True,
             )
-        with evidence_col:
+        with context_col:
             st.markdown(
                 f"""
-                <div class="header-evidence">
-                    <div class="header-evidence-label">Evidence status</div>
-                    <strong>{ready_count:02d}/{len(rows):02d}</strong>
-                    <span>数据与模型<br>检查就绪</span>
+                <div class="header-context">
+                    <div>
+                        <div class="header-context-label">Current workspace</div>
+                        <div class="header-context-page">{current_page}</div>
+                    </div>
+                    <div class="header-ready">
+                        <span><i></i>系统就绪</span>
+                        <small>{ready_count:02d} / {len(rows):02d} 证据源</small>
+                    </div>
                 </div>
                 """,
                 unsafe_allow_html=True,
@@ -2568,12 +3167,15 @@ def render_header(
                     menu_help += f"，上次 {last_sync}"
                 with st.popover("☰ 菜单", help=menu_help):
                     st.caption("管理菜单 · 状态每 10 秒自动同步")
-                    menu_items = [
-                        ("工作台", "工作台"),
-                        ("账户管理", "账号管理"),
-                        ("个人主页", "个人主页"),
-                        ("系统说明", "系统说明"),
-                    ]
+                    menu_items = [("工作台", "工作台")]
+                    if is_admin:
+                        menu_items.append(("账户管理", "账号管理"))
+                    menu_items.extend(
+                        [
+                            ("个人主页", "个人主页"),
+                            ("系统说明", "系统说明"),
+                        ]
+                    )
                     menu_cols = st.columns(2)
                     for index, (label, page_name) in enumerate(menu_items):
                         with menu_cols[index % 2]:
@@ -2590,25 +3192,61 @@ def render_header(
                                 st.session_state.admin_console_page = page_name
                                 st.rerun()
                     st.divider()
-                    st.markdown("#### 数据状态")
-                    st.markdown(
-                        f'<div class="admin-status-grid">{status_rows}</div>',
-                        unsafe_allow_html=True,
-                    )
-                    prompt_versions = status.get("prompt_versions") or {}
-                    if prompt_versions or status.get("tabular_models"):
-                        prompt_text = (
-                            f"Prompt：{prompt_versions.get('interview', '-')} / "
-                            f"{prompt_versions.get('companion', '-')}"
-                            if prompt_versions
-                            else ""
+                    st.markdown("#### 功能模块")
+                    module_options = [
+                        label
+                        for _, labels in (menu_nav_groups or [])
+                        for label in labels
+                    ]
+                    if module_options:
+                        selected_module = st.selectbox(
+                            "功能模块",
+                            module_options,
+                            index=(
+                                module_options.index(current_page)
+                                if current_page in module_options
+                                else 0
+                            ),
+                            format_func=format_nav_label,
+                            key="header_module_select",
+                            label_visibility="collapsed",
                         )
-                        model_text = (
-                            f"表格模型：{status.get('tabular_models')} 个"
-                            if status.get("tabular_models")
-                            else ""
+                        if st.button(
+                            "打开所选模块",
+                            key="header_module_open",
+                            width="stretch",
+                            type="primary",
+                        ):
+                            st.session_state.main_nav = selected_module
+                            st.session_state.admin_console_page = "工作台"
+                            st.rerun()
+                    if is_admin:
+                        st.divider()
+                        st.markdown("#### 数据状态")
+                        st.markdown(
+                            f'<div class="admin-status-grid">{status_rows}</div>',
+                            unsafe_allow_html=True,
                         )
-                        st.caption(" · ".join(item for item in [prompt_text, model_text] if item))
+                        prompt_versions = status.get("prompt_versions") or {}
+                        if prompt_versions or status.get("tabular_models"):
+                            prompt_text = (
+                                f"Prompt：{prompt_versions.get('interview', '-')} / "
+                                f"{prompt_versions.get('companion', '-')}"
+                                if prompt_versions
+                                else ""
+                            )
+                            model_text = (
+                                f"表格模型：{status.get('tabular_models')} 个"
+                                if status.get("tabular_models")
+                                else ""
+                            )
+                            st.caption(
+                                " · ".join(
+                                    item
+                                    for item in [prompt_text, model_text]
+                                    if item
+                                )
+                            )
 
 
 INTERVIEW_GREETING = "您好，我先陪您慢慢聊一会儿。不用着急，想到哪说到哪。\n\n最近这一周，您晚上睡得好吗？会不会半夜醒、醒得早，或者白天总没精神？"
@@ -2648,6 +3286,23 @@ NAV_CODES = {
     "个人主页": "PROFILE",
     "系统说明": "ABOUT",
 }
+
+ADMIN_NAV_GROUPS = [
+    ("筛查工作台", ["风险评估", "用户记录"]),
+    (
+        "研究与数据",
+        ["养老调查数据", "多模态数据", "模拟数据", "数据平衡处理"],
+    ),
+    (
+        "模型与证据",
+        ["不平衡对比", "融合校准", "增量验证", "统计校正", "数据健康"],
+    ),
+    ("系统运行", ["数据优化", "后台任务"]),
+]
+
+USER_NAV_GROUPS = [
+    ("个人工作台", ["风险评估", "用户记录", "个人主页", "系统说明"]),
+]
 
 
 def format_nav_label(label: str) -> str:
@@ -3511,6 +4166,22 @@ def inject_auth_css() -> None:
             border-top-color: #d7dfdc;
             color: #68797c;
         }
+        .auth-brand-card {
+            animation: auth-panel-in 380ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+        }
+        .st-key-auth_panel {
+            animation: auth-panel-in 420ms cubic-bezier(0.2, 0.8, 0.2, 1) 55ms both;
+        }
+        @keyframes auth-panel-in {
+            from {
+                opacity: 0;
+                transform: translateY(8px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
         @media (max-width: 900px) {
             .block-container {
                 padding-top: 1rem;
@@ -3538,6 +4209,10 @@ def inject_auth_css() -> None:
             }
         }
         @media (prefers-reduced-motion: reduce) {
+            .auth-brand-card,
+            .st-key-auth_panel {
+                animation: none !important;
+            }
             div[data-testid="stFormSubmitButton"] button,
             [data-testid="stTabs"] button[data-baseweb="tab"] {
                 transition: none !important;
@@ -4108,7 +4783,10 @@ def human_bytes(size: int) -> str:
     return f"{value:.1f} TB"
 
 
-def render_sidebar() -> str:
+def render_sidebar(
+    nav_groups: list[tuple[str, list[str]]] | None = None,
+    selected_nav: str = "",
+) -> str:
     account = st.session_state.get("auth_account") or {}
     is_admin = account.get("role") == "admin"
     with st.sidebar:
@@ -4133,51 +4811,80 @@ def render_sidebar() -> str:
             unsafe_allow_html=True,
         )
         role_text = "管理员" if is_admin else "普通用户"
+        status = st.session_state.get("_system_status") or {}
+        status_rows = [
+            status.get("charls_ready"),
+            status.get("mpdd_ready"),
+            status.get("cmdc_ready"),
+            status.get("incremental_validation_ready"),
+            status.get("medical_kb_ready"),
+        ]
+        ready_count = sum(bool(value) for value in status_rows)
         st.markdown(
             f'<div class="sidebar-account">'
+            f'<div class="sidebar-account-top">'
             f'<div class="sidebar-account-label">当前账号 · {role_text}</div>'
+            f'<span class="sidebar-ready"><i></i>{ready_count}/{len(status_rows)} 就绪</span>'
+            f"</div>"
             f'<div class="sidebar-account-name">'
             f'{account.get("display_name") or account.get("username")}'
             f'<span class="sidebar-account-handle">@{account.get("username", "")}</span>'
             f"</div></div>",
             unsafe_allow_html=True,
         )
+        if nav_groups:
+            st.markdown(
+                '<div class="sidebar-nav-heading">功能导航</div>',
+                unsafe_allow_html=True,
+            )
+            for group_name, labels in nav_groups:
+                st.markdown(
+                    f'<div class="sidebar-nav-group">{group_name}</div>',
+                    unsafe_allow_html=True,
+                )
+                for start in range(0, len(labels), 2):
+                    chunk = labels[start : start + 2]
+                    button_cols = st.columns(len(chunk), gap="small")
+                    for column, label in zip(button_cols, chunk):
+                        with column:
+                            if st.button(
+                                label,
+                                key=f"sidebar_nav_{label}",
+                                type=(
+                                    "primary"
+                                    if label == selected_nav
+                                    else "secondary"
+                                ),
+                                width="stretch",
+                            ):
+                                st.session_state.main_nav = label
+                                st.session_state.admin_console_page = "工作台"
+                                st.rerun()
+        care_mode = st.toggle(
+            "关怀模式",
+            value=st.session_state.get("care_mode", False),
+            key="care_mode_toggle",
+            help="放大文字并增强关键状态对比度。",
+        )
+        st.session_state.care_mode = care_mode
+        api_key = ""
+        with st.expander("设置与安全说明", expanded=False):
+            if care_mode:
+                st.caption("关怀模式已开启：大字与高对比。")
+            st.caption("默认本地处理；启用第三方模型前需要单独同意。")
+            if is_admin:
+                api_key = st.text_input(
+                    "大模型 API Key（可选）",
+                    type="password",
+                    key="sidebar_api_key",
+                )
+                st.caption("留空时使用本地 .env 配置。")
         if st.button("退出登录", width="stretch", key="logout_button"):
             backend.auth_logout()
             _clear_auth_state()
             st.rerun()
-        care_mode = st.toggle(
-            "关怀模式（大字 / 高对比）",
-            value=st.session_state.get("care_mode", False),
-            key="care_mode_toggle",
-        )
-        st.session_state.care_mode = care_mode
-        if care_mode:
-            st.success("关怀模式已开启：大字 / 高对比")
-        else:
-            st.caption("当前为标准模式")
-        st.markdown(
-            """
-            <div class="sidebar-protocol">
-                <div class="sidebar-protocol-title">Safe & transparent</div>
-                <div class="sidebar-protocol-row"><b>01</b><span>自然对话，不诱导回答</span></div>
-                <div class="sidebar-protocol-row"><b>02</b><span>量表进度清晰可见</span></div>
-                <div class="sidebar-protocol-row"><b>03</b><span>风险解释保留依据</span></div>
-                <div class="sidebar-protocol-row"><b>04</b><span>数据默认本地处理</span></div>
-            </div>
-            """,
-            unsafe_allow_html=True,
-        )
         if is_admin:
-            st.markdown("---")
-            api_key = st.text_input("大模型 API Key（可选）", type="password")
-            if api_key:
-                st.caption("已填写，用于对话 Agent 与风险摘要。")
-            else:
-                st.caption("留空时使用本地 .env 配置。")
             return api_key
-        st.markdown("---")
-        st.caption("普通用户仅可使用风险评估与个人记录功能。")
         return ""
 
 
@@ -4498,14 +5205,23 @@ def render_assessment(api_key: str) -> None:
         unsafe_allow_html=True,
     )
 
-    control_cols = st.columns([0.46, 0.54], gap="large")
-    with control_cols[0]:
-        with st.container(key="assessment_privacy_panel", border=True):
+    with st.container(key="assessment_setup_panel", border=True):
+        st.markdown(
+            """
+            <div class="setup-panel-head">
+                <strong>筛查设置</strong>
+                <span>先确定数据边界与交流方式，再开始本次评估。</span>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+        control_cols = st.columns([0.45, 0.55], gap="large")
+        with control_cols[0]:
             st.markdown(
                 """
                 <div class="panel-kicker">本地计算</div>
-                <div class="panel-title">隐私与数据</div>
-                <div class="panel-copy">默认在本地完成筛查；只有明确开启后才调用第三方模型。</div>
+                <div class="panel-title">数据边界</div>
+                <div class="panel-copy">默认本地处理；开启第三方增强时会先脱敏。</div>
                 """,
                 unsafe_allow_html=True,
             )
@@ -4522,13 +5238,12 @@ def render_assessment(api_key: str) -> None:
                 else "本地规则与本地模型正在运行。"
             )
 
-    with control_cols[1]:
-        with st.container(key="assessment_mode_panel", border=True):
+        with control_cols[1]:
             st.markdown(
                 """
                 <div class="panel-kicker">筛查路径</div>
-                <div class="panel-title">选择交流方式</div>
-                <div class="panel-copy">温情问询进入筛查；日常陪伴不生成风险结论。</div>
+                <div class="panel-title">交流方式</div>
+                <div class="panel-copy">温情问询进入风险筛查；日常陪伴不生成结论。</div>
                 """,
                 unsafe_allow_html=True,
             )
@@ -4553,23 +5268,28 @@ def render_assessment(api_key: str) -> None:
                 if mode == "interview"
                 else "当前：日常陪伴 · 不进入风险评分"
             )
-
-    if mode == "companion":
-        render_companion_chat(api_key)
-        return
-
-    with st.container(key="assessment_storage_panel", border=True):
-        storage_col, storage_note_col = st.columns([0.58, 0.42], vertical_alignment="center")
+        st.markdown(
+            '<div class="assessment-setup-divider"></div>',
+            unsafe_allow_html=True,
+        )
+        storage_col, storage_note_col = st.columns(
+            [0.58, 0.42],
+            vertical_alignment="center",
+        )
         with storage_col:
             storage_consent = st.toggle(
-                "我已知晓并同意将本次评估数据保存到当前设备",
+                "将本次评估保存到当前设备",
                 value=st.session_state.get("assessment_storage_consent", False),
                 key="assessment_storage_consent_toggle",
                 help="不勾选仍可查看和导出本次结果，但不会写入用户评估记录。",
             )
         with storage_note_col:
-            st.caption("保存后可回到用户记录页查看历史趋势；不保存不会影响本次结果。")
-    st.session_state.assessment_storage_consent = storage_consent
+            st.caption("保存后可在用户记录中查看历史趋势；不保存不影响本次结果。")
+        st.session_state.assessment_storage_consent = storage_consent
+
+    if mode == "companion":
+        render_companion_chat(api_key)
+        return
 
     users = backend.list_users()
     user_by_id = {u["id"]: u for u in users}
@@ -8759,16 +9479,9 @@ if not ensure_auth_session():
 account = st.session_state.get("auth_account") or {}
 is_admin = account.get("role") == "admin"
 admin_console_page = st.session_state.get("admin_console_page", "工作台")
-render_header(
-    show_admin_menu=is_admin,
-    admin_console_page=admin_console_page,
-)
-if welcome_name := st.session_state.pop("login_welcome", None):
-    st.toast(f"欢迎回来，{welcome_name}")
 init_state()
 prime_backend_version()
 auto_sync_backend()
-api_key = render_sidebar()
 
 if is_admin:
     page_defs = [
@@ -8786,6 +9499,7 @@ if is_admin:
         ("数据优化", render_data_cache),
         ("后台任务", render_jobs),
     ]
+    nav_groups = ADMIN_NAV_GROUPS
 else:
     page_defs = [
         ("风险评估", lambda: render_assessment(api_key)),
@@ -8793,26 +9507,37 @@ else:
         ("个人主页", render_account_profile),
         ("系统说明", render_about),
     ]
+    nav_groups = USER_NAV_GROUPS
 
 console_pages = {
     "账号管理": render_account_admin,
     "个人主页": render_account_profile,
     "系统说明": render_about,
 }
+apply_tab_navigation()
+nav_labels = [label for label, _ in page_defs]
+if st.session_state.get("main_nav") not in nav_labels:
+    st.session_state.main_nav = nav_labels[0]
+selected_nav = str(st.session_state.main_nav)
+header_page = (
+    admin_console_page
+    if is_admin and admin_console_page in console_pages
+    else selected_nav
+)
+
+render_header(
+    show_admin_menu=True,
+    admin_console_page=admin_console_page,
+    current_page=header_page,
+    is_admin=is_admin,
+    menu_nav_groups=nav_groups,
+)
+if welcome_name := st.session_state.pop("login_welcome", None):
+    st.toast(f"欢迎回来，{welcome_name}")
+api_key = render_sidebar(nav_groups=nav_groups, selected_nav=header_page)
+
 if is_admin and admin_console_page in console_pages:
     console_pages[admin_console_page]()
 else:
-    apply_tab_navigation()
-    nav_labels = [label for label, _ in page_defs]
-    if st.session_state.get("main_nav") not in nav_labels:
-        st.session_state.main_nav = nav_labels[0]
-    selected = st.radio(
-        "功能导航",
-        options=nav_labels,
-        key="main_nav",
-        horizontal=True,
-        label_visibility="collapsed",
-        format_func=format_nav_label,
-    )
     renderers = dict(page_defs)
-    renderers[selected]()
+    renderers[selected_nav]()
