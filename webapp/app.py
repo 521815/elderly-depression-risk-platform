@@ -1810,8 +1810,20 @@ def inject_css() -> None:
         }
         h4 {
             margin: 1.25rem 0 0.55rem;
+            position: relative;
+            padding-left: 0.62rem;
             font-size: 1.04rem;
             line-height: 1.35;
+        }
+        h4::before {
+            content: "";
+            position: absolute;
+            left: 0;
+            top: 0.2em;
+            bottom: 0.16em;
+            width: 2px;
+            border-radius: 2px;
+            background: #b47b3f;
         }
         [data-testid="stCaptionContainer"] p {
             color: #5b6d70;
@@ -2064,6 +2076,19 @@ def inject_css() -> None:
             border: 1px solid #d2ded9;
             border-radius: 3px;
             overflow: hidden;
+        }
+        [data-testid="stPlotlyChart"] {
+            padding: 0.4rem 0.35rem 0.15rem;
+            border: 1px solid #d3ddd8;
+            border-radius: 5px;
+            background: #ffffff;
+            box-shadow: 0 7px 20px rgba(18, 49, 47, 0.035);
+        }
+        [data-testid="stJson"] {
+            padding: 0.75rem;
+            border: 1px solid #d4dfda;
+            border-radius: 5px;
+            background: #f8faf8;
         }
         [data-testid="stFileUploaderDropzoneInstructions"] > div > span:first-child,
         [data-testid="stFileUploaderDropzoneInstructions"] > div > span:last-child {
@@ -8511,10 +8536,33 @@ def render_data_health() -> None:
     warnings = report.get("warnings", [])
     if not issues and not warnings:
         st.success("所有数据源均通过健康检查。")
-    for item in issues:
-        st.error(f"{item.get('source', '')}：{item.get('message', '')}")
-    for item in warnings:
-        st.warning(f"{item.get('source', '')}：{item.get('message', '')}")
+    else:
+        if issues:
+            st.error(f"发现 {len(issues)} 个阻断问题，需要先处理后再用于训练或评估。")
+        if warnings:
+            st.warning(
+                f"发现 {len(warnings)} 个风险提示，不阻断运行，但需要在汇报和模型卡中说明。"
+            )
+        checks = pd.DataFrame(
+            [
+                {
+                    "级别": "阻断",
+                    "数据源": item.get("source", "未标注"),
+                    "说明": item.get("message", ""),
+                }
+                for item in issues
+            ]
+            + [
+                {
+                    "级别": "提示",
+                    "数据源": item.get("source", "未标注"),
+                    "说明": item.get("message", ""),
+                }
+                for item in warnings
+            ]
+        )
+        with st.expander("查看检查明细", expanded=bool(issues)):
+            st.dataframe(checks, width="stretch", hide_index=True)
 
     sources = report.get("sources", {})
     charls = sources.get("charls", {})
