@@ -2349,14 +2349,21 @@ def inject_css() -> None:
             letter-spacing: 0.04em;
         }
         [data-testid="stSidebar"] [class*="st-key-sidebar_nav_"] button {
-            min-height: 2.05rem;
-            padding: 0.24rem 0.34rem;
+            min-height: 2.42rem;
+            padding: 0.3rem 0.38rem;
             border-color: rgba(219, 235, 229, 0.10);
             border-radius: 3px;
             background: rgba(255, 255, 255, 0.025);
-            color: #c9d9d5;
+            color: #d2dfdc;
             font-size: 0.67rem;
             font-weight: 620;
+            line-height: 1.22;
+            text-align: left;
+        }
+        [data-testid="stSidebar"] [class*="st-key-sidebar_nav_"] button p {
+            width: 100%;
+            white-space: pre-line;
+            text-align: left;
         }
         [data-testid="stSidebar"] [class*="st-key-sidebar_nav_"] button:hover {
             border-color: rgba(192, 218, 210, 0.26);
@@ -2559,7 +2566,38 @@ def inject_css() -> None:
             transform: translateY(-2px);
         }
         [data-testid="stChatMessage"] {
+            margin: 0 8% 0.55rem 0;
+            padding: 0.2rem 0.65rem;
+            border: 1px solid #d6e1dc;
+            border-left: 3px solid #2f7469;
+            border-radius: 6px;
+            background: #f8faf8;
             animation: message-in 220ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+        }
+        [data-testid="stChatMessage"]:has([data-testid="chatAvatarIcon-user"]) {
+            margin: 0 0 0.55rem 8%;
+            border: 0;
+            border-right: 3px solid #b47b3f;
+            background: #173b3a;
+        }
+        [data-testid="stChatMessage"]:has([data-testid="chatAvatarIcon-user"]) p,
+        [data-testid="stChatMessage"]:has([data-testid="chatAvatarIcon-user"]) li {
+            color: #f4f8f6;
+        }
+        [data-testid="stChatInput"] {
+            min-height: 3rem;
+            padding: 0.2rem;
+            border-color: #bacac4;
+            border-radius: 6px;
+            background: #ffffff;
+            box-shadow: 0 9px 24px rgba(18, 49, 47, 0.06);
+        }
+        [data-testid="stChatInput"]:focus-within {
+            border-color: #2f7469;
+            box-shadow: 0 0 0 3px rgba(47, 116, 105, 0.10);
+        }
+        [data-testid="stSpinner"] {
+            color: #42655f;
         }
         div[data-testid="stPopoverBody"] {
             transform-origin: top right;
@@ -4824,7 +4862,7 @@ def render_sidebar(
             f'<div class="sidebar-account">'
             f'<div class="sidebar-account-top">'
             f'<div class="sidebar-account-label">当前账号 · {role_text}</div>'
-            f'<span class="sidebar-ready"><i></i>{ready_count}/{len(status_rows)} 就绪</span>'
+            f'<span class="sidebar-ready"><i></i>核心 {ready_count}/{len(status_rows)}</span>'
             f"</div>"
             f'<div class="sidebar-account-name">'
             f'{account.get("display_name") or account.get("username")}'
@@ -4848,7 +4886,7 @@ def render_sidebar(
                     for column, label in zip(button_cols, chunk):
                         with column:
                             if st.button(
-                                label,
+                                format_nav_label(label),
                                 key=f"sidebar_nav_{label}",
                                 type=(
                                     "primary"
