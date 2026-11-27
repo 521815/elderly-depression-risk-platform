@@ -2,42 +2,42 @@
   "model_path": "/Users/yellowich/Desktop/大创/老年抑郁风险预测大模型/output/dialogue_intent_model.pkl",
   "modes": {
     "interview": {
-      "samples": 9161,
-      "train_samples": 7261,
-      "test_samples": 1900,
+      "samples": 9747,
+      "train_samples": 7556,
+      "test_samples": 2191,
       "labels": 15,
-      "accuracy": 0.4031578947368421,
-      "macro_f1": 0.35436290451109126,
+      "accuracy": 0.5015974440894568,
+      "macro_f1": 0.32927270324448593,
       "validation_strategy": "grouped_seed_holdout",
       "threshold_analysis": {
         "0.4": {
-          "coverage": 0.25157894736842107,
-          "accuracy": 0.797071129707113
+          "coverage": 0.360109539023277,
+          "accuracy": 0.8884664131812421
         },
         "0.5": {
-          "coverage": 0.13789473684210526,
-          "accuracy": 0.9961832061068703
+          "coverage": 0.22957553628480146,
+          "accuracy": 0.9880715705765407
         },
         "0.55": {
-          "coverage": 0.12210526315789473,
-          "accuracy": 1.0
+          "coverage": 0.19808306709265175,
+          "accuracy": 0.9907834101382489
         },
         "0.6": {
-          "coverage": 0.11473684210526315,
-          "accuracy": 1.0
+          "coverage": 0.18575992697398447,
+          "accuracy": 0.995085995085995
         },
         "0.7": {
-          "coverage": 0.10526315789473684,
+          "coverage": 0.12962117754450023,
           "accuracy": 1.0
         }
       },
       "label_distribution": {
-        "somatic": 2181,
-        "safety": 1204,
-        "negative_cognition": 1053,
+        "somatic": 2321,
+        "safety": 1764,
+        "negative_cognition": 1101,
         "interest": 948,
-        "sleep": 919,
-        "mood": 869,
+        "mood": 917,
+        "sleep": 709,
         "cognition": 691,
         "social": 624,
         "medication": 96,
@@ -50,45 +50,45 @@
       }
     },
     "companion": {
-      "samples": 1440,
-      "train_samples": 1136,
+      "samples": 1520,
+      "train_samples": 1216,
       "test_samples": 304,
       "labels": 15,
-      "accuracy": 0.28289473684210525,
-      "macro_f1": 0.22329881015609535,
+      "accuracy": 0.3190789473684211,
+      "macro_f1": 0.26462920126315903,
       "validation_strategy": "grouped_seed_holdout",
       "threshold_analysis": {
         "0.4": {
-          "coverage": 0.009868421052631578,
-          "accuracy": 1.0
+          "coverage": 0.07236842105263158,
+          "accuracy": 0.8636363636363636
         },
         "0.5": {
-          "coverage": 0.0,
-          "accuracy": 0.0
+          "coverage": 0.019736842105263157,
+          "accuracy": 0.8333333333333334
         },
         "0.55": {
-          "coverage": 0.0,
-          "accuracy": 0.0
+          "coverage": 0.006578947368421052,
+          "accuracy": 1.0
         },
         "0.6": {
-          "coverage": 0.0,
-          "accuracy": 0.0
+          "coverage": 0.006578947368421052,
+          "accuracy": 1.0
         },
         "0.7": {
-          "coverage": 0.0,
-          "accuracy": 0.0
+          "coverage": 0.003289473684210526,
+          "accuracy": 1.0
         }
       },
       "label_distribution": {
+        "health": 144,
+        "negative_event": 128,
         "greeting": 96,
         "weather": 96,
         "food": 96,
         "family": 96,
         "hobby": 96,
-        "health": 96,
         "memory": 96,
         "positive_event": 96,
-        "negative_event": 96,
         "loneliness": 96,
         "festival": 96,
         "pet": 96,

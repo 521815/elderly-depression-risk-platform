@@ -4,8 +4,10 @@
 
 当前版本：
 
-- `interview_v2`：温情问询与半结构化筛查
-- `companion_v2`：日常陪伴式聊天
+- `interview_v3`：温情问询、半结构化筛查与用户主动选择支持方式
+- `companion_v3`：日常陪伴、自然承接积极信息与低负担行动
+
+`interview_v2` 和 `companion_v2` 保留用于行为对照和回滚。
 
 发布流程：
 

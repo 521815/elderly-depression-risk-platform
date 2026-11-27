@@ -280,6 +280,10 @@ def run_case(case: dict) -> dict:
         ),
         "single_question": reply.count("？") <= 1,
         "no_repeated_apology": "谢谢您愿意说这些，我听到了" not in reply,
+        "no_fixed_service_thanks": "谢谢您愿意说得这么具体" not in reply,
+        "no_self_referential_repair": (
+            "您刚才的重点是“您刚才说的话”" not in reply
+        ),
         "expected_terms": all(
             term in reply for term in case.get("expected_terms", [])
         ),

@@ -1,40 +1,40 @@
 {
   "model_path": "/Users/yellowich/Desktop/大创/老年抑郁风险预测大模型/output/dialogue_response_policy.pkl",
-  "samples": 291,
+  "samples": 315,
   "labels": 8,
-  "accuracy": 0.9690239625949737,
+  "accuracy": 0.9714285714285713,
   "macro_f1": 0.9596353233969334,
-  "high_confidence_coverage": 0.2747516072472238,
-  "high_confidence_accuracy": 0.9875,
+  "high_confidence_coverage": 0.292063492063492,
+  "high_confidence_accuracy": 0.9888888888888889,
   "folds": [
     {
-      "accuracy": 0.9830508474576272,
+      "accuracy": 0.9841269841269841,
       "macro_f1": 0.9725274725274725,
-      "coverage": 0.3220338983050847,
+      "coverage": 0.3492063492063492,
       "high_conf_accuracy": 1.0
     },
     {
-      "accuracy": 0.9310344827586207,
+      "accuracy": 0.9365079365079365,
       "macro_f1": 0.9009803921568627,
-      "coverage": 0.27586206896551724,
-      "high_conf_accuracy": 0.9375
+      "coverage": 0.2857142857142857,
+      "high_conf_accuracy": 0.9444444444444444
     },
     {
       "accuracy": 1.0,
       "macro_f1": 1.0,
-      "coverage": 0.25862068965517243,
+      "coverage": 0.2222222222222222,
       "high_conf_accuracy": 1.0
     },
     {
-      "accuracy": 0.9827586206896551,
+      "accuracy": 0.9841269841269841,
       "macro_f1": 0.9653846153846154,
-      "coverage": 0.3103448275862069,
+      "coverage": 0.3333333333333333,
       "high_conf_accuracy": 1.0
     },
     {
-      "accuracy": 0.9482758620689655,
+      "accuracy": 0.9523809523809523,
       "macro_f1": 0.9592841369157159,
-      "coverage": 0.20689655172413793,
+      "coverage": 0.2698412698412698,
       "high_conf_accuracy": 1.0
     }
   ]

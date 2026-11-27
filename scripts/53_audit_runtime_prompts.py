@@ -22,6 +22,8 @@ CHECKS = {
         "topic_switch": "中途换题",
         "user_correction": "用户纠正",
         "stop_control": "用户明确表示停止",
+        "no_repeated_opener": "不重复同一开场",
+        "action_preference": "用户想一起想办法",
         "structured_output": "只输出一个合法 JSON",
     },
     "companion": {
@@ -31,6 +33,8 @@ CHECKS = {
         "safety_escalation": "120、110或12356",
         "support_choice": "继续听",
         "stop_control": "用户想停止",
+        "positive_valence": "先顺着积极含义回应",
+        "no_repeated_opener": "不连续重复",
         "structured_output": "只输出一个合法 JSON",
     },
 }

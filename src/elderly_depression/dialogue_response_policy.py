@@ -304,6 +304,8 @@ def generate_training_rows() -> list[dict]:
             "最近睡得挺好",
             "睡眠不错，白天也有精神",
             "这几天睡得踏实",
+            "作息规律以后白天也轻松一些",
+            "这两天睡够了，精神头不错",
         ],
     }
     for strategy, phrases in component_rows.items():

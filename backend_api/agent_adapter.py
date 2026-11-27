@@ -421,7 +421,7 @@ CORE_FOLLOWUP_CLOSERS = {
 
 STRONG_CARE_RESPONSES = {
     "mood": (
-        "听到您最近经常被这些情绪困住，我有些担心，也很感谢您愿意说出来。"
+        "听到您最近经常被这些情绪困住，我有些担心。"
         "这不是您太脆弱，一个人扛着会很累。"
         "您愿意的话，可以先联系一位信任的家人、朋友或医生，让对方知道您最近的状态；"
         "如果低落已经持续两周以上，或影响了吃饭、睡眠和日常活动，建议尽快做专业评估。"
@@ -434,7 +434,7 @@ STRONG_CARE_RESPONSES = {
         "现在最影响您的是忘事、找不到东西，还是注意力难以集中？"
     ),
     "negative_cognition": (
-        "听到您这样看自己，我很担心，也很感谢您愿意把这些话说出来。"
+        "听到您这样看自己，我很担心。"
         "这种自责和没盼头的感觉会把人压得很累，但不是您的错，也不需要一个人扛。"
         "您愿意的话，请先告诉一位信任的家人、朋友或医生，让对方陪您一会儿；"
         "如果出现伤害自己的想法，请立即联系家人并拨打 120、110 或心理援助热线 12356。"
@@ -494,6 +494,7 @@ UNCERTAIN_SHORT_ANSWERS = {
     "还行吧",
     "一般",
     "说不清",
+    "说不清楚",
     "不知道",
     "不确定",
     "不好说",
@@ -701,7 +702,7 @@ COMPANION_KEYWORDS = {
 
 
 SAFETY_REPLY = (
-    "谢谢您愿意跟我说这些，这一定很不容易。您现在的安全最重要。"
+    "听到您这样说，我很担心。您现在的安全最重要。"
     "如果有伤害自己的想法，请先不要一个人扛着，马上告诉身边可信的家人或医生；"
     "紧急时请拨打当地精神卫生热线或急救电话。我在这里陪您，但无法替代专业急救。"
     "您现在安全吗？身边有没有能马上联系到的人？"
@@ -718,7 +719,7 @@ COMPANION_GREETING = (
 )
 
 COMPANION_SAFETY_REPLY = (
-    "谢谢您愿意跟我说这些。您对我来说很重要，安全最要紧。"
+    "听到您这样说，我很担心。您对我来说很重要，安全最要紧。"
     "如果有伤害自己的想法，请先告诉身边可信的家人或医生，紧急时拨打当地精神卫生热线。"
     "我会继续在这里陪着您。您现在安全吗？身边有人能马上陪着您吗？"
 )
@@ -1210,10 +1211,24 @@ class AgentAdapter:
         state.last_alliance_repair = "misunderstanding"
         state.pending_slot = "alliance_repair"
         state.pending_topic = state.current_topic
-        previous = state.previous_focus_text or "您刚才说的话"
+        previous = re.sub(r"\s+", "", state.previous_focus_text or "")
+        previous_is_meta = (
+            not previous
+            or previous in {"您刚才说的话", compact}
+            or any(
+                phrase in previous
+                for phrase in BOT_DISSATISFACTION_PHRASES
+            )
+        )
+        if previous_is_meta:
+            return (
+                "是我刚才没接准，不是您表达得不好。"
+                "您可以直接说现在最想聊哪件事，我按您的新重点来；"
+                "也可以先换个话题。"
+            )
         return (
             f"是我刚才没接准，不是您表达得不好。您刚才的重点是“{previous}”。"
-            "我会按这个来。您愿意先接着这件事说，还是换个话题？"
+            "我会按这个继续。您愿意先接着说，还是换个话题？"
         )
 
     @staticmethod
@@ -1310,33 +1325,38 @@ class AgentAdapter:
                 "好，我先不急着给建议。您从最想说的地方开始，"
                 "我在这儿听着，不打断您。"
             )
-        try:
-            from elderly_depression.dialogue_knowledge import retrieve_guidance
-
-            topic = {
-                "negative_event": "mood",
-                "loneliness": "social",
-                "dignity": "negative_cognition",
-            }.get(state.support_preference_topic, state.current_topic)
-            guidance = retrieve_guidance(topic, text, "moderate", max_results=1)
-        except Exception:
-            guidance = []
-        if guidance:
-            item = guidance[0]
-            action = (
-                f"{item['validation']} {item['action']} "
-                f"{item['escalation']}"
-            )
-        else:
-            action = (
-                "可以先选一件十分钟内能完成的小事，或者联系一个信任的人。"
-            )
+        topic = {
+            "negative_event": "mood",
+            "loneliness": "social",
+            "dignity": "negative_cognition",
+        }.get(state.support_preference_topic, state.current_topic)
+        action = {
+            "social": (
+                "好，我们一起找个今天能做到的办法：给最信任的人发一句"
+                "“想聊几句”，或者约熟悉的邻居走十分钟。"
+                "您更愿意先从哪一步开始，先发消息还是先打电话？"
+            ),
+            "mood": (
+                "好，我们先挑一件今天能完成的小事：把最烦的那一点写下来，"
+                "或者给可信的人发句话。不用一次把整件事解决。"
+                "您更愿意先写下来，还是先联系一个人？"
+            ),
+            "negative_cognition": (
+                "好，先别一个人反复想。今天可以找一位家人或老朋友，"
+                "只说一句“最近我总觉得自己成了负担”，让对方先陪您聊几分钟。"
+                "您更愿意找谁说？"
+            ),
+        }.get(
+            topic,
+            "好，我们先选一件十分钟内能完成的小事：联系一个信任的人，"
+            "或者把最困扰的一点写下来。您更愿意先做哪一个？",
+        )
         if preference == "both":
             return (
-                "好，我先接住您的感受，再一起想办法。"
-                f"{action} 您更愿意先从哪一步开始？"
+                "好，我先接住您的感受，再陪您一起想办法。"
+                f"{action}"
             )
-        return f"{action} 您更愿意先从哪一步开始？"
+        return action
 
     @staticmethod
     def _handle_general_medical(
@@ -2533,6 +2553,12 @@ class AgentAdapter:
         analysis: UtteranceAnalysis,
     ) -> str | None:
         focus = analysis.focus_text or text
+        compact_focus = re.sub(r"\s+", "", focus)
+        if (
+            mode == "interview"
+            and compact_focus in UNCERTAIN_SHORT_ANSWERS
+        ):
+            return self._uncertain_clarification(state.current_topic)
         prediction = self._intent_prediction(focus, mode)
         if prediction is None and focus != text:
             prediction = self._intent_prediction(text, mode)
@@ -3646,8 +3672,8 @@ AGENT_CONTRACT = {
     "purpose": "自适应老年抑郁筛查访谈 Agent；本地意图、响应策略和检索知识优先，用户明确同意后才使用第三方模型。",
     "endpoint": "POST /api/agent/chat",
     "prompt_versions": {
-        "interview": "interview_v2",
-        "companion": "companion_v2",
+        "interview": "interview_v3",
+        "companion": "companion_v3",
     },
     "request": {
         "session_id": "string",

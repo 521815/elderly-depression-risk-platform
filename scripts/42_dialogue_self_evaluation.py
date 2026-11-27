@@ -170,6 +170,25 @@ DIGNITY_LIFE_REVIEW_CASES = [
     ("我想说说这一辈子最骄傲的事", ["人生", "经历"]),
 ]
 
+ITERATION_V3_CASES = [
+    ("interview", [("最近心里很难受，总想哭", ["难受", "持续", "影响"])]),
+    (
+        "interview",
+        [("你答非所问，我不想继续这样聊", ["没接准", "换个话题"])],
+    ),
+    (
+        "companion",
+        [("今天身体还行", ["松快", "精神", "出去走走"])],
+    ),
+    (
+        "companion",
+        [
+            ("今天心里很烦，什么都不想做", ["先听", "想办法"]),
+            ("一起想办法", ["今天能完成", "先写下来", "先联系"]),
+        ],
+    ),
+]
+
 
 def _run_case(agent: AgentAdapter, mode: str, cases: list[tuple[str, list[str]]], session: str) -> list[dict]:
     messages = []
@@ -288,6 +307,13 @@ def main() -> None:
             "companion",
             [case],
             f"self-dignity-life-review-{index}",
+        )
+    for index, (mode, turns) in enumerate(ITERATION_V3_CASES):
+        results += _run_case(
+            agent,
+            mode,
+            turns,
+            f"self-iteration-v3-{index}",
         )
     results += _run_case(agent, "companion", COMPANION_CASES, "self-companion")
 

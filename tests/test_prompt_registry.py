@@ -17,30 +17,33 @@ class PromptRegistryTests(unittest.TestCase):
             completed_topics="无",
             planned_topic="兴趣与愉悦",
         )
-        self.assertEqual(version, "interview_v2")
+        self.assertEqual(version, "interview_v3")
         self.assertIn("睡眠与精力", prompt)
         self.assertIn("兴趣与愉悦", prompt)
         self.assertIn("最多一个问号", prompt)
         self.assertIn("不诊断抑郁症", prompt)
         self.assertIn("只输出一个合法 JSON", prompt)
+        self.assertIn("不重复同一开场", prompt)
+        self.assertIn("用户想一起想办法", prompt)
         self.assertNotIn("[[", prompt)
 
     def test_companion_prompt_stays_out_of_screening(self):
         prompt, version = load_prompt("companion")
-        self.assertEqual(version, "companion_v2")
+        self.assertEqual(version, "companion_v3")
         self.assertIn("不做筛查量表", prompt)
         self.assertIn("最多一个问号", prompt)
         self.assertIn("120、110或12356", prompt)
         self.assertIn("用户想停止", prompt)
+        self.assertIn("先顺着积极含义回应", prompt)
         self.assertNotIn("[[", prompt)
 
     def test_prompt_versions_are_exposed(self):
         versions = prompt_versions()
-        self.assertEqual(versions["interview"], "interview_v2")
-        self.assertEqual(versions["companion"], "companion_v2")
+        self.assertEqual(versions["interview"], "interview_v3")
+        self.assertEqual(versions["companion"], "companion_v3")
         self.assertEqual(
             AGENT_CONTRACT["prompt_versions"]["interview"],
-            "interview_v2",
+            "interview_v3",
         )
 
     def test_llm_prompt_contains_structured_runtime_state(self):
@@ -91,7 +94,7 @@ class PromptRegistryTests(unittest.TestCase):
         )
         self.assertIn("几点上床", reply)
         system_prompt = completions.kwargs["messages"][0]["content"]
-        self.assertIn("interview_v2", agent.last_prompt_version)
+        self.assertIn("interview_v3", agent.last_prompt_version)
         self.assertIn("## 本轮可核对状态", system_prompt)
         self.assertIn("当前主题：睡眠与精力", system_prompt)
         self.assertIn("本轮真正焦点", system_prompt)

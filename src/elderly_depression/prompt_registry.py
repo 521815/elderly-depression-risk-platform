@@ -10,12 +10,12 @@ PROMPT_ROOT = PROJECT_ROOT / "prompts"
 
 PROMPT_SPECS = {
     "interview": {
-        "version": "interview_v2",
-        "path": PROMPT_ROOT / "runtime" / "interview_v2.md",
+        "version": "interview_v3",
+        "path": PROMPT_ROOT / "runtime" / "interview_v3.md",
     },
     "companion": {
-        "version": "companion_v2",
-        "path": PROMPT_ROOT / "runtime" / "companion_v2.md",
+        "version": "companion_v3",
+        "path": PROMPT_ROOT / "runtime" / "companion_v3.md",
     },
 }
 
