@@ -7129,7 +7129,7 @@ def render_mpdd_dataset() -> None:
 
 
 def render_cmdc_external() -> None:
-    st.subheader("CMDC 中文多模态访谈")
+    st.markdown("#### CMDC 中文多模态访谈")
     st.caption(
         "用于中文访谈文本、语音和面部信号的外部验证。"
         "该数据是混合成人样本，不是老年专属队列，不进入当前老年风险主评分。"
@@ -7641,7 +7641,7 @@ def render_cmdc_external() -> None:
 
 
 def render_modma_auxiliary() -> None:
-    st.subheader("MODMA 辅助语音")
+    st.markdown("#### MODMA 辅助语音")
     st.warning(
         "MODMA 为 18–55 岁临床 MDD/健康对照数据，不是老年专属队列。"
         "只用于跨年龄段预训练、迁移和鲁棒性研究，不进入当前老年主评分。"
