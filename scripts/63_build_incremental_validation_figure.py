@@ -32,10 +32,11 @@ def main() -> None:
         "B1": "B1\n人口学",
         "B2": "B2\n理论核心",
         "B3": "B3\n理论完整",
+        "B3T": "B3T\n+共病轨迹",
         "B4": "B4\n随机森林",
+        "B4T": "B4T\n森林+轨迹",
     }
     ax = axes[0]
-    colors = [COLORS[0], COLORS[1], COLORS[2], COLORS[3], COLORS[4]]
     x = list(range(len(charls)))
     ax.bar(
         x,
@@ -45,7 +46,7 @@ def main() -> None:
             charls["auc_ci_high"] - charls["auc"],
         ],
         capsize=3,
-        color=colors,
+        color=[COLORS[index % len(COLORS)] for index in x],
         alpha=0.88,
     )
     ax.set_xticks(x)

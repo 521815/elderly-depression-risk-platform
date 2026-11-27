@@ -24,6 +24,10 @@ from sklearn.preprocessing import StandardScaler
 from ..config import RANDOM_STATE
 from ..data.mpdd import add_mpdd_binary_target
 from ..evaluation import imbalanced_metrics_frame
+from ..features.comorbidity_trajectory import (
+    COMORBIDITY_TRAJECTORY_FEATURES,
+    append_comorbidity_trajectory_features,
+)
 from .fusion import expected_calibration_error
 from .multimodal import _fit_modality
 
@@ -84,7 +88,7 @@ def _available(df: pd.DataFrame, columns: list[str]) -> list[str]:
 
 def _pipeline(model) -> object:
     return make_pipeline(
-        SimpleImputer(strategy="median"),
+        SimpleImputer(strategy="median", keep_empty_features=True),
         StandardScaler(),
         model,
     )
@@ -92,7 +96,7 @@ def _pipeline(model) -> object:
 
 def _tree_pipeline(model) -> object:
     return make_pipeline(
-        SimpleImputer(strategy="median"),
+        SimpleImputer(strategy="median", keep_empty_features=True),
         model,
     )
 
@@ -237,6 +241,7 @@ def run_charls_theory_baselines(
     """Evaluate pre-specified theory baselines with subject-grouped CV."""
     data = df.dropna(subset=["depression", "id"]).copy()
     data["id"] = data["id"].astype(str)
+    data = append_comorbidity_trajectory_features(data)
     y = data["depression"].astype(int)
     groups = data["id"]
 
@@ -252,6 +257,11 @@ def run_charls_theory_baselines(
         + _available(data, CHARLS_CHRONIC_FEATURES)
         + _available(data, CHARLS_COGNITIVE_FEATURES)
     )
+    trajectory_features = _available(
+        data,
+        COMORBIDITY_TRAJECTORY_FEATURES,
+    )
+    theory_with_trajectory = theory_full + trajectory_features
 
     specs = [
         (
@@ -283,10 +293,24 @@ def run_charls_theory_baselines(
             "logistic",
         ),
         (
+            "B3T",
+            "logistic",
+            "theory_full_with_comorbidity_trajectory",
+            theory_with_trajectory,
+            "logistic",
+        ),
+        (
             "B4",
             "random_forest",
             "theory_full",
             theory_full,
+            "forest",
+        ),
+        (
+            "B4T",
+            "random_forest",
+            "theory_full_with_comorbidity_trajectory",
+            theory_with_trajectory,
             "forest",
         ),
     ]
@@ -408,6 +432,8 @@ def run_charls_theory_baselines(
         ("B1", "B2"),
         ("B2", "B3"),
         ("B3", "B4"),
+        ("B3", "B3T"),
+        ("B4", "B4T"),
     ]:
         reference = oof_by_model[reference_id]
         candidate = oof_by_model[candidate_id]
@@ -455,6 +481,10 @@ def run_charls_theory_baselines(
             "demographic": demographic,
             "theory_core": theory_core,
             "theory_full": theory_full,
+            "comorbidity_trajectory": trajectory_features,
+            "theory_full_with_comorbidity_trajectory": (
+                theory_with_trajectory
+            ),
             "excluded": [
                 "cesd_score",
                 "depression",
@@ -684,8 +714,21 @@ def cross_source_audit(
                     "mobility_score",
                     "social_work",
                     "cesd_score",
+                    "chronic_hibpe",
+                    "chronic_arthre",
+                    "chronic_dyslipe",
                 ],
-            ),
+            )
+            | {
+                "longitudinal_wave": (
+                    "wave" in charls.columns
+                    and "id" in charls.columns
+                ),
+                "chronic_onset_age": any(
+                    column.endswith("_onset_age")
+                    for column in charls.columns
+                ),
+            },
         },
         "MPDD": {
             "subjects": (
@@ -857,6 +900,14 @@ def run_incremental_validation(
             "charls_theory_delta_auc": float(
                 charls_summary.loc["B2", "auc"]
                 - charls_summary.loc["B1", "auc"]
+            ),
+            "charls_comorbidity_trajectory_delta_auc_logistic": float(
+                charls_summary.loc["B3T", "auc"]
+                - charls_summary.loc["B3", "auc"]
+            ),
+            "charls_comorbidity_trajectory_delta_auc_forest": float(
+                charls_summary.loc["B4T", "auc"]
+                - charls_summary.loc["B4", "auc"]
             ),
             "mpdd_full_auc": float(full_mpdd["auc_mean"]),
             "mpdd_full_pr_auc": float(full_mpdd["pr_auc_mean"]),

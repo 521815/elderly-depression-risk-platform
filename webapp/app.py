@@ -7982,7 +7982,7 @@ def render_incremental_validation() -> None:
     render_page_intro(
         "增量验证",
         "EVIDENCE · ABLATION & BOUNDARIES",
-        "比较理论基线、传统模型和同人级模态组合；跨队列数据只做证据审计，不拼接不同受试者。",
+        "比较理论基线、静态共病、疾病轨迹、传统模型和同人级模态组合；跨队列数据只做证据审计。",
     )
     if st.button(
         "运行理论基线与模态消融",
@@ -8010,23 +8010,56 @@ def render_incremental_validation() -> None:
     audit = reports.get("cross_source_audit") or {}
     meta = reports.get("meta") or {}
 
-    metrics = st.columns(3)
+    baseline_labels = {
+        "B0": "B0 · 患病率",
+        "B1": "B1 · 人口学",
+        "B2": "B2 · 理论核心",
+        "B3": "B3 · 静态共病完整",
+        "B3T": "B3T · 共病轨迹",
+        "B4": "B4 · 随机森林",
+        "B4T": "B4T · 森林 + 轨迹",
+    }
+    feature_set_labels = {
+        "population_prevalence": "训练折患病率",
+        "demographic": "人口学",
+        "theory_core": "理论核心",
+        "theory_full": "理论完整 + 静态慢病",
+        "theory_full_with_comorbidity_trajectory": "理论完整 + 静态慢病 + 共病轨迹",
+    }
+
+    metrics = st.columns(4)
     if not charls.empty and "auc" in charls.columns:
         best_charls = charls.sort_values("auc", ascending=False).iloc[0]
         metrics[0].metric(
             "CHARLS 最优基线",
             f"{best_charls.get('baseline_id', '-')} · AUC {float(best_charls['auc']):.3f}",
         )
+    trajectory_comparison = charls_comparisons[
+        (charls_comparisons["reference"] == "B3")
+        & (charls_comparisons["candidate"] == "B3T")
+    ]
+    trajectory_delta = (
+        float(trajectory_comparison.iloc[0]["auc_delta"])
+        if not trajectory_comparison.empty
+        else None
+    )
+    metrics[1].metric(
+        "共病轨迹增量",
+        f"{trajectory_delta:+.3f}" if trajectory_delta is not None else "待验证",
+        help="B3T 相对 B3：加入波次可观察的疾病顺序、病程时间和级联特征。",
+    )
     if not mpdd.empty and "auc_mean" in mpdd.columns:
         candidates = mpdd[mpdd["modalities"] != "prevalence"]
         best_mpdd = candidates.sort_values("auc_mean", ascending=False).iloc[0]
-        metrics[1].metric(
+        metrics[2].metric(
             "MPDD 最优模态组合",
             f"AUC {float(best_mpdd['auc_mean']):.3f}",
         )
-        metrics[1].caption(str(best_mpdd.get("modalities", "-")).replace("+", " + "))
+        metrics[2].caption(
+            str(best_mpdd.get("modalities", "-")).replace("+", " + ")
+        )
     pairing = audit.get("pairing") or {}
-    metrics[2].metric(
+    metrics[3].metric(
         "CHARLS–MPDD 同人配对",
         "否" if pairing.get("CHARLS__MPDD") is False else "未确认",
     )
@@ -8057,6 +8090,12 @@ def render_incremental_validation() -> None:
                 "ece": "ECE",
                 "f1": "F1",
             }
+        )
+        display["编号"] = (
+            display["编号"].map(baseline_labels).fillna(display["编号"])
+        )
+        display["变量集"] = display["变量集"].map(feature_set_labels).fillna(
+            display["变量集"]
         )
         for column in ["AUC", "PR-AUC", "Brier", "ECE", "F1"]:
             display[column] = display[column].map(
@@ -8101,11 +8140,28 @@ def render_incremental_validation() -> None:
                     "brier_delta": "ΔBrier",
                 }
             )
+            comparison_display["参考基线"] = comparison_display["参考基线"].map(
+                baseline_labels
+            ).fillna(comparison_display["参考基线"])
+            comparison_display["新增对照"] = comparison_display["新增对照"].map(
+                baseline_labels
+            ).fillna(comparison_display["新增对照"])
             for column in comparison_display.columns[2:]:
                 comparison_display[column] = comparison_display[column].map(
                     lambda value: f"{float(value):+.3f}"
                 )
             st.dataframe(comparison_display, width="stretch", hide_index=True)
+        with st.expander("共病轨迹特征口径", expanded=False):
+            st.markdown(
+                "**B3T / B4T** 在不改变标签和受试者切分的前提下，加入："
+                "首次观察到慢病的波次、同波次多病标记、首个至第二个病种的间隔、"
+                "观测期内新诊断数量、疾病进展速度、中心疾病负担、末端疾病负担，"
+                "以及关节炎→高血压→血脂异常/心脏病/糖尿病等证据约束序列。\n\n"
+                "当前标准化表只有四轮疾病状态，没有原始问卷中的首次确诊年龄，"
+                "因此这里属于“波次观察轨迹”；已确保每一行只使用当前及既往波次，"
+                "不会读取未来诊断。方法依据：Chen et al., BMC Public Health, "
+                "2024, doi:10.1186/s12889-024-17890-7。"
+            )
 
     st.markdown("#### MPDD 同人级模态消融")
     if not mpdd.empty:

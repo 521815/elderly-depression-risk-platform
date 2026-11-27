@@ -43,6 +43,20 @@ def _charls_fixture() -> pd.DataFrame:
                     "serial7": subject % 5,
                     "cesd_score": 15 if label else 5,
                     "depression": label,
+                    "chronic_hibpe": int(subject % 4 == 0),
+                    "chronic_diabe": int(subject % 5 == 0),
+                    "chronic_cancre": int(subject % 11 == 0),
+                    "chronic_lunge": int(subject % 7 == 0),
+                    "chronic_hearte": int(subject % 6 == 0),
+                    "chronic_stroke": int(subject % 10 == 0),
+                    "chronic_psyche": int(subject % 8 == 0),
+                    "chronic_arthre": int(subject % 3 == 0),
+                    "chronic_dyslipe": int(subject % 6 == 1),
+                    "chronic_livere": int(subject % 12 == 0),
+                    "chronic_kidneye": int(subject % 9 == 0),
+                    "chronic_digeste": int(subject % 5 == 2),
+                    "chronic_asthmae": int(subject % 13 == 0),
+                    "chronic_memrye": int(subject % 14 == 0),
                 }
             )
     return pd.DataFrame(rows)
@@ -75,8 +89,14 @@ class IncrementalValidationTests(unittest.TestCase):
             n_bootstrap=5,
         )
         summary = result["summary"]
-        self.assertEqual(summary["baseline_id"].tolist(), ["B0", "B1", "B2", "B3", "B4"])
+        self.assertEqual(
+            summary["baseline_id"].tolist(),
+            ["B0", "B1", "B2", "B3", "B3T", "B4", "B4T"],
+        )
         self.assertNotIn("cesd_score", result["feature_sets"]["theory_full"])
+        self.assertTrue(result["feature_sets"]["comorbidity_trajectory"])
+        self.assertIn("B3", result["comparisons"]["reference"].tolist())
+        self.assertIn("B3T", result["comparisons"]["candidate"].tolist())
         self.assertTrue((summary["n_subjects"] == 30).all())
         self.assertIn("auc_ci_low", summary.columns)
 
