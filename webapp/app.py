@@ -4409,13 +4409,19 @@ def inject_auth_css() -> None:
             color: #68797c;
         }
         .auth-brand-card {
-            display: flex;
-            flex-direction: column;
-            min-height: clamp(535px, 70vh, 640px);
+            display: grid;
+            grid-template-rows: auto 1fr auto;
+            gap: 1.35rem;
+            min-height: clamp(620px, 74vh, 680px);
+            height: clamp(620px, 74vh, 680px);
             padding: 1.9rem 1.8rem;
         }
         .auth-brand-lockup {
-            margin-bottom: 2.4rem;
+            margin-bottom: 0;
+        }
+        .auth-brand-message {
+            align-self: center;
+            padding: 0.5rem 0;
         }
         .auth-stage-label {
             margin-top: 0;
@@ -4433,10 +4439,13 @@ def inject_auth_css() -> None:
             line-height: 1.72;
         }
         .auth-trust-row {
-            margin-top: auto;
+            margin-top: 0;
         }
         .st-key-auth_panel {
-            min-height: clamp(535px, 70vh, 640px);
+            display: flex;
+            flex-direction: column;
+            min-height: clamp(620px, 74vh, 680px);
+            height: clamp(620px, 74vh, 680px);
             padding: 2rem 2.15rem 1.7rem;
         }
         .auth-form-head h2 {
@@ -4467,6 +4476,7 @@ def inject_auth_css() -> None:
             }
             .auth-brand-card {
                 min-height: auto;
+                height: auto;
                 padding: 1.45rem;
                 margin-bottom: 0;
             }
@@ -4484,6 +4494,7 @@ def inject_auth_css() -> None:
             }
             .st-key-auth_panel {
                 min-height: auto;
+                height: auto;
                 padding: 1.3rem;
             }
         }
@@ -4569,11 +4580,13 @@ def render_auth_gate() -> None:
                         <div class="auth-brand-sub">Clinical research screening</div>
                     </div>
                 </div>
-                <div class="auth-stage-label">Risk screening workspace</div>
-                <h1>从一次对话<br>整理风险线索</h1>
-                <p class="auth-brand-copy">
-                    结合量表、共病背景与可用行为信号，生成可解释的科研风险提示。
-                </p>
+                <div class="auth-brand-message">
+                    <div class="auth-stage-label">Risk screening workspace</div>
+                    <h1>从一次对话<br>整理风险线索</h1>
+                    <p class="auth-brand-copy">
+                        结合量表、共病背景与可用行为信号，生成可解释的科研风险提示。
+                    </p>
+                </div>
                 <div class="auth-trust-row">
                     <span class="auth-trust-chip">本地处理优先</span>
                     <span class="auth-trust-chip">科研风险筛查</span>
