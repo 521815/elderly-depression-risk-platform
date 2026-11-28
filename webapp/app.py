@@ -2286,6 +2286,48 @@ def inject_css() -> None:
             min-width: 264px;
             background: #0b2725;
         }
+        [data-testid="stSidebar"][aria-expanded="true"]
+            button[data-testid="stBaseButton-headerNoPadding"] {
+            display: inline-flex !important;
+            align-items: center;
+            justify-content: center;
+            gap: 0.22rem;
+            width: auto !important;
+            min-width: 4.25rem !important;
+            height: 2.05rem !important;
+            padding: 0 0.5rem !important;
+            border: 1px solid rgba(210, 160, 94, 0.72) !important;
+            border-radius: 4px !important;
+            background: rgba(210, 160, 94, 0.13) !important;
+            color: #f0d3a8 !important;
+            box-shadow: none !important;
+            transition:
+                background-color 160ms ease,
+                border-color 160ms ease,
+                color 160ms ease,
+                transform 160ms ease !important;
+        }
+        [data-testid="stSidebar"][aria-expanded="true"]
+            button[data-testid="stBaseButton-headerNoPadding"]::after {
+            content: "收起";
+            color: inherit;
+            font-family: "Avenir Next", "PingFang SC", sans-serif;
+            font-size: 0.65rem;
+            font-weight: 720;
+            line-height: 1;
+        }
+        [data-testid="stSidebar"][aria-expanded="true"]
+            button[data-testid="stBaseButton-headerNoPadding"]:hover {
+            border-color: #d2a05e !important;
+            background: #d2a05e !important;
+            color: #102a28 !important;
+            transform: translateY(-1px);
+        }
+        [data-testid="stSidebar"][aria-expanded="true"]
+            button[data-testid="stBaseButton-headerNoPadding"] svg {
+            width: 1rem !important;
+            height: 1rem !important;
+        }
         [data-testid="stSidebar"][aria-expanded="false"] {
             width: 0 !important;
             min-width: 0 !important;
@@ -2302,37 +2344,45 @@ def inject_css() -> None:
         }
         .dsh-sidebar-restore {
             position: fixed !important;
-            top: 116px !important;
+            top: 112px !important;
             left: 0 !important;
             z-index: 99990 !important;
             display: none;
             align-items: center;
             justify-content: center;
-            width: 34px !important;
-            height: 48px !important;
-            padding: 0 !important;
-            overflow: hidden;
-            border: 1px solid #8ca8a1;
+            gap: 0.24rem;
+            width: 72px !important;
+            height: 36px !important;
+            padding: 0 0.48rem !important;
+            border: 1px solid #c28c4f;
             border-left: 0;
             border-radius: 0 6px 6px 0;
             background: #0b2725 !important;
-            color: transparent !important;
-            box-shadow: 7px 8px 18px rgba(18, 49, 47, 0.16);
-            color: #ffffff;
+            color: #ffffff !important;
+            box-shadow:
+                inset 3px 0 0 #d2a05e,
+                8px 9px 20px rgba(18, 49, 47, 0.22);
             cursor: pointer;
             font-family: "Avenir Next", sans-serif;
-            font-size: 23px;
-            font-weight: 500;
-            line-height: 1;
+            font-size: 0.66rem;
+            font-weight: 720;
+            line-height: 1.1;
+            white-space: nowrap;
             transition:
                 width 160ms cubic-bezier(0.2, 0.8, 0.2, 1),
                 background-color 160ms ease,
                 box-shadow 160ms ease;
         }
         .dsh-sidebar-restore:hover {
-            width: 40px !important;
-            background: #143b38 !important;
-            box-shadow: 9px 10px 22px rgba(18, 49, 47, 0.22);
+            width: 82px !important;
+            background: #163f3a !important;
+            box-shadow:
+                inset 3px 0 0 #e2b778,
+                10px 12px 24px rgba(18, 49, 47, 0.28);
+        }
+        .dsh-sidebar-restore:focus-visible {
+            outline: 2px solid #d2a05e;
+            outline-offset: 3px;
         }
         [data-testid="stExpandSidebarButton"] {
             display: none !important;
@@ -3058,6 +3108,8 @@ def inject_css() -> None:
             .stFormSubmitButton button,
             [data-testid="stTabs"] button[data-baseweb="tab"],
             [data-testid="stSidebar"] [class*="st-key-sidebar_nav_"] button,
+            [data-testid="stSidebar"][aria-expanded="true"]
+                button[data-testid="stBaseButton-headerNoPadding"],
             .st-key-main_nav [role="radiogroup"] label,
             [data-testid="stChatMessage"] {
                 transition: none !important;
@@ -3068,6 +3120,8 @@ def inject_css() -> None:
             div[data-testid="stMetric"]:hover,
             .stButton button:hover,
             .stButton button:active,
+            [data-testid="stSidebar"][aria-expanded="true"]
+                button[data-testid="stBaseButton-headerNoPadding"]:hover,
             .st-key-main_nav [role="radiogroup"] label:hover,
             .st-key-main_nav [role="radiogroup"] label:has(input:checked),
             .st-key-main_nav [aria-checked="true"] {
@@ -3227,7 +3281,7 @@ def install_sidebar_recovery_control() -> None:
           button.className = "dsh-sidebar-restore";
           button.setAttribute("aria-label", "展开侧栏");
           button.title = "展开侧栏";
-          button.textContent = "›";
+          button.textContent = "›  展开";
           button.addEventListener("click", () => {
             const sidebar = root.querySelector('[data-testid="stSidebar"]');
             const collapsed =
