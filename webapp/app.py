@@ -2282,9 +2282,60 @@ def inject_css() -> None:
             outline-offset: 2px;
         }
 
-        [data-testid="stSidebar"] {
+        [data-testid="stSidebar"][aria-expanded="true"] {
             min-width: 264px;
             background: #0b2725;
+        }
+        [data-testid="stSidebar"][aria-expanded="false"] {
+            width: 0 !important;
+            min-width: 0 !important;
+            max-width: 0 !important;
+            flex-basis: 0 !important;
+            margin: 0 !important;
+            border: 0 !important;
+            background: transparent !important;
+            overflow: hidden !important;
+        }
+        [data-testid="stSidebar"][aria-expanded="false"]
+            [data-testid="stSidebarContent"] {
+            visibility: hidden;
+        }
+        .dsh-sidebar-restore {
+            position: fixed !important;
+            top: 116px !important;
+            left: 0 !important;
+            z-index: 99990 !important;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            width: 34px !important;
+            height: 48px !important;
+            padding: 0 !important;
+            overflow: hidden;
+            border: 1px solid #8ca8a1;
+            border-left: 0;
+            border-radius: 0 6px 6px 0;
+            background: #0b2725 !important;
+            color: transparent !important;
+            box-shadow: 7px 8px 18px rgba(18, 49, 47, 0.16);
+            color: #ffffff;
+            cursor: pointer;
+            font-family: "Avenir Next", sans-serif;
+            font-size: 23px;
+            font-weight: 500;
+            line-height: 1;
+            transition:
+                width 160ms cubic-bezier(0.2, 0.8, 0.2, 1),
+                background-color 160ms ease,
+                box-shadow 160ms ease;
+        }
+        .dsh-sidebar-restore:hover {
+            width: 40px !important;
+            background: #143b38 !important;
+            box-shadow: 9px 10px 22px rgba(18, 49, 47, 0.22);
+        }
+        [data-testid="stExpandSidebarButton"] {
+            display: none !important;
         }
         [data-testid="stSidebarContent"] {
             padding: 0.85rem 0.8rem 1rem;
@@ -3140,6 +3191,79 @@ def lock_chinese_language() -> None:
     )
 
 
+def apply_sidebar_toggle_request() -> None:
+    if not st.session_state.pop("_toggle_sidebar_requested", False):
+        return
+    components.html(
+        """
+        <script>
+        const root = window.parent && window.parent.document
+          ? window.parent.document
+          : document;
+        const sidebar = root.querySelector('[data-testid="stSidebar"]');
+        const collapsed = sidebar?.getAttribute('aria-expanded') === 'false';
+        const toggle = collapsed
+          ? root.querySelector('[data-testid="stExpandSidebarButton"]')
+          : sidebar?.querySelector('button[data-testid="stBaseButton-headerNoPadding"]');
+        if (toggle) toggle.click();
+        </script>
+        """,
+        height=0,
+        width=0,
+    )
+
+
+def install_sidebar_recovery_control() -> None:
+    components.html(
+        """
+        <script>
+        const win = window.parent;
+        const root = win.document;
+        let button = root.getElementById("dsh-sidebar-restore");
+        if (!button) {
+          button = root.createElement("button");
+          button.id = "dsh-sidebar-restore";
+          button.type = "button";
+          button.className = "dsh-sidebar-restore";
+          button.setAttribute("aria-label", "展开侧栏");
+          button.title = "展开侧栏";
+          button.textContent = "›";
+          button.addEventListener("click", () => {
+            const sidebar = root.querySelector('[data-testid="stSidebar"]');
+            const collapsed =
+              sidebar?.getAttribute("aria-expanded") === "false";
+            const toggle = collapsed
+              ? root.querySelector('[data-testid="stExpandSidebarButton"]')
+              : sidebar?.querySelector(
+                  'button[data-testid="stBaseButton-headerNoPadding"]'
+                );
+            if (toggle) toggle.click();
+          });
+          root.body.appendChild(button);
+        }
+        const sync = () => {
+          const sidebar = root.querySelector('[data-testid="stSidebar"]');
+          const collapsed =
+            sidebar?.getAttribute("aria-expanded") === "false";
+          button.style.display = collapsed ? "flex" : "none";
+        };
+        if (win.__dshSidebarRecoveryObserver) {
+          win.__dshSidebarRecoveryObserver.disconnect();
+        }
+        win.__dshSidebarRecoveryObserver = new MutationObserver(sync);
+        win.__dshSidebarRecoveryObserver.observe(root.body, {
+          subtree: true,
+          attributes: true,
+          attributeFilter: ["aria-expanded"],
+        });
+        sync();
+        </script>
+        """,
+        height=0,
+        width=0,
+    )
+
+
 def render_header(
     show_admin_menu: bool = False,
     admin_console_page: str = "工作台",
@@ -3272,6 +3396,14 @@ def render_header(
                 if last_sync:
                     menu_help += f"，上次 {last_sync}"
                 with st.popover("☰ 菜单", help=menu_help):
+                    if st.button(
+                        "显示 / 隐藏侧栏",
+                        key="header_sidebar_toggle",
+                        width="stretch",
+                    ):
+                        st.session_state._toggle_sidebar_requested = True
+                        st.rerun()
+                    st.divider()
                     st.caption("管理菜单 · 状态每 10 秒自动同步")
                     menu_items = [("工作台", "工作台")]
                     if is_admin:
@@ -9664,6 +9796,8 @@ render_header(
 if welcome_name := st.session_state.pop("login_welcome", None):
     st.toast(f"欢迎回来，{welcome_name}")
 api_key = render_sidebar(nav_groups=nav_groups, selected_nav=header_page)
+install_sidebar_recovery_control()
+apply_sidebar_toggle_request()
 
 if is_admin and admin_console_page in console_pages:
     console_pages[admin_console_page]()
