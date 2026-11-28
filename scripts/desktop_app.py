@@ -15,6 +15,18 @@ WEBAPP_PORT = 8501
 BACKEND_PORT = 8001
 LOCK_FILE = PROJECT / "output" / "desktop_app.lock"
 APP_BUNDLE_ID = "com.elderly.depression.desktop"
+FRONTEND_SUFFIXES = {
+    ".css",
+    ".html",
+    ".jpeg",
+    ".jpg",
+    ".js",
+    ".json",
+    ".png",
+    ".py",
+    ".svg",
+    ".webp",
+}
 
 
 def _pid_alive(pid: int) -> bool:
@@ -82,6 +94,39 @@ def _stop_port_listener(port: int) -> None:
         if not pids:
             return
         time.sleep(0.2)
+
+
+def _frontend_revision() -> int:
+    """Return a monotonic revision for files that affect the visible app."""
+    webapp_dir = PROJECT / "webapp"
+    revisions = []
+    for path in webapp_dir.rglob("*"):
+        if not path.is_file() or "__pycache__" in path.parts:
+            continue
+        if path.suffix.lower() not in FRONTEND_SUFFIXES:
+            continue
+        try:
+            revisions.append(path.stat().st_mtime_ns)
+        except OSError:
+            continue
+    return max(revisions, default=0)
+
+
+def _watch_frontend(window: object, interval: float = 1.0) -> None:
+    """Reload the embedded window when local frontend files change."""
+    revision = _frontend_revision()
+    while True:
+        time.sleep(interval)
+        next_revision = _frontend_revision()
+        if next_revision <= revision:
+            continue
+        revision = next_revision
+        # Give Streamlit a moment to finish its own source reload.
+        time.sleep(0.6)
+        try:
+            window.evaluate_js("window.location.reload()")
+        except Exception:
+            pass
 
 
 def main() -> None:
@@ -158,7 +203,7 @@ def main() -> None:
             proc.terminate()
         return
 
-    webview.create_window(
+    window = webview.create_window(
         "老年抑郁风险筛查",
         f"http://127.0.0.1:{WEBAPP_PORT}",
         width=1280,
@@ -166,7 +211,7 @@ def main() -> None:
         min_size=(960, 640),
     )
     try:
-        webview.start()
+        webview.start(_watch_frontend, window)
     finally:
         LOCK_FILE.unlink(missing_ok=True)
         for proc in started:

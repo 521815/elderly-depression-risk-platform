@@ -4462,6 +4462,9 @@ def inject_auth_css() -> None:
             margin: 0.4rem auto 0;
             padding: 1rem 1.55rem 0.85rem;
             border-radius: 8px 8px 0 0;
+            background:
+                linear-gradient(118deg, #143b3a 0%, #173f3d 62%, #1b4642 100%);
+            box-shadow: 0 18px 48px rgba(20, 59, 58, 0.14);
         }
         .auth-brand-message {
             display: grid;
@@ -4469,7 +4472,8 @@ def inject_auth_css() -> None:
             gap: 0.5rem 1.2rem;
             align-items: center;
             margin-top: 0.68rem;
-            padding: 0;
+            padding: 0 0 0 0.92rem;
+            border-left: 2px solid rgba(215, 163, 93, 0.88);
         }
         .auth-brand-message h1 {
             max-width: none;
@@ -4495,6 +4499,9 @@ def inject_auth_css() -> None:
             padding: 0.9rem 1.55rem 0.85rem;
             border-radius: 0 0 8px 8px;
             border-top: 0;
+            box-shadow:
+                inset 0 1px 0 rgba(255, 255, 255, 0.9),
+                0 22px 58px rgba(24, 53, 55, 0.10);
         }
         .st-key-auth_panel .auth-form-head h2 {
             margin-top: 0.2rem;
@@ -4515,6 +4522,18 @@ def inject_auth_css() -> None:
         .st-key-auth_panel .auth-security-note {
             margin-top: 0.55rem;
             padding-top: 0.62rem;
+        }
+        .st-key-auth_panel [data-testid="stAlert"] {
+            min-height: 2.7rem;
+            border: 1px solid #ddd2ba;
+            border-radius: 3px;
+            background: #faf7ef;
+            color: #4f4637;
+            box-shadow: none;
+        }
+        .st-key-auth_panel [data-testid="stAlert"] p {
+            color: inherit;
+            font-variant-numeric: tabular-nums;
         }
         .auth-brand-card {
             animation: auth-panel-in 380ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
@@ -4546,6 +4565,7 @@ def inject_auth_css() -> None:
             .auth-brand-message {
                 grid-template-columns: 1fr;
                 margin-top: 1rem;
+                padding-left: 0.82rem;
             }
             .auth-brand-message h1 {
                 font-size: 1.65rem;
