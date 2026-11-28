@@ -2240,6 +2240,7 @@ def inject_css() -> None:
             background: #4ec098;
             box-shadow: 0 0 0 3px rgba(78, 192, 152, 0.12);
             vertical-align: 0.08em;
+            animation: status-dot-in 520ms cubic-bezier(0.2, 0.8, 0.2, 1) 180ms both;
         }
         .header-ready small {
             color: #7b8b87;
@@ -2269,7 +2270,8 @@ def inject_css() -> None:
         .stButton button:active,
         .stDownloadButton button:active,
         .stFormSubmitButton button:active {
-            transform: translateY(0) scale(0.985);
+            transform: translateY(0) scale(0.975);
+            box-shadow: inset 0 2px 5px rgba(18, 49, 47, 0.12);
         }
         .stButton button:focus-visible,
         .stDownloadButton button:focus-visible,
@@ -2374,26 +2376,29 @@ def inject_css() -> None:
             letter-spacing: 0.04em;
         }
         [data-testid="stSidebar"] [class*="st-key-sidebar_nav_"] button {
-            min-height: 2.42rem;
-            padding: 0.3rem 0.38rem;
-            border-color: rgba(219, 235, 229, 0.10);
+            min-height: 2.05rem;
+            padding: 0.24rem 0.36rem;
+            border-color: transparent;
             border-radius: 3px;
-            background: rgba(255, 255, 255, 0.025);
-            color: #d2dfdc;
-            font-size: 0.67rem;
-            font-weight: 620;
-            line-height: 1.22;
+            background: transparent;
+            color: #c8d7d3;
+            font-family: "Avenir Next Condensed", "DIN Alternate", "PingFang SC", sans-serif;
+            font-size: 0.64rem;
+            font-weight: 640;
+            line-height: 1.15;
             text-align: left;
         }
         [data-testid="stSidebar"] [class*="st-key-sidebar_nav_"] button p {
             width: 100%;
-            white-space: pre-line;
+            white-space: nowrap;
             text-align: left;
         }
         [data-testid="stSidebar"] [class*="st-key-sidebar_nav_"] button:hover {
-            border-color: rgba(192, 218, 210, 0.26);
-            background: rgba(255, 255, 255, 0.07);
-            transform: translateX(2px);
+            border-color: rgba(192, 218, 210, 0.20);
+            background: rgba(255, 255, 255, 0.065);
+            color: #ffffff;
+            box-shadow: inset 2px 0 0 #7fa89f;
+            transform: translateX(3px);
         }
         [data-testid="stSidebar"] [class*="st-key-sidebar_nav_"] button[kind="primary"],
         [data-testid="stSidebar"] [class*="st-key-sidebar_nav_"]
@@ -2404,6 +2409,8 @@ def inject_css() -> None:
             box-shadow:
                 inset 0 -2px 0 rgba(67, 42, 12, 0.12),
                 0 7px 16px rgba(0, 0, 0, 0.12);
+            transform: translateX(1px);
+            animation: nav-selected-in 220ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
         }
         [data-testid="stSidebar"] [class*="st-key-sidebar_nav_"]
             button[data-testid="stBaseButton-primary"] p {
@@ -2427,7 +2434,7 @@ def inject_css() -> None:
             padding: 0.05rem 0 0.82rem 0.9rem;
             border-left: 2px solid #b47b3f;
             border-bottom: 1px solid var(--line);
-            animation: workspace-rise 300ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+            animation: workspace-rise 420ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
         }
         .page-intro-eyebrow {
             color: #6b7f79;
@@ -2450,7 +2457,7 @@ def inject_css() -> None:
             border-radius: 7px;
             background: #ffffff;
             box-shadow: 0 12px 32px rgba(18, 49, 47, 0.055);
-            animation: workspace-rise 360ms cubic-bezier(0.2, 0.8, 0.2, 1) 35ms both;
+            animation: workspace-rise 460ms cubic-bezier(0.2, 0.8, 0.2, 1) 45ms both;
         }
         .assessment-hero::before {
             content: "";
@@ -2585,6 +2592,11 @@ def inject_css() -> None:
                 box-shadow 170ms cubic-bezier(0.2, 0.8, 0.2, 1),
                 transform 170ms cubic-bezier(0.2, 0.8, 0.2, 1);
         }
+        .stButton button:hover,
+        .stDownloadButton button:hover {
+            box-shadow: 0 7px 18px rgba(18, 49, 47, 0.08);
+            transform: translateY(-2px);
+        }
         div[data-testid="stMetric"]:hover {
             border-color: #b9cbc4;
             box-shadow: 0 10px 24px rgba(18, 49, 47, 0.07);
@@ -2644,7 +2656,7 @@ def inject_css() -> None:
         @keyframes workspace-rise {
             from {
                 opacity: 0;
-                transform: translateY(7px);
+                transform: translateY(11px);
             }
             to {
                 opacity: 1;
@@ -2689,6 +2701,30 @@ def inject_css() -> None:
             to {
                 opacity: 1;
                 transform: translateY(0) scale(1);
+            }
+        }
+        @keyframes nav-selected-in {
+            from {
+                opacity: 0.55;
+                transform: translateX(-5px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(1px);
+            }
+        }
+        @keyframes status-dot-in {
+            0% {
+                opacity: 0.25;
+                transform: scale(0.55);
+            }
+            65% {
+                opacity: 1;
+                transform: scale(1.22);
+            }
+            100% {
+                opacity: 1;
+                transform: scale(1);
             }
         }
 
@@ -2953,6 +2989,13 @@ def inject_css() -> None:
             .st-key-assessment_setup_panel [data-testid="stVerticalBlockBorderWrapper"],
             div[data-testid="stPopoverBody"],
             [data-testid="stChatMessage"] {
+                animation: none !important;
+            }
+            .header-ready i,
+            .sidebar-ready i,
+            [data-testid="stSidebar"]
+                [class*="st-key-sidebar_nav_"]
+                button[data-testid="stBaseButton-primary"] {
                 animation: none !important;
             }
             .app-mark,
@@ -3367,10 +3410,14 @@ USER_NAV_GROUPS = [
     ("个人工作台", ["风险评估", "用户记录", "个人主页", "系统说明"]),
 ]
 
-
 def format_nav_label(label: str) -> str:
     code = NAV_CODES.get(label)
     return f"{label}\n{code}" if code else label
+
+
+def format_sidebar_nav_label(label: str) -> str:
+    code = NAV_CODES.get(label, "")
+    return f"{label}  {code}".strip()
 
 
 def render_page_intro(title: str, kicker: str, description: str) -> None:
@@ -4905,24 +4952,20 @@ def render_sidebar(
                     f'<div class="sidebar-nav-group">{group_name}</div>',
                     unsafe_allow_html=True,
                 )
-                for start in range(0, len(labels), 2):
-                    chunk = labels[start : start + 2]
-                    button_cols = st.columns(len(chunk), gap="small")
-                    for column, label in zip(button_cols, chunk):
-                        with column:
-                            if st.button(
-                                format_nav_label(label),
-                                key=f"sidebar_nav_{label}",
-                                type=(
-                                    "primary"
-                                    if label == selected_nav
-                                    else "secondary"
-                                ),
-                                width="stretch",
-                            ):
-                                st.session_state.main_nav = label
-                                st.session_state.admin_console_page = "工作台"
-                                st.rerun()
+                for label in labels:
+                    if st.button(
+                        format_sidebar_nav_label(label),
+                        key=f"sidebar_nav_{label}",
+                        type=(
+                            "primary"
+                            if label == selected_nav
+                            else "secondary"
+                        ),
+                        width="stretch",
+                    ):
+                        st.session_state.main_nav = label
+                        st.session_state.admin_console_page = "工作台"
+                        st.rerun()
         care_mode = st.toggle(
             "关怀模式",
             value=st.session_state.get("care_mode", False),
