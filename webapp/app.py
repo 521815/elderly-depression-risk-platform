@@ -4409,6 +4409,43 @@ def inject_auth_css() -> None:
             color: #68797c;
         }
         .auth-brand-card {
+            display: flex;
+            flex-direction: column;
+            min-height: clamp(535px, 70vh, 640px);
+            padding: 1.9rem 1.8rem;
+        }
+        .auth-brand-lockup {
+            margin-bottom: 2.4rem;
+        }
+        .auth-stage-label {
+            margin-top: 0;
+        }
+        .auth-brand-card h1 {
+            max-width: 25rem;
+            margin: 0.55rem 0 0;
+            font-size: clamp(2.15rem, 2.6vw, 2.85rem);
+            line-height: 1.28;
+        }
+        .auth-brand-copy {
+            max-width: 24rem;
+            margin-top: 0.9rem;
+            font-size: 0.94rem;
+            line-height: 1.72;
+        }
+        .auth-trust-row {
+            margin-top: auto;
+        }
+        .st-key-auth_panel {
+            min-height: clamp(535px, 70vh, 640px);
+            padding: 2rem 2.15rem 1.7rem;
+        }
+        .auth-form-head h2 {
+            font-size: 2.25rem;
+        }
+        .auth-form-head p {
+            max-width: 32rem;
+        }
+        .auth-brand-card {
             animation: auth-panel-in 380ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
         }
         .st-key-auth_panel {
@@ -4514,7 +4551,7 @@ def render_auth_gate() -> None:
     inject_auth_css()
     _, shell, _ = st.columns([0.16, 2.68, 0.16])
     with shell:
-        brand_col, auth_col = st.columns([1.03, 0.97], gap="large")
+        brand_col, auth_col = st.columns([0.78, 1.22], gap="large")
         logo_path = PROJECT_ROOT / "webapp" / "assets" / "logo-mark.svg"
         logo_uri = ""
         if logo_path.exists():
@@ -4529,24 +4566,14 @@ def render_auth_gate() -> None:
                     <div class="auth-brand-mark"><img src="{logo_uri}" alt=""></div>
                     <div>
                         <div class="auth-brand-name">老年抑郁风险筛查</div>
-                        <div class="auth-brand-sub">多模态抑郁风险评估平台</div>
+                        <div class="auth-brand-sub">Clinical research screening</div>
                     </div>
                 </div>
-                <div class="auth-stage-label">Conversation to care / risk screening</div>
-                <h1>从一次自然对话<br>看清老年抑郁风险</h1>
+                <div class="auth-stage-label">Risk screening workspace</div>
+                <h1>从一次对话<br>整理风险线索</h1>
                 <p class="auth-brand-copy">
-                    对话、量表、共病背景与可用行为信号被整理成清晰的风险提示，
-                    每个结果都保留依据、适用范围和安全边界。
+                    结合量表、共病背景与可用行为信号，生成可解释的科研风险提示。
                 </p>
-                <div class="auth-evidence-board">
-                    <div class="auth-evidence-head">
-                        <span>How it works</span><span>04 stages</span>
-                    </div>
-                    <div class="auth-evidence-row"><b>01</b><span>自然对话，识别语言线索</span><small>CONVERSATION</small></div>
-                    <div class="auth-evidence-row"><b>02</b><span>完成量表，补充背景与共病</span><small>ASSESSMENT</small></div>
-                    <div class="auth-evidence-row"><b>03</b><span>整合可用的行为与情绪信号</span><small>MULTIMODAL</small></div>
-                    <div class="auth-evidence-row"><b>04</b><span>解释风险，保留安全边界</span><small>EXPLANATION</small></div>
-                </div>
                 <div class="auth-trust-row">
                     <span class="auth-trust-chip">本地处理优先</span>
                     <span class="auth-trust-chip">科研风险筛查</span>
@@ -4561,8 +4588,8 @@ def render_auth_gate() -> None:
             """
             <div class="auth-form-head">
                 <div class="auth-eyebrow">账号入口</div>
-                <h2>进入工作台</h2>
-                <p>登录已有账号，或创建普通用户账号。管理员账号拥有完整数据和账号管理权限。</p>
+                <h2>登录工作台</h2>
+                <p>使用已有账号进入，普通用户也可以直接注册。</p>
             </div>
             <div class="auth-rule">
                 用户名允许 @ _ - &amp; ¥ $ # 和数字、大小写字母；密码至少 8 位，并同时包含大写和小写字母。
@@ -4740,8 +4767,8 @@ def render_auth_gate() -> None:
         auth_panel.markdown(
             """
             <div class="auth-security-note">
-                本系统仅用于科研风险筛查和辅助沟通，不替代医生诊断。对话默认在本地处理；
-                启用第三方大模型前需要单独同意，并自动隐藏姓名、住址、电话、证件号和邮箱。
+                仅用于科研风险筛查，不替代医生诊断。数据默认本地处理，
+                启用第三方模型前会单独征得同意并完成脱敏。
             </div>
             """,
             unsafe_allow_html=True,
