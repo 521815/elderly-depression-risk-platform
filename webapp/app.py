@@ -4455,6 +4455,68 @@ def inject_auth_css() -> None:
             max-width: 32rem;
         }
         .auth-brand-card {
+            display: block;
+            max-width: 720px;
+            min-height: 0;
+            height: auto;
+            margin: 0.4rem auto 0;
+            padding: 1rem 1.55rem 0.85rem;
+            border-radius: 8px 8px 0 0;
+        }
+        .auth-brand-message {
+            display: grid;
+            grid-template-columns: minmax(0, 1fr) minmax(220px, 0.78fr);
+            gap: 0.5rem 1.2rem;
+            align-items: center;
+            margin-top: 0.68rem;
+            padding: 0;
+        }
+        .auth-brand-message h1 {
+            max-width: none;
+            margin: 0;
+            font-size: clamp(1.45rem, 1.8vw, 1.72rem);
+            line-height: 1.28;
+        }
+        .auth-brand-message .auth-brand-copy {
+            max-width: none;
+            margin: 0;
+            font-size: 0.8rem;
+            line-height: 1.6;
+        }
+        .auth-brand-card .auth-trust-row {
+            margin-top: 0.72rem;
+            padding-top: 0.58rem;
+        }
+        .st-key-auth_panel {
+            max-width: 720px;
+            min-height: 0;
+            height: auto;
+            margin: -0.5rem auto 0.6rem;
+            padding: 0.9rem 1.55rem 0.85rem;
+            border-radius: 0 0 8px 8px;
+            border-top: 0;
+        }
+        .st-key-auth_panel .auth-form-head h2 {
+            margin-top: 0.2rem;
+            font-size: 1.85rem;
+        }
+        .st-key-auth_panel [data-testid="stVerticalBlock"] {
+            gap: 0.42rem;
+        }
+        .st-key-auth_panel [data-testid="stForm"] {
+            gap: 0.45rem;
+        }
+        .st-key-auth_panel [data-testid="stTabs"] {
+            margin-top: -0.1rem;
+        }
+        .st-key-auth_panel .auth-rule {
+            margin: 0.15rem 0 0.55rem;
+        }
+        .st-key-auth_panel .auth-security-note {
+            margin-top: 0.55rem;
+            padding-top: 0.62rem;
+        }
+        .auth-brand-card {
             animation: auth-panel-in 380ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
         }
         .st-key-auth_panel {
@@ -4478,7 +4540,15 @@ def inject_auth_css() -> None:
                 min-height: auto;
                 height: auto;
                 padding: 1.45rem;
-                margin-bottom: 0;
+                margin: 0 auto;
+                border-radius: 8px 8px 0 0;
+            }
+            .auth-brand-message {
+                grid-template-columns: 1fr;
+                margin-top: 1rem;
+            }
+            .auth-brand-message h1 {
+                font-size: 1.65rem;
             }
             .auth-brand-card h1 {
                 font-size: 1.85rem;
@@ -4495,7 +4565,19 @@ def inject_auth_css() -> None:
             .st-key-auth_panel {
                 min-height: auto;
                 height: auto;
+                margin: -0.65rem auto 1rem;
                 padding: 1.3rem;
+                border-radius: 0 0 8px 8px;
+            }
+            .st-key-auth_panel [data-testid="stHorizontalBlock"] {
+                display: block !important;
+            }
+            .st-key-auth_panel
+                [data-testid="stHorizontalBlock"]
+                > [data-testid="stColumn"] {
+                width: 100% !important;
+                min-width: 100% !important;
+                margin-bottom: 0.55rem;
             }
         }
         @media (prefers-reduced-motion: reduce) {
@@ -4560,9 +4642,8 @@ def ensure_auth_session() -> bool:
 
 def render_auth_gate() -> None:
     inject_auth_css()
-    _, shell, _ = st.columns([0.16, 2.68, 0.16])
+    _, shell, _ = st.columns([0.08, 2.84, 0.08])
     with shell:
-        brand_col, auth_col = st.columns([0.78, 1.22], gap="large")
         logo_path = PROJECT_ROOT / "webapp" / "assets" / "logo-mark.svg"
         logo_uri = ""
         if logo_path.exists():
@@ -4570,7 +4651,7 @@ def render_auth_gate() -> None:
                 "data:image/svg+xml;base64,"
                 + base64.b64encode(logo_path.read_bytes()).decode("ascii")
             )
-        brand_col.markdown(
+        st.markdown(
             f"""
             <div class="auth-brand-card">
                 <div class="auth-brand-lockup">
@@ -4581,22 +4662,16 @@ def render_auth_gate() -> None:
                     </div>
                 </div>
                 <div class="auth-brand-message">
-                    <div class="auth-stage-label">Risk screening workspace</div>
-                    <h1>从一次对话<br>整理风险线索</h1>
+                    <h1>从对话开始，整理风险线索</h1>
                     <p class="auth-brand-copy">
                         结合量表、共病背景与可用行为信号，生成可解释的科研风险提示。
                     </p>
-                </div>
-                <div class="auth-trust-row">
-                    <span class="auth-trust-chip">本地处理优先</span>
-                    <span class="auth-trust-chip">科研风险筛查</span>
-                    <span class="auth-trust-chip">不替代诊断</span>
                 </div>
             </div>
             """,
             unsafe_allow_html=True,
         )
-        auth_panel = auth_col.container(key="auth_panel")
+        auth_panel = st.container(key="auth_panel")
         auth_panel.markdown(
             """
             <div class="auth-form-head">
@@ -4622,11 +4697,17 @@ def render_auth_gate() -> None:
                 username = st.text_input("用户名", key="login_username")
                 password = st.text_input("密码", type="password", key="login_password")
                 challenge = _auth_challenge("login_challenge")
-                if challenge:
-                    st.info(f"人机验证：{challenge['question']}")
-                else:
-                    st.error("无法连接后端获取人机验证，请确认桌面版后端已启动。")
-                answer = st.text_input("请输入计算结果", key="login_answer")
+                challenge_col, answer_col = st.columns(
+                    [1.08, 0.92],
+                    vertical_alignment="bottom",
+                )
+                with challenge_col:
+                    if challenge:
+                        st.info(f"人机验证：{challenge['question']}")
+                    else:
+                        st.error("无法连接后端获取人机验证，请确认桌面版后端已启动。")
+                with answer_col:
+                    answer = st.text_input("计算结果", key="login_answer")
                 submitted = st.form_submit_button(
                     "登录",
                     width="stretch",
